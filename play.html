@@ -120,6 +120,14 @@
 		border-radius: 50%;
 		transform: translate(-50%, -50%);
 	}
+	#hud-location {
+		top: calc(4.8rem + env(safe-area-inset-top));
+		right: calc(0.4rem + env(safe-area-inset-right));
+		padding: 0.3rem 0.5rem;
+		background: rgba(20, 16, 8, 0.65);
+		color: #eee4c9;
+		font-size: 0.75rem;
+	}
 	#hud-nav {
 		top: calc(2.6rem + env(safe-area-inset-top));
 		right: calc(0.4rem + env(safe-area-inset-right));
@@ -170,13 +178,14 @@
 	<div id="hud-profession">—</div>
 </div>
 <div id="hud-log" class="hud"></div>
+<div id="hud-location" class="hud" aria-live="off"></div>
 <div id="hud-minimap" class="hud"></div>
 <div id="hud-nav" class="hud">
 	<a href="index.html">Summary</a><a href="sim.html">Sim</a>
 </div>
 <div id="hud-hint" class="hud"><span>◐ move</span><span>look ◑</span></div>
 
-<!-- First rendering pass: real media/models geometry via a minimal OBJ loader, shared GameState for party/HUD data. -->
+<!-- Frozen saved-world exploration; terrain and shared model assets stream through a fixed pool. -->
 <script type="module" src="jCRPG-engine/js/play_page.js"></script>
 </body>
 </html>

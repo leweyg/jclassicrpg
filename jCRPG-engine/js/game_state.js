@@ -2,7 +2,7 @@
  * game_state.js
  *
  * Rendering-agnostic game state model shared between sim.html (headless
- * simulation, no visuals) and, later, play.html's world/render layers. This
+ * simulation, no visuals) and play.html's world/render layers. This
  * module must not import three.js or touch the DOM — it only models data:
  * scenario/world descriptors, the party, and a mock clock.
  *
@@ -10,6 +10,9 @@
  * ticking) are NOT implemented yet — SimTime is a placeholder that just
  * counts turns so the rest of the state shape can be agreed on now.
  */
+
+import { loadFrozenWorld, wrap } from "./frozen_world.js";
+import { WorldStream } from "./world_stream.js";
 
 import { starterPartyRef, worldsRef, ChangeEvents } from "./game_static_core.js";
 
@@ -75,7 +78,7 @@ export class PartyState {
 	}
 }
 
-/** World generation descriptor only (no generated terrain/geometry yet — that comes with the render pass). */
+/** World dimensions/seed metadata; the frozen terrain is held by the exploration cache. */
 export class WorldDescriptor {
 	constructor({ name = "default", sizeX = 0, sizeY = 0, sizeZ = 0, magnification = 1, seed = 0 } = {}) {
 		this.name = name;
@@ -96,7 +99,7 @@ export class WorldDescriptor {
 }
 
 /**
- * Top-level, rendering-agnostic game state. Shared by sim.html and (later)
+ * Top-level, rendering-agnostic game state. Shared by sim.html and
  * play.html — neither this class nor anything it references may depend on
  * three.js or the DOM.
  */
@@ -107,6 +110,7 @@ export class GameState {
 		this.time = time ?? new SimTime();
 		this.party = party ?? new PartyState();
 		this.events = new ChangeEvents();
+		this.exploration = null; // Transient bounded cache; excluded from saves.
 	}
 
 	/** Builds default state from the reference JSON data (starter party + real default world params). */
@@ -137,6 +141,26 @@ export class GameState {
 			time,
 			party,
 		});
+	}
+
+	/** Begin exploring the frozen save at its captured party position. */
+	async startExploration() {
+		const frozen = await loadFrozenWorld();
+		this.world = new WorldDescriptor({ name: 'Frozen JClassicRPG', sizeX: frozen.sizeX, sizeY: 80, sizeZ: frozen.sizeZ, seed: frozen.seed });
+		Object.assign(this.party.position, frozen.spawn);
+		this.exploration = new WorldStream(frozen);
+		this.exploration.update(this.party.position.x, this.party.position.z);
+		return this.exploration;
+	}
+
+	/** Mutates the existing position object; returns whether nearby areas changed. */
+	moveParty(dx, dz) {
+		if (!this.exploration) return false;
+		const world = this.exploration.world;
+		this.party.position.x = wrap(this.party.position.x + dx, world.sizeX);
+		this.party.position.z = wrap(this.party.position.z + dz, world.sizeZ);
+		this.party.position.y = this.exploration.heightAt(this.party.position.x, this.party.position.z);
+		return this.exploration.update(this.party.position.x, this.party.position.z);
 	}
 
 	/** Placeholder turn step — no economy/ecology/combat mechanics yet, just advances the mock clock. */

@@ -9,9 +9,7 @@
 
 import { GameSim } from "./game_sim.js";
 import { SceneRenderer } from "./render_engine.js";
-
-// The captured reference screenshot's world position (see world_seed0_sample.json playerPositionAtCapture).
-const REFERENCE_POSITION = { x: 800, y: 41, z: 907 };
+import { TERRAIN_NAMES } from "./frozen_world.js";
 
 function pickActiveMember(party) {
 	return party.members.find((m) => m.foreName === "ELMARA") ?? party.members[0];
@@ -35,6 +33,7 @@ function appendLog(text) {
 	const line = document.createElement("div");
 	line.textContent = text;
 	logEl.appendChild(line);
+	while (logEl.children.length > 12) logEl.firstElementChild.remove();
 	logEl.scrollTop = logEl.scrollHeight;
 }
 
@@ -51,23 +50,35 @@ async function main() {
 		return;
 	}
 
-	// Homage to the captured reference moment (see world_seed0_sample.json) until real world-position tracking exists.
-	sim.gameState.party.position = { ...REFERENCE_POSITION };
-
-	renderHud(sim.gameState);
-	appendLog(`Loading Geo at X/Z ${REFERENCE_POSITION.x}/${REFERENCE_POSITION.z}...`);
-	appendLog("Load Complete.");
-	appendLog(`Loading Geo at X/Z ${REFERENCE_POSITION.x}/${REFERENCE_POSITION.z + 1}...`);
-	appendLog("Load Complete.");
-	appendLog("You hear faint sounds around.");
-	appendLog("Probably Kobold Miner.");
-
-	if (status) status.textContent = "";
-
-	const renderer = new SceneRenderer(canvas);
-	await renderer.buildForestClearing({ seed: sim.gameState.world.seed });
-	renderer.start();
-	window.__sceneRenderer = renderer; // debug hook for manual inspection in devtools
+	try {
+		if (status) status.textContent = "Loading saved world…";
+		await sim.gameState.startExploration();
+		renderHud(sim.gameState);
+		const renderer = new SceneRenderer(canvas);
+		await renderer.buildWorld(sim.gameState);
+		renderer.start();
+		window.__sceneRenderer = renderer;
+		window.__gameState = sim.gameState;
+		if (status) status.textContent = "";
+		appendLog("Saved world loaded. Drag on the left to walk; drag on the right to look.");
+		const location = document.getElementById('hud-location');
+		let lastArea = '';
+		const updateLocation = () => {
+			const state = sim.gameState, p = state.party.position, world = state.exploration.world;
+			const landmark = world.landmarkAt(p.x, p.z);
+			const area = landmark?.name ?? TERRAIN_NAMES[world.typeAt(p.x, p.z)];
+			location.textContent = `${area} · ${Math.floor(p.x)}, ${Math.floor(p.z)}`;
+			if (area !== lastArea) { appendLog(`Entering ${area}.`); lastArea = area; }
+		};
+		updateLocation();
+		// HUD strings/DOM work are deliberately outside the animation loop.
+		const hudTimer = setInterval(updateLocation, 250);
+		window.addEventListener('pagehide', () => { clearInterval(hudTimer); renderer.stop(); }, { once: true });
+		window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
+	} catch (err) {
+		if (status) status.textContent = `Failed to load world: ${err.message}`;
+		console.error(err);
+	}
 }
 
 main();
