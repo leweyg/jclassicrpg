@@ -1,0 +1,39 @@
+{
+  "description": "A concrete, real playable starting party mined from the engine's own example character saves (jCRPG-engine/chars/*/character.zip -> character.xml, XStream-serialized org.jcrpg.world.ai.humanoid.modifier.race.*). These 3 characters match the party size (3) recorded in the example save's desc.txt, and are treated as the default/reference starter party for the web port.",
+  "recommendation": "Use these saved characters as the initial playable party instead of building a full character-creation UI first. It unblocks party/inventory/combat UI and rendering work immediately with real, valid stat data. Build the character-creation flow (race/profession picker + attribute rolling) as a later feature layered on top of the same data shapes, once the core game loop works end-to-end.",
+  "party": [
+    {
+      "foreName": "ELMO", "surName": "", "race": "Human", "profession": "Warrior", "genderType": 1,
+      "pictureRoot": "human", "pictureId": "francesco_hayez1.png",
+      "attributes": { "CHARISMA": 10, "PSYCHE": 10, "CONSTITUTION": 10, "KARMA": 10, "PIETY": 10, "CONCENTRATION": 10, "SPEED": 10, "STRENGTH": 20 },
+      "resistances": { "RESIST_CHEMICAL": 10, "RESIST_MENTAL": 10, "RESIST_PIERCE": 10, "RESIST_HEAT": 10, "RESIST_COLD": 10, "RESIST_EVIL": 10, "RESIST_BLUDGEON": 10, "RESIST_GOOD": 10 },
+      "nonZeroSkills": { "LargeBlades": 10, "Climbing": 6, "MediumBlades": 25, "Wrestling": 10, "ShortBlades": 6, "StaffsAndWands": 6, "MaceAndFlail": 10, "Swimming": 6 },
+      "sourceFile": "jCRPG-engine/chars/20102303-21.05.43.470_ELMO/character.zip"
+    },
+    {
+      "foreName": "ELMARA", "surName": "", "race": "Elf", "profession": "Warrior", "genderType": 2,
+      "pictureRoot": "elf", "pictureId": "falero_luis_ricardo1.png",
+      "attributes": { "CHARISMA": 10, "PSYCHE": 12, "CONSTITUTION": 10, "KARMA": 10, "PIETY": 10, "CONCENTRATION": 12, "SPEED": 10, "STRENGTH": 16 },
+      "resistances": { "RESIST_CHEMICAL": 10, "RESIST_MENTAL": 10, "RESIST_PIERCE": 10, "RESIST_HEAT": 10, "RESIST_COLD": 10, "RESIST_EVIL": 10, "RESIST_BLUDGEON": 10, "RESIST_GOOD": 10 },
+      "nonZeroSkills": { "LargeBlades": 10, "Climbing": 6, "MediumBlades": 25, "Wrestling": 10, "ShortBlades": 6, "StaffsAndWands": 6, "MaceAndFlail": 10, "Swimming": 6 },
+      "sourceFile": "jCRPG-engine/chars/20102403-00.26.37.338_ELMARA/character.zip"
+    },
+    {
+      "foreName": "PALMANO", "surName": "", "race": "Elf", "profession": "Warrior", "genderType": 1,
+      "pictureRoot": "elf", "pictureId": "male_Kidalethil.png",
+      "attributes": { "CHARISMA": 10, "PSYCHE": 12, "CONSTITUTION": 10, "KARMA": 10, "PIETY": 10, "CONCENTRATION": 12, "SPEED": 10, "STRENGTH": 16 },
+      "resistances": { "RESIST_CHEMICAL": 10, "RESIST_MENTAL": 10, "RESIST_PIERCE": 10, "RESIST_HEAT": 10, "RESIST_COLD": 10, "RESIST_EVIL": 10, "RESIST_BLUDGEON": 10, "RESIST_GOOD": 10 },
+      "nonZeroSkills": { "LargeBlades": 10, "ShortBlades": 6, "Swimming": 6, "MaceAndFlail": 10, "StaffsAndWands": 6, "Climbing": 6, "MediumBlades": 25, "Wrestling": 10 },
+      "sourceFile": "jCRPG-engine/chars/20102503-23.01.09.574_PALMANO/character.zip"
+    }
+  ],
+  "genderTypeLegend": { "1": "male", "2": "female", "3": "possibleGenders bitmask seen on race templates (both)" },
+  "notes": [
+    "attributes/resistances/skills confirm the schema already captured in world_seed0_sample.json (base value 10 for a fresh CharacterCreationRules default; these 3 already have some attributes/skills raised above baseline from creation-time allocation and/or play).",
+    "genderType and pictureRoot/pictureId map directly to portrait assets (e.g. jCRPG-engine cache or resources) the UI (CharacterSheetWindow) uses for the character portrait."
+  ],
+  "webPort": {
+    "approach": "Ship this party JSON as the default/starter party for play.html; ItemSystem/GameLogic stubs can load it directly instead of running character creation. A character-creation UI (races/professions from characters.json) can be added afterward as an alternate 'New Game' path.",
+    "targetFiles": ["jCRPG-engine/js/game_logic.js", "jCRPG-engine/js/save_load.js"]
+  }
+}
