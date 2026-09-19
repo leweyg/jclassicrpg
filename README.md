@@ -5,6 +5,15 @@ Play at: https://leweyg.github.io/jclassicrpg/play.html
 
 Homepage: https://leweyg.github.io/jclassicrpg/
 
+# Web Port TODO List
+
+- DONE: Basic systems, sim and playable world.
+- TODO: Cube map sky has flipped X axis (Y seems fine)
+- TODO: Map when clicked needs to expand to show scroll and zoom able map
+- TODO: Map needs to show mission/puzzle areas, shrines, any other key items
+
+
+
 ## Frozen-world exploration
 
 Serve the repository root (for example, `python3 -m http.server 8000`) and open
