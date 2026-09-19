@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jClassicRPG — Web Port Architecture Summary</title>
+<style>
+	:root {
+		color-scheme: dark;
+		--bg: #14161a;
+		--panel: #1e2127;
+		--border: #2f333c;
+		--text: #e6e6e6;
+		--muted: #9aa0aa;
+		--accent: #6fb7ff;
+	}
+	body {
+		margin: 0;
+		font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+		background: var(--bg);
+		color: var(--text);
+	}
+	header {
+		padding: 2rem 1.5rem 1rem;
+		max-width: 960px;
+		margin: 0 auto;
+	}
+	header h1 {
+		margin: 0 0 0.25rem;
+		font-size: 1.8rem;
+	}
+	header p {
+		color: var(--muted);
+		line-height: 1.5;
+	}
+	nav a {
+		display: inline-block;
+		margin-top: 0.5rem;
+		color: var(--accent);
+		text-decoration: none;
+		border: 1px solid var(--accent);
+		padding: 0.4rem 0.9rem;
+		border-radius: 6px;
+	}
+	nav a:hover {
+		background: var(--accent);
+		color: #10131a;
+	}
+	#load-status {
+		max-width: 960px;
+		margin: 0 auto;
+		padding: 0 1.5rem;
+		color: var(--muted);
+		font-size: 0.9rem;
+	}
+	main {
+		max-width: 960px;
+		margin: 0 auto;
+		padding: 1rem 1.5rem 3rem;
+		display: grid;
+		gap: 1rem;
+	}
+	.system-card {
+		background: var(--panel);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 1.1rem 1.3rem;
+	}
+	.system-card h3 {
+		margin: 0 0 0.15rem;
+	}
+	.java-package {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		color: var(--muted);
+		font-size: 0.85rem;
+		margin-bottom: 0.6rem;
+	}
+	.description {
+		line-height: 1.5;
+	}
+	.field-label {
+		margin-top: 0.7rem;
+		font-size: 0.8rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--muted);
+	}
+	.chip-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		margin-top: 0.35rem;
+	}
+	.chip {
+		background: #262b33;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		padding: 0.2rem 0.65rem;
+		font-size: 0.8rem;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	}
+	.chip-lib {
+		border-color: #5a4a2a;
+		color: #ffcf7a;
+	}
+	.chip-file {
+		border-color: #2a4a3a;
+		color: #7adfa0;
+	}
+	.web-approach {
+		line-height: 1.5;
+		margin: 0.3rem 0 0;
+	}
+</style>
+</head>
+<body>
+<header>
+	<h1>jClassicRPG — Web Port Architecture Summary</h1>
+	<p>
+		This page is a reference summary of the major subsystems of the original jCRPG Java engine
+		(<code>jCRPG-engine-fix20100607</code>), the native libraries each one depends on, and the plan
+		for reimplementing each system for the web. The catalogue below is data-driven, loaded from
+		<code>jCRPG-engine/json/static_core_data.json</code> by
+		<code>jCRPG-engine/js/game_static_core.js</code>.
+	</p>
+	<nav>
+		<a href="play.html">Go to Play (stub)</a>
+	</nav>
+</header>
+<div id="load-status">Loading subsystem catalogue…</div>
+<main id="systems-summary"></main>
+<script type="module" src="jCRPG-engine/js/summary_page.js"></script>
+</body>
+</html>

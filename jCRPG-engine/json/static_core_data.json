@@ -1,0 +1,124 @@
+{
+  "portName": "jClassicRPG Web Port",
+  "sourceVersion": "jCRPG-engine-fix20100607",
+  "description": "Reference data describing the major subsystems of the original Java jCRPG engine, and how each is planned to be reimplemented for the web. Loaded at runtime by game_static_core.js.",
+  "systems": [
+    {
+      "id": "world",
+      "name": "World & Simulation",
+      "javaPackage": "org.jcrpg.world",
+      "keyClasses": ["Engine", "World", "Place", "Geography", "Political", "Economic", "Boundaries", "Time"],
+      "subPackages": ["place", "object", "climate", "generator", "ai", "time"],
+      "description": "Owns the persistent game world: geography/boundaries, political and economic simulation, climate, world generation and time-of-day/calendar progression. Drives NPC AI at the world scale.",
+      "javaLibraries": [],
+      "webPort": {
+        "approach": "Pure data + logic port, no rendering dependency. Reimplement as plain JS/TS classes operating on JSON world data.",
+        "targetFiles": ["jCRPG-engine/js/world_state.js"]
+      }
+    },
+    {
+      "id": "space",
+      "name": "Space Partitioning (Cube Grid)",
+      "javaPackage": "org.jcrpg.space",
+      "keyClasses": ["Cube", "CubeInterpreter", "Side", "sidetype.*"],
+      "subPackages": ["sidetype"],
+      "description": "Defines the voxel-like cube/tile grid used to lay out the 3D world: each Cube has typed Sides (wall, floor, ceiling, ramp, etc.) interpreted by CubeInterpreter to build renderable geometry.",
+      "javaLibraries": [],
+      "webPort": {
+        "approach": "Represent cubes as flat typed arrays (Int8Array/Uint8Array) keyed by grid coordinates; a CubeInterpreter equivalent module derives mesh/side data for the WebGL renderer.",
+        "targetFiles": ["jCRPG-engine/js/space_grid.js"]
+      }
+    },
+    {
+      "id": "threed",
+      "name": "3D Rendering Engine",
+      "javaPackage": "org.jcrpg.threed",
+      "keyClasses": ["J3DCore", "ModelLoader", "GeoTileLoader", "ModelPool", "RenderedAreaThread", "VegetationSetup"],
+      "subPackages": ["core", "engine", "input", "moving", "scene", "standing"],
+      "description": "The rendering and scene-graph layer: loads 3D models/terrain tiles, manages pooled/instanced nodes for performance, handles vegetation, lighting, and per-frame scene updates.",
+      "javaLibraries": ["ardor3d", "jme2", "lwjgl"],
+      "webPort": {
+        "approach": "Original engine is built on Ardor3D/JME2 scene graphs rendering via LWJGL/OpenGL. Replace with three.js (WebGL) scene graph: Object3D hierarchy in place of jME/Ardor3D nodes, GLTF/custom loaders in place of ModelLoader.",
+        "targetFiles": ["jCRPG-engine/js/render_engine.js"]
+      }
+    },
+    {
+      "id": "audio",
+      "name": "Audio",
+      "javaPackage": "org.jcrpg.audio",
+      "keyClasses": ["AudioServer", "Channel"],
+      "subPackages": [],
+      "description": "Manages sound channels and playback of effects/music tied to world and UI events.",
+      "javaLibraries": ["lwjgl (OpenAL binding)"],
+      "webPort": {
+        "approach": "Original uses LWJGL's OpenAL bindings. Replace with the Web Audio API (AudioContext, GainNode per channel).",
+        "targetFiles": ["jCRPG-engine/js/audio_server.js"]
+      }
+    },
+    {
+      "id": "game",
+      "name": "Game Logic & Rules",
+      "javaPackage": "org.jcrpg.game",
+      "keyClasses": ["GameLogic", "GameStateContainer", "EncounterLogic", "CharacterCreationRules", "TurnActTurnState"],
+      "subPackages": ["element", "logic", "scenario", "trigger"],
+      "description": "Turn-based RPG rules engine: character creation, encounters/combat resolution, scenario scripting and world triggers, plus the top-level mutable game state container.",
+      "javaLibraries": [],
+      "webPort": {
+        "approach": "Pure logic, no native dependency; port directly to JS as a rules/state-machine module driven by the same static data tables.",
+        "targetFiles": ["jCRPG-engine/js/game_logic.js"]
+      }
+    },
+    {
+      "id": "objects",
+      "name": "Objects & Items",
+      "javaPackage": "org.jcrpg.world.object",
+      "keyClasses": ["Obj", "ObjInstance", "ObjList", "Weapon", "Armor", "Ammunition", "Equippable", "PotionAndKit", "RawMaterial"],
+      "subPackages": ["armor", "combat", "craft", "magical"],
+      "description": "Data model for equipment, weapons, armor, potions, crafting materials and magical items, plus inventory list handling.",
+      "javaLibraries": [],
+      "webPort": {
+        "approach": "Almost entirely data-driven; item definitions belong in static_core_data.json (or a dedicated items JSON) with thin JS wrapper classes for instance state (durability, enchantments, stack counts).",
+        "targetFiles": ["jCRPG-engine/js/items.js"]
+      }
+    },
+    {
+      "id": "ui",
+      "name": "UI System",
+      "javaPackage": "org.jcrpg.ui",
+      "keyClasses": ["HUD", "Window", "ButtonRow", "BasicText", "FontUtils", "KeyListener"],
+      "subPackages": ["map", "meter", "mouse", "text", "window"],
+      "description": "Custom in-3D-scene UI: HUD overlays, windows/dialogs, meters (health/mana bars), minimap, and text/font rendering, all drawn as part of the 3D scene rather than native OS widgets.",
+      "javaLibraries": ["ardor3d/jme2 (UI drawn via the 3D scene graph)"],
+      "webPort": {
+        "approach": "Replace in-scene 3D UI nodes with standard DOM/CSS overlays (or a canvas 2D layer) positioned above the WebGL canvas; keeps text crisp and simplifies input handling.",
+        "targetFiles": ["jCRPG-engine/js/ui_overlay.js"]
+      }
+    },
+    {
+      "id": "persistence",
+      "name": "Persistence (Save/Load)",
+      "javaPackage": "org.jcrpg.util.saveload",
+      "keyClasses": ["SaveLoadNewGame", "XMLReader", "HashUtil"],
+      "subPackages": [],
+      "description": "Serializes/deserializes full game state to disk (see save/ directory) so games can be resumed later.",
+      "javaLibraries": ["xstream (XML object serialization)"],
+      "webPort": {
+        "approach": "Original serializes Java objects to XML via XStream. Replace with JSON.stringify/parse of the JS game-state object, persisted to localStorage/IndexedDB.",
+        "targetFiles": ["jCRPG-engine/js/save_load.js"]
+      }
+    },
+    {
+      "id": "abs_change",
+      "name": "State Change Abstraction",
+      "javaPackage": "org.jcrpg.abs.change",
+      "keyClasses": ["(change event/listener abstractions)"],
+      "subPackages": [],
+      "description": "Cross-cutting abstraction layer used to propagate state-change events between world/game logic and the systems that react to them (UI, rendering, AI).",
+      "javaLibraries": [],
+      "webPort": {
+        "approach": "Model as a lightweight JS EventTarget/pub-sub bus shared across world_state, game_logic, render_engine and ui_overlay modules.",
+        "targetFiles": ["jCRPG-engine/js/change_events.js"]
+      }
+    }
+  ]
+}
