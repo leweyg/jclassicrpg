@@ -15,9 +15,42 @@
     "12. Scenario.initiateScenario() plays the scenario's intro Event exactly once (tracked via ScenarioState flag Scenario.INTRO_PLAYED) unless already played or in a test session."
   ],
   "notes": [
-    "The actual scenario content (worldparams.xml, ecology.xml, events.xml, scenario.properties) lives outside this repository, in a sibling 'scenario' directory that is not checked in here — so there is no single fixed 'first world' to read verbatim; the values below are the schema/defaults implied by the Java code.",
-    "Because generation is seeded (WorldParams.randomSeed / desc.seed, default 0), the web port can reproduce the same first world deterministically once a matching worldparams.xml + ecology.xml + PRNG algorithm are ported."
+    "UPDATE: the real scenario data files ARE present in this workspace, at media/ai/world/default_worldparams.xml and media/ai/ecology/default_ecology.xml (top-level 'media/' dir, sibling of jCRPG-engine/). See realDefaultWorldParams and realDefaultEcology below for their actual content.",
+    "Because generation is seeded (WorldParams.randomSeed / desc.seed), the web port can reproduce the same first world deterministically once a matching PRNG algorithm (org.jcrpg.util.HashUtil) is ported alongside these real params."
   ],
+  "realDefaultWorldParams": {
+    "sourceFile": "media/ai/world/default_worldparams.xml",
+    "name": "default", "author": "eburriel@yahoo.com", "version": "1.0",
+    "randomSeedInFile": 1,
+    "size": { "sizeX": 40, "sizeY": 2, "sizeZ": 40, "magnification": 40, "heightRatio": 1.0, "normalSize": 40 },
+    "climateBelts": [
+      { "id": "Arctic", "implementation": "org.jcrpg.world.climate.impl.arctic.Arctic", "sizeMuls": 1 },
+      { "id": "Continental", "implementation": "org.jcrpg.world.climate.impl.continental.Continental", "sizeMuls": 4 },
+      { "id": "Desert", "implementation": "org.jcrpg.world.climate.impl.desert.Desert", "sizeMuls": 2 },
+      { "id": "Tropical", "implementation": "org.jcrpg.world.climate.impl.tropical.Tropical", "sizeMuls": 2 }
+    ],
+    "geographies": [
+      { "id": "Mountain", "implementation": "org.jcrpg.world.place.geography.Moutain" },
+      { "id": "Plain", "implementation": "org.jcrpg.world.place.geography.Plain" },
+      { "id": "Forest", "implementation": "org.jcrpg.world.place.geography.Forest" },
+      { "id": "Ocean", "implementation": "org.jcrpg.world.place.water.Ocean" },
+      { "id": "Cave", "implementation": "org.jcrpg.world.place.geography.sub.Cave" },
+      { "id": "River", "implementation": "org.jcrpg.world.place.water.River" }
+    ],
+    "geology": {
+      "foundationId": "Ocean", "landDensity": 5, "landMass": 90,
+      "mainStream": [ { "geo": "Plain", "likeness": 4 }, { "geo": "Forest", "likeness": 8 }, { "geo": "Mountain", "likeness": 4 } ],
+      "additional": [ { "geo": "River", "likeness": 4 }, { "geo": "Cave", "likeness": 4 } ]
+    },
+    "crossCheck": "sizeX=40,sizeY=2,sizeZ=40,magnification=40 exactly matches the mined save's realSizeX/Y/Z=1600/80/1600 in world_seed0_sample.json (40*40=1600, 2*40=80) — confirms this is the actual file used to generate that world."
+  },
+  "realDefaultEcology": {
+    "sourceFile": "media/ai/ecology/default_ecology.xml",
+    "name": "default", "author": "eburriel@yahoo.com", "version": "1.0",
+    "bestiarySample": ["HUMANCOMMONERS", "BOARMANTRIBE", "GREEKMAZEHORDE", "KOBOLDHORDE", "GIANTCAVESPIDERS", "BROWNBEARFAMILY", "POLARBEARS", "GORILLAHORDE", "WOLFPACK", "WARTHOGS", "FOXFAMILY", "DEERFAMILY", "HERONS", "LIZARDS", "PLANTOIDHORDE"],
+    "populationRuleShape": "<population ref-animal-id=... ref-climat=Arctic|Continental|Desert|Tropical percentage-chance-of-appearance=0-100 min-in-group max-in-group max-in-world food-chain-position=HERBIVORE|PRIMARY_CARNIVORE|SECONDARY_CARNIVORE prefix-name=...>",
+    "crossCheck": "Observed settlement id prefixes in world_seed0_sample.json (populationHumanCommoners#, populationBoarmanTribe#) correspond directly to bestiary ids HUMANCOMMONERS/BOARMANTRIBE here — confirms this is the real ecology file used to generate that world."
+  },
   "defaultGameState": {
     "gameId": "game1",
     "engine": { "startHour": 12, "startDay": 0, "startYear": 0, "numberOfTurn": 0 },

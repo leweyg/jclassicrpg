@@ -1,22 +1,30 @@
 {
   "description": "Consolidated map of every rendering-related asset the original engine touches: shaders (custom and third-party), fonts, UI/portrait/icon images, and 3D model sources vs. their compiled cache form. Cross-references world_assets.json (model catalogue) and game_assets.json (fonts/audio/render settings).",
-  "keyFinding_externalMediaTree": {
-    "summary": "Most *visual* source assets (raw .obj/.mtl models, all textures, UI art, portraits, icons) are NOT in this repository. They live in a sibling '../media/' directory (same pattern as the missing '../scenario/jclassicrpg' scenario data found earlier) that was never checked in here.",
-    "evidence": [
-      "org.jcrpg.ui.UIBase registers resource locators pointing at ../media/ui/, ../media/portraits/, ../media/textures/icons/objects/ for UI art, character portraits, and inventory/item icons respectively.",
-      "org.jcrpg.apps.BinaryConverter (the tool that produced jCRPG-engine/cache/*) reads raw .obj files by recursively scanning modelsDir='../media/' and reads their textures from ../media/textures/models/<quality>/, ../media/textures/models/common/, ../media/textures/orbiters/, ../media/textures/flare/.",
-      "org.jcrpg.threed.engine.TrimeshGeometryBatch.shaderDirectory = '../media/shaders/' — an additional (apparently unused/legacy) external shader lookup path, separate from the in-repo custom shaders and the ones bundled in the ardor3d jars."
-    ],
-    "implication": "The web port cannot recover original textures, UI art, or portrait images from this repo alone; those must be re-created/re-sourced, or obtained from a copy of the original './media' tree if the user has one, or substituted with new web-native art."
+  "keyFinding_mediaTreeFound": {
+    "summary": "UPDATE: the source media tree IS present in this workspace, at top-level 'media/' (sibling of jCRPG-engine/, jCRPG-engine's own code expects it one level up as '../media/' when run from jCRPG-engine/). It contains real, plain-text/plain-image source assets for everything the engine renders: raw .obj/.mtl/.3ds models, all quality tiers of texture, UI art, character portraits, icons, shaders, audio, fonts, and — critically — the scenario's default_worldparams.xml and default_ecology.xml (see worlds.json, updated).",
+    "topLevelLayout": {
+      "media/models/<category>": "raw Wavefront .obj + .mtl source meshes (bush, external, fauna, grass, ground, humanoid, inside, item, monster, tree) — same categories as world_assets.json, 86 .obj files total",
+      "media/sides/": "top-level (not under models/) .3ds/.obj/.mtl source for space.sidetype Cube face geometry (maze walls/ground, cactus, etc.)",
+      "media/textures/models/{common,low,low_png,medium,high}": "per-quality-tier texture sets for the models above (154 files at medium/high/low)",
+      "media/textures/{cursor,flare,icons,orbiters,sky}": "cursor art, lens flare, item/state/entity icons (textures/icons/{objects,states,entities}), sun/moon orbiter textures, and a 6-side skybox (day/ and night/ variants)",
+      "media/ui/": "102 files — window frames, HUD, meters, dice, hourglass, plus subfolders busy/, windowicons/, popups/, inventory/, mapicons/, mainmenu/, topbuttons/, characters/",
+      "media/portraits/{human,elf,dwarf,catkind}/{male,female}": "character portrait art (112 human, 26 dwarf, 15 elf, 4 catkind files) — confirmed to directly match starter_party.json pictureId values (e.g. ELMO's 'francesco_hayez1.png' exists under portraits/human/male/, ELMARA/PALMANO's portraits under portraits/elf/)",
+      "media/audio/{music,sound}": "535 audio files",
+      "media/font/": "conc_font/font/vinquefont source art backing the in-repo vinque.fnt+png",
+      "media/shaders/": "bbGrass/fader/grassMove vertex-billboard grass shaders plus a shaders/xray/ subfolder, distinct from the custom DOF/shadow/normalmap shaders already cataloged below under jCRPG-engine/src/main/resources",
+      "media/ai/world/default_worldparams.xml": "the REAL world-generation parameters (see worlds.json)",
+      "media/ai/ecology/default_ecology.xml": "the REAL bestiary/population placement rules (see worlds.json)",
+      "media/configs/config-*.properties": "quality presets (lowest-debug/lowest/low/normal/high/highest) equivalent to jCRPG-engine/config.properties"
+    },
+    "implication": "Real textures, UI art, portraits, and now the actual scenario data files are all available in this repo. The web port can use these directly (after format conversion where needed, e.g. .dds -> .png/.webp) instead of authoring placeholder art."
   },
   "modelCacheFormatCorrection": {
-    "note": "Earlier cataloguing (world_assets.json) assumed jCRPG-engine/cache/*.obj were plain-text Wavefront OBJ. Verified by inspection they are NOT: each file is gzip-compressed, and decompresses to a binary Ardor3D 'BinaryExporter' scene-graph dump (serialized Spatial/TextureState/ColorRGBA/etc. — visible strings like 'com.ardor3d.image.Texture2D', 'com.ardor3d.math.ColorRGBA').",
+    "note": "jCRPG-engine/cache/*.obj are NOT plain-text Wavefront OBJ despite the extension. Verified by inspection: each cache file is gzip-compressed and decompresses to a binary Ardor3D 'BinaryExporter' scene-graph dump (serialized Spatial/TextureState/ColorRGBA/etc.). The REAL plain-text .obj sources live in media/models/** (e.g. media/models/bush/Bush_01.obj: 90 vertices, 144 uvs, 36 faces, confirmed via 'file' and grep) and are what the cache was generated from.",
     "producedBy": "org.jcrpg.apps.BinaryConverter: ObjImporter loads a real .obj from ../media/**, builds an Ardor3D Spatial, then BinaryExporter.save() serializes the whole scenegraph (geometry + material/texture state) which is written to cache/<TEXDIR>/<flattened-path>.obj and is gzip-compressed on disk.",
-    "namingConvention": "Cache filename = the source file's path relative to '../media/' with '/' replaced by '_', extension kept as .obj. E.g. cache 'models_external_House_01_wall.obj' <- source '../media/models/external/House_01_wall.obj'; cache 'sides_maze_wall_thick.obj' <- source '../media/sides/maze_wall_thick.obj' (top-level 'sides' tree, not under 'models').",
+    "namingConvention": "Cache filename = the source file's path relative to '../media/' with '/' replaced by '_', extension kept as .obj. E.g. cache 'models_external_House_01_wall.obj' <- source 'media/models/external/House_01_wall.obj'; cache 'sides_maze_wall_thick.obj' <- source 'media/sides/maze_wall_thick.obj' (top-level 'sides' tree, not under 'models').",
     "webPortImplication": [
-      "Real per-vertex mesh data (vertex/face/normal/uv counts, material assignments) cannot be read directly as text from these cache files.",
-      "Options to recover real geometry: (a) locate the original '../media' source tree with raw .obj/.mtl files (preferred — trivial to parse as plain Wavefront OBJ), (b) write a small Ardor3D BinaryExporter-format reader (gzip -> custom binary chunk parser) to pull geometry back out of cache/*, or (c) treat these as opaque and author fresh placeholder/replacement meshes for the web port.",
-      "Given (a) is unavailable in this repo and (b) is a non-trivial reverse-engineering effort, the pragmatic default for early web-port milestones is (c): simple placeholder primitives (boxes for buildings, billboards/cones for trees, etc.) keyed by the same category names in world_assets.json, upgraded later if the real media tree is found."
+      "Use media/models/**/*.obj (+ matching .mtl) directly as the real mesh source for the web port — no need to reverse-engineer the Ardor3D binary cache format at all.",
+      "Load via three.js OBJLoader/MTLLoader (or pre-convert to glTF offline for smaller/faster-loading files); texture references in the .mtl files should be repointed at media/textures/models/<quality>/."
     ]
   },
   "shaders": {
@@ -49,6 +57,12 @@
           "description": "A full screen-space ambient occlusion pipeline (pre-render depth pass, SSAO pass + a 'cSSAO' cone/color variant, separable X/Y blur, final texturing composite). Present in the resource tree but not confirmed wired into an active Java render pass in the packages searched — likely an experimental/unused feature."
         }
       ]
+    },
+    "sourceInMedia": {
+      "basePath": "media/shaders/",
+      "files": ["bbGrass.vert", "bbGrass.frag", "bbGrass2.vp", "bbGrass2.fp", "bbGrass3.vp", "fader.vp", "fader.fp", "grassMove.vp", "grassMove.fp", "grassMove2.fp"],
+      "subfolder": "media/shaders/xray/",
+      "description": "Billboard grass movement/wind-sway shaders (bbGrass*/grassMove*) and a screen fader, plus an xray/ variant set. Separate from the compiled custom shaders bundled into jCRPG-engine/src/main/resources above (those look like build output of these or a related source tree; both are now available for direct comparison/reuse)."
     },
     "bundledInLibraries": {
       "description": "Real GLSL shader source text bundled directly inside the third-party jars in jCRPG-engine/lib/ (plain resource files inside the jar's zip structure — extractable with a plain unzip, no decompilation needed).",
@@ -112,6 +126,7 @@
     "customInRepo": {
       "id": "vinque",
       "files": ["jCRPG-engine/src/main/resources/org/jcrpg/ui/vinque.fnt", "jCRPG-engine/src/main/resources/org/jcrpg/ui/vinque_0.png"],
+      "sourceInMedia": ["media/font/vinquefont.tga", "media/font/font.png", "media/font/font.tga", "media/font/conc_font.png", "media/font/new32.bmp", "media/font/free/"],
       "format": "BMFont (Angel Code) — .fnt descriptor + glyph atlas PNG",
       "javaOwner": "org.jcrpg.ui.FontUtils / org.jcrpg.ui.BasicText via threed.BMFontLoader",
       "usage": "The game's actual in-scene UI/HUD text font."
@@ -129,16 +144,16 @@
       "files": ["com/jme/app/defaultfont.tga"],
       "usage": "jME2's built-in default font texture; leftover from the older render path, not used by the current UI (which uses vinque)."
     },
-    "webPort": "Convert vinque.fnt/png (or re-render at higher res) to a standard BMFont-compatible web renderer, or use it as an MSDF font source; no external art needed here since it's already in-repo."
+    "webPort": "Convert vinque.fnt/png (or re-render at higher res from media/font/ source) to a standard BMFont-compatible web renderer, or use it as an MSDF font source."
   },
   "uiAndPortraitImages": {
-    "status": "NOT present in this repository",
+    "status": "Present in this workspace at top-level media/ (see keyFinding_mediaTreeFound above)",
     "javaOwner": "org.jcrpg.ui.UIBase",
     "resourceLocatorPaths": {
-      "RES_TYPE_UI": "../media/ui/ (.dds/.png/.jpg)",
-      "RES_TYPE_CHARS (portraits)": "../media/portraits/ (.dds/.png/.jpg) — matches pictureId values seen in starter_party.json e.g. 'francesco_hayez1.png'",
-      "RES_TYPE_GAME_2D (item/inventory icons)": "../media/textures/icons/objects/ (.dds/.png/.jpg) — matches getIconFilePath() calls in UIImageCache usages across ui/window/interaction/*"
+      "RES_TYPE_UI": "media/ui/ (102 files: .dds/.png, window frames, HUD, meters, dice, hourglass, + busy/windowicons/popups/inventory/mapicons/mainmenu/topbuttons/characters subfolders)",
+      "RES_TYPE_CHARS (portraits)": "media/portraits/{human,elf,dwarf,catkind}/{male,female}/ — confirmed to match starter_party.json pictureId values (e.g. ELMO's 'francesco_hayez1.png' found at portraits/human/male/)",
+      "RES_TYPE_GAME_2D (item/inventory icons)": "media/textures/icons/{objects,states,entities}/ — matches getIconFilePath() calls in UIImageCache usages across ui/window/interaction/*"
     },
-    "webPort": "These need to be re-sourced (original '../media' tree, if the user has an archived copy) or re-created for the web port; UIOverlay (jCRPG-engine/js/ui_overlay.js) should key its image lookups the same way (by RES_TYPE + relative filename) so a future asset pack can drop straight in."
+    "webPort": "UIOverlay (jCRPG-engine/js/ui_overlay.js) should key its image lookups the same way (by RES_TYPE + relative filename) so these media/ assets (after .dds -> .png/.webp conversion where needed) can be dropped straight in."
   }
 }

@@ -6,7 +6,7 @@
  * port logic lives in game_static_core.js and its sibling modules.
  */
 
-import { GameStaticCore, worldsRef, worldAssetsRef, charactersRef, gameAssetsRef, renderingAssetsRef } from "./game_static_core.js";
+import { GameStaticCore, worldsRef, worldAssetsRef, charactersRef, gameAssetsRef, renderingAssetsRef, mediaAssetsRef } from "./game_static_core.js";
 
 function renderSystemCard(system) {
 	const card = document.createElement("section");
@@ -132,12 +132,13 @@ function appendKeyValues(parent, label, obj) {
 }
 
 async function renderFirstWorldSummary(container) {
-	const [worlds, assets, characters, gameAssets, rendering] = await Promise.all([
+	const [worlds, assets, characters, gameAssets, rendering, media] = await Promise.all([
 		worldsRef.load(),
 		worldAssetsRef.load(),
 		charactersRef.load(),
 		gameAssetsRef.load(),
 		renderingAssetsRef.load(),
+		mediaAssetsRef.load(),
 	]);
 
 	const boot = makeSection("First World — Boot Sequence");
@@ -194,7 +195,7 @@ async function renderFirstWorldSummary(container) {
 	const renderingSection = makeSection("Rendering & Asset Pipeline");
 	const mediaNote = document.createElement("p");
 	mediaNote.className = "web-approach";
-	mediaNote.textContent = `Key finding: ${rendering.keyFinding_externalMediaTree.summary}`;
+	mediaNote.textContent = `Key finding: ${rendering.keyFinding_mediaTreeFound.summary}`;
 	renderingSection.appendChild(mediaNote);
 	const cacheNote = document.createElement("p");
 	cacheNote.className = "web-approach";
@@ -220,6 +221,18 @@ async function renderFirstWorldSummary(container) {
 	uiNote.textContent = `UI/portrait/icon images: ${rendering.uiAndPortraitImages.status}.`;
 	renderingSection.appendChild(uiNote);
 	container.appendChild(renderingSection);
+
+	const mediaSection = makeSection("media/ Asset Manifest (Real Source Tree)");
+	const mediaDesc = document.createElement("p");
+	mediaDesc.className = "description";
+	mediaDesc.textContent = media.description;
+	mediaSection.appendChild(mediaDesc);
+	appendKeyValues(mediaSection, "Model source counts (media/models/<category>)", media.categories.models.counts);
+	appendKeyValues(mediaSection, "Portrait counts (media/portraits/<race>)", media.categories.portraits.counts);
+	appendKeyValues(mediaSection, "Audio counts (media/audio/<type>)", media.categories.audio.counts);
+	appendKeyValues(mediaSection, "UI subfolder counts (media/ui/<subfolder>)", media.categories.ui.subfolders);
+	appendChips(mediaSection, "Scenario data files (real worldparams/ecology)", media.categories.scenarioData.files);
+	container.appendChild(mediaSection);
 }
 
 async function main() {

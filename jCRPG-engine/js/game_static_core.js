@@ -21,6 +21,7 @@ export const WORLD_ASSETS_DATA_URL = "jCRPG-engine/json/world_assets.json";
 export const CHARACTERS_DATA_URL = "jCRPG-engine/json/characters.json";
 export const GAME_ASSETS_DATA_URL = "jCRPG-engine/json/game_assets.json";
 export const RENDERING_ASSETS_DATA_URL = "jCRPG-engine/json/rendering_assets.json";
+export const MEDIA_ASSETS_DATA_URL = "jCRPG-engine/json/media_assets.json";
 export const STARTER_PARTY_DATA_URL = "jCRPG-engine/json/starter_party.json";
 export const WORLD_SEED0_SAMPLE_DATA_URL = "jCRPG-engine/json/world_seed0_sample.json";
 
@@ -79,6 +80,7 @@ export const worldAssetsRef = new StaticJsonRef(WORLD_ASSETS_DATA_URL);
 export const charactersRef = new StaticJsonRef(CHARACTERS_DATA_URL);
 export const gameAssetsRef = new StaticJsonRef(GAME_ASSETS_DATA_URL);
 export const renderingAssetsRef = new StaticJsonRef(RENDERING_ASSETS_DATA_URL);
+export const mediaAssetsRef = new StaticJsonRef(MEDIA_ASSETS_DATA_URL);
 export const starterPartyRef = new StaticJsonRef(STARTER_PARTY_DATA_URL);
 export const worldSeed0SampleRef = new StaticJsonRef(WORLD_SEED0_SAMPLE_DATA_URL);
 

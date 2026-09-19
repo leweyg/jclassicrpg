@@ -1,0 +1,96 @@
+{
+  "description": "Canonical inventory of the top-level media/ directory (sibling of jCRPG-engine/) — the real, plain-text/plain-image source asset tree the engine's code expects at '../media/' relative to jCRPG-engine. This supersedes the 'not present' assumptions in earlier passes of rendering_assets.json/worlds.json/world_seed0_sample.json; those files have been corrected to reference this one.",
+  "root": "media/",
+  "javaExpectedPath": "../media/ (relative to jCRPG-engine working directory, per org.jcrpg.apps.BinaryConverter, org.jcrpg.ui.UIBase resource locators, org.jcrpg.threed.engine.TrimeshGeometryBatch.shaderDirectory)",
+  "categories": {
+    "models": {
+      "path": "media/models/<category>/*.obj (+ .mtl)",
+      "counts": { "bush": 3, "external": 21, "fauna": 12, "ground": 21, "humanoid": 4, "inside": 2, "item": 6, "monster": 5, "tree": 12, "grass": 0 },
+      "note": "grass/ has no .obj, only a raw 3ds source (grass_plane1.3ds) — grass is otherwise handled via billboard shaders, not per-instance meshes.",
+      "verifiedSample": { "file": "media/models/bush/Bush_01.obj", "format": "ASCII Wavefront OBJ (Blender3D v245 export)", "vertices": 90, "uvCoords": 144, "faces": 36 },
+      "crossReference": "jCRPG-engine/json/world_assets.json (category catalogue), jCRPG-engine/json/rendering_assets.json (cache-format correction)"
+    },
+    "sides": {
+      "path": "media/sides/ (top-level, not under models/)",
+      "fileCount": 43,
+      "formats": [".3ds", ".obj", ".mtl"],
+      "note": "Source for org.jcrpg.space.sidetype Cube-face geometry (maze walls/ground, cactus, doors, roofs, generic hill/ground pieces)."
+    },
+    "texturesModels": {
+      "path": "media/textures/models/{common,low,low_png,medium,high}/",
+      "counts": { "common": 8, "low": 154, "low_png": 149, "medium": 154, "high": 154 },
+      "note": "Per-quality-tier texture sets matching the config.properties TEXTURE_QUALITY tiers; 'common' likely holds shared/utility textures used across all tiers."
+    },
+    "texturesOther": {
+      "cursor": "media/textures/cursor/",
+      "flare": "media/textures/flare/ (lens flare sprites, paired with flaresmall.jpg at media root)",
+      "orbiters": "media/textures/orbiters/ (sun/moon textures for org.jcrpg.world.place.orbiter)",
+      "icons": {
+        "path": "media/textures/icons/{objects,states,entities}/",
+        "counts": { "objects": 18, "states": 6, "entities": 16 },
+        "javaOwner": "UIImageCache.getImage(...getIconFilePath()) calls across ui/window/interaction/* (inventory/item icons, status effect icons, entity/creature icons)"
+      },
+      "sky": {
+        "path": "media/textures/sky/",
+        "files": ["bottom.jpg", "east.jpg", "north.jpg", "south.jpg", "top.jpg", "sky.jpg", "day/sky.jpg", "day/top.jpg", "day/top_new.jpg", "day/top_old.jpg", "night/sky.jpg", "night/top.jpg"],
+        "note": "6-sided skybox with separate day/ and night/ variants for top+sky faces (side faces presumably shared/static)."
+      }
+    },
+    "shaders": {
+      "path": "media/shaders/",
+      "files": ["bbGrass.vert", "bbGrass.frag", "bbGrass2.vp", "bbGrass2.fp", "bbGrass3.vp", "fader.vp", "fader.fp", "grassMove.vp", "grassMove.fp", "grassMove2.fp"],
+      "subfolder": "media/shaders/xray/",
+      "crossReference": "jCRPG-engine/json/rendering_assets.json (full shader catalogue including in-repo compiled shaders and third-party jar-bundled shaders)"
+    },
+    "ui": {
+      "path": "media/ui/",
+      "topLevelFileCount": 102,
+      "subfolders": { "busy": 7, "characters": 3, "inventory": 1, "mainmenu": 25, "mapicons": 5, "popups": 3, "topbuttons": 8, "windowicons": 1 },
+      "notableFiles": ["windowframe.png/.dds", "hud.png/hud1*.png", "meter.png", "bar_meter.png", "dice2.png", "hourglass*.png", "portraitFrame.png", "scroll.png", "checkBoxBase.png/checkBoxSelected.png"],
+      "javaOwner": "org.jcrpg.ui.UIBase / Window / HUD / meter package"
+    },
+    "portraits": {
+      "path": "media/portraits/{human,elf,dwarf,catkind}/{male,female}/",
+      "counts": { "human": 112, "dwarf": 26, "elf": 15, "catkind": 4 },
+      "verifiedAgainstStarterParty": [
+        { "file": "portraits/human/male/francesco_hayez1.png", "usedBy": "ELMO (starter_party.json)" },
+        { "file": "portraits/human/female/falero_luis_ricardo1.png", "usedBy": "also present under portraits/elf/female/ — ELMARA (starter_party.json) uses the elf/female copy" },
+        { "file": "portraits/elf/male/male_Kidalethil.png", "usedBy": "PALMANO (starter_party.json)" }
+      ],
+      "note": "Each portrait has a matching .license file (per-image attribution/license, e.g. francesco_hayez1.license)."
+    },
+    "audio": {
+      "path": "media/audio/{music,sound}/",
+      "counts": { "music": 26, "sound": 508 },
+      "crossReference": "jCRPG-engine/json/game_assets.json (AudioServer/Channel settings)"
+    },
+    "fonts": {
+      "path": "media/font/",
+      "files": ["conc_font.png", "font.png", "font.tga", "vinquefont.tga", "new32.bmp"],
+      "subfolder": "media/font/free/",
+      "note": "Source art backing the compiled jCRPG-engine/src/main/resources/org/jcrpg/ui/vinque.fnt + vinque_0.png used in-game."
+    },
+    "scenarioData": {
+      "path": "media/ai/{world,ecology}/",
+      "files": ["media/ai/world/default_worldparams.xml", "media/ai/ecology/default_ecology.xml"],
+      "significance": "These are the actual scenario data files org.jcrpg.game.scenario.Scenario.load() reads (previously assumed missing from this repo). See jCRPG-engine/json/worlds.json realDefaultWorldParams/realDefaultEcology for parsed content, cross-checked against the real generated world in world_seed0_sample.json."
+    },
+    "configs": {
+      "path": "media/configs/",
+      "files": ["config-lowest-debug.properties", "config-lowest.properties", "config-low.properties", "config-normal.properties", "config-high.properties", "config-highest.properties"],
+      "note": "Quality presets equivalent in shape to jCRPG-engine/config.properties (see game_assets.json renderSettings)."
+    },
+    "lang": {
+      "path": "media/lang/language.properties",
+      "note": "Localization strings, loaded via org.jcrpg.util.Language."
+    },
+    "misc": {
+      "files": ["media/flaresmall.jpg", "media/floppy.jpg", "media/.project"],
+      "note": "flaresmall.jpg/floppy.jpg are loose top-level images (lens flare thumbnail, save-icon 'floppy disk' art); .project is an Eclipse project file for the media resource tree itself."
+    }
+  },
+  "webPort": {
+    "approach": "Use media/ as the single source of truth for all visual/audio asset conversion: .obj/.mtl -> three.js OBJLoader/MTLLoader or pre-baked glTF; .dds -> .png/.webp; sky/ -> a CubeTextureLoader skybox (day/night variants swapped by time-of-day); portraits/icons/ui -> served as-is (already .png/.jpg); audio/ -> served as-is or transcoded to a web-friendly codec.",
+    "targetFiles": ["jCRPG-engine/js/render_engine.js", "jCRPG-engine/js/ui_overlay.js", "jCRPG-engine/js/audio_server.js"]
+  }
+}

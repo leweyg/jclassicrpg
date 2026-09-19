@@ -71,12 +71,12 @@
     "defaultValue": 10
   },
   "recommendation": {
-    "runningOriginalEngine": "Not attempted: no JRE or Maven is installed in this environment, the project targets Java 1.5 with 15-year-old ardor3d/lwjgl/jinput native binaries (x86, not arm64/Apple Silicon compatible), and the actual scenario data files (worldparams.xml/ecology.xml) referenced by ScenarioLoader are not present in this repository anyway. Standing the original renderer back up would be a large yak-shave for uncertain payoff.",
-    "cachingFinding": "cache/{low,medium,high,low_png} only ever store converted 3D model geometry (see world_assets.json) — there is no cached *generated world* data there. The only real generated-world snapshot in this repo is this save file (gamestate.xml inside save/game1_20100426-004720.124/savegame.zip), which is why it was mined here instead.",
+    "runningOriginalEngine": "Still not attempted: no JRE or Maven is installed in this environment, and the project targets Java 1.5 with 15-year-old ardor3d/lwjgl/jinput native binaries (x86, not arm64/Apple Silicon compatible). UPDATE: the scenario data files (worldparams.xml/ecology.xml) previously believed missing were actually found at media/ai/world/default_worldparams.xml and media/ai/ecology/default_ecology.xml (see worlds.json realDefaultWorldParams/realDefaultEcology) — so the remaining blocker to running the original engine is purely toolchain/native-library availability, not missing data.",
+    "cachingFinding": "cache/{low,medium,high,low_png} only ever store converted 3D model geometry (see world_assets.json/rendering_assets.json) — there is no cached *generated world* data there. The only real generated-world snapshot in this repo is this save file (gamestate.xml inside save/game1_20100426-004720.124/savegame.zip), which is why it was mined here instead.",
     "suggestedNextSteps": [
       "Treat this file's numbers as authentic reference/validation data for a from-scratch JS world generator, not something to load verbatim (the full XML is 26MB of XStream-specific serialization and not worth parsing in the browser).",
-      "Build the initial UI selection flow (scenario picker stub + character creation using characters.json races/professions/attributes) now — it does not depend on world-gen fidelity.",
-      "Port world generation conceptually (WorldParams-driven terrain/road/settlement placement) rather than transliterating the Java 1:1, using this file's real magnification/size/shrine-count/district-count as a sanity check for the JS port's output."
+      "Now that media/ (real .obj models, textures, UI art, portraits, shaders, and the real worldparams/ecology XML) has been located, prioritize wiring real assets into play.html/render_engine.js over building placeholder art.",
+      "Port world generation conceptually (WorldParams-driven terrain/road/settlement placement) rather than transliterating the Java 1:1, using this file's real magnification/size/shrine-count/district-count and the now-confirmed real worldparams.xml/ecology.xml as the source of truth for the JS port's output."
     ]
   }
 }
