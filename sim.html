@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jClassicRPG — Sim (headless game state)</title>
+<style>
+	:root {
+		color-scheme: dark;
+		--bg: #14161a;
+		--panel: #1e2127;
+		--border: #2f333c;
+		--text: #e6e6e6;
+		--muted: #9aa0aa;
+		--accent: #6fb7ff;
+	}
+	body {
+		margin: 0;
+		font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+		background: var(--bg);
+		color: var(--text);
+	}
+	header {
+		padding: 2rem 1.5rem 1rem;
+		max-width: 960px;
+		margin: 0 auto;
+	}
+	header h1 {
+		margin: 0 0 0.25rem;
+		font-size: 1.8rem;
+	}
+	header p {
+		color: var(--muted);
+		line-height: 1.5;
+	}
+	nav a {
+		display: inline-block;
+		margin-top: 0.5rem;
+		margin-right: 0.5rem;
+		color: var(--accent);
+		text-decoration: none;
+		border: 1px solid var(--accent);
+		padding: 0.4rem 0.9rem;
+		border-radius: 6px;
+	}
+	nav a:hover {
+		background: var(--accent);
+		color: #10131a;
+	}
+	#load-status {
+		max-width: 960px;
+		margin: 0 auto;
+		padding: 0 1.5rem;
+		color: var(--muted);
+		font-size: 0.9rem;
+	}
+	main {
+		max-width: 960px;
+		margin: 0 auto;
+		padding: 1rem 1.5rem 3rem;
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: 1fr 1fr;
+	}
+	.panel {
+		background: var(--panel);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 1.1rem 1.3rem;
+	}
+	.panel h2 {
+		margin-top: 0;
+		font-size: 1rem;
+		color: var(--accent);
+	}
+	.controls {
+		grid-column: 1 / -1;
+		display: flex;
+		gap: 0.6rem;
+	}
+	button {
+		background: #262b33;
+		color: var(--text);
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		padding: 0.5rem 1rem;
+		cursor: pointer;
+		font-size: 0.9rem;
+	}
+	button:hover {
+		border-color: var(--accent);
+	}
+	#state-dump {
+		white-space: pre-wrap;
+		word-break: break-word;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.8rem;
+		max-height: 60vh;
+		overflow: auto;
+		margin: 0;
+	}
+	#log {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.8rem;
+		max-height: 60vh;
+		overflow: auto;
+	}
+	#log div {
+		border-bottom: 1px solid var(--border);
+		padding: 0.2rem 0;
+		color: var(--muted);
+	}
+</style>
+</head>
+<body>
+<header>
+	<h1>jClassicRPG — Sim (headless game state)</h1>
+	<p>
+		Runs the shared, rendering-agnostic <code>GameState</code> (jCRPG-engine/js/game_state.js) offline via
+		<code>GameSim</code> (jCRPG-engine/js/game_sim.js) — no three.js, no DOM scene, just the core state and a mock
+		turn clock. This same state module is meant to be reused by play.html once rendering is wired up.
+	</p>
+	<nav>
+		<a href="index.html">Architecture Summary</a>
+		<a href="play.html">Play (stub)</a>
+	</nav>
+</header>
+<div id="load-status">Loading sim…</div>
+<main>
+	<div class="controls">
+		<button id="step-btn">Step Turn</button>
+		<button id="run-btn">Auto Run (1/sec)</button>
+	</div>
+	<section class="panel">
+		<h2>Game State</h2>
+		<pre id="state-dump"></pre>
+	</section>
+	<section class="panel">
+		<h2>Log</h2>
+		<div id="log"></div>
+	</section>
+</main>
+<script type="module" src="jCRPG-engine/js/sim_page.js"></script>
+</body>
+</html>
