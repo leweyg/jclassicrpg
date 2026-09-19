@@ -1,0 +1,46 @@
+# Blender3D MTL File: bookcase.blend
+# Material Count: 4
+newmtl Material
+Ns 96.078431
+Ka 0.500000 0.500000 0.500000
+Kd 0.264608 0.448429 0.073020
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd wooden1.jpg
+
+
+newmtl Material.002
+Ns 96.078431
+Ka 0.500000 0.500000 0.500000
+Kd 0.357398 0.500000 0.500000
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd wooden1.jpg
+
+
+newmtl Material.001_wooden1.jpg
+Ns 180.392157
+Ka 0.500000 0.500000 0.500000
+Kd 0.439947 0.450575 0.280530
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd wooden1.jpg
+
+
+newmtl Material.001
+Ns 180.392157
+Ka 0.500000 0.500000 0.500000
+Kd 0.439947 0.450575 0.280530
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd wooden1.jpg
+
+

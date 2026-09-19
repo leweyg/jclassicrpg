@@ -1,0 +1,13 @@
+# Blender3D MTL File: shop_pos.blend
+# Material Count: 1
+newmtl Cube.006_trade_cente_trade_center.jpg
+Ns 0.000000
+Ka 0.500000 0.500000 0.500000
+Kd 0.640000 0.640000 0.640000
+Ks 0.400000 0.400000 0.400000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd trade_center.jpg
+
+
