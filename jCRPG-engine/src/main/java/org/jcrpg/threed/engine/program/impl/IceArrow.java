@@ -1,0 +1,94 @@
+/*
+ *  This file is part of JavaCRPG.
+ *  Copyright (C) 2008 Illes Pal Zoltan
+ *
+ *  JavaCRPG is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  JavaCRPG is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package org.jcrpg.threed.engine.program.impl;
+
+import org.jcrpg.threed.J3DCore;
+import org.jcrpg.threed.engine.program.EffectNode;
+
+import com.ardor3d.extension.effect.particle.ParticleFactory;
+import com.ardor3d.extension.effect.particle.ParticleSystem;
+import com.ardor3d.math.ColorRGBA;
+import com.ardor3d.math.Matrix3;
+import com.ardor3d.math.Vector3;
+import com.ardor3d.renderer.state.BlendState;
+import com.ardor3d.renderer.state.TextureState;
+import com.ardor3d.renderer.state.ZBufferState;
+
+public class IceArrow extends EffectNode {
+
+	private ParticleSystem pMesh;
+	//private Box debugBox;
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public IceArrow() {
+		speed = 2;
+		BlendState as1 = J3DCore.getInstance().modelLoader.alphaStateParticleEffectBase;
+		ZBufferState zstate = J3DCore.getInstance().modelLoader.zBufferStateOff;
+		TextureState ts = J3DCore.getInstance().modelLoader
+				.loadTextureStates(new String[] { "flaresmall.jpg" })[0];
+		
+		pMesh = cacheMesh.get(this.getClass());
+		
+		if (pMesh==null)
+		{
+
+			pMesh = ParticleFactory.buildParticles("particles", 300);
+			pMesh.setEmissionDirection(new Vector3(0, 1, 0));
+			pMesh.setInitialVelocity(.009f);
+			pMesh.setStartSize(0.25f);
+			pMesh.setEndSize(0.15f);
+			pMesh.setMinimumLifeTime(1200f);
+			pMesh.setMaximumLifeTime(1400f);
+			pMesh.setStartColor(new ColorRGBA(0.8f, 0.8f, 1.f, 1));
+			pMesh.setEndColor(new ColorRGBA(0.6f, 0.5f, 0.7f, 0));
+			pMesh.setMaximumAngle(360f * Math.PI/180d);
+			pMesh.getParticleController().setControlFlow(false);
+			pMesh.warmUp(60);
+	
+			pMesh.setRenderState(as1);
+			pMesh.setRenderState(ts);
+			pMesh.setRenderState(zstate);
+	
+			cacheMesh.put(this.getClass(), pMesh);
+		} else
+		{
+			pMesh.setOriginOffset(new Vector3(0,0,0));
+		}
+
+		this.attachChild(pMesh);
+	}
+
+	@Override
+	public void setPosition(Vector3 newPos, Matrix3 newAngle) {
+		currentPos = newPos;
+		if (pMesh!=null)
+			pMesh.setOriginOffset(currentPos);
+		super.setPosition(newPos,newAngle);
+	}
+	
+	@Override
+	public void clearUp()
+	{
+		pMesh.removeFromParent();
+	}
+
+}
