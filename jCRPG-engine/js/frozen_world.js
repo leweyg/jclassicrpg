@@ -38,6 +38,7 @@ export class FrozenWorld {
 		this.spawn = data.spawn;
 		this.layers = Object.fromEntries(data.layers.map(layer => [layer.kind, { ...layer, cells: Uint8Array.from(layer.cells) }]));
 		this.landmarks = data.landmarks;
+		this.additionalMapMarkers = data.additionalMapMarkers ?? [];
 		this.climates = new Uint8Array(1600);
 		const climateTypes = ['Continental', 'Arctic', 'Desert', 'Tropical'];
 		for (const belt of data.climates) for (let i = 0; i < 1600; i++) {

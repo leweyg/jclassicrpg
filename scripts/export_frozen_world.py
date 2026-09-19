@@ -87,6 +87,23 @@ def export():
             if record['sizeX'] > 0 and record['sizeZ'] > 0 and key not in seen:
                 seen.add(key)
                 landmarks.append(record)
+    # Map-only records: keep these visible without pretending their gameplay is ported.
+    additional_markers = []
+    for kind, marker_kind in [('DungeonDistrict', 'dungeon'), ('PavedStorageAreaGround', 'storage')]:
+        seen = set()
+        for e in records(kind):
+            x, z = number(e, 'origoX'), number(e, 'origoZ')
+            sx, sz = number(e, 'sizeX'), number(e, 'sizeZ')
+            key = (e.findtext('id'), x, z)
+            if sx <= 0 or sz <= 0 or key in seen:
+                continue
+            seen.add(key)
+            additional_markers.append({
+                'id': f'{kind}:{key[0]}:{x}:{z}', 'kind': marker_kind,
+                'name': e.findtext('foundationName') or ('Storage area' if marker_kind == 'storage' else key[0]),
+                'x': x + sx / 2, 'y': number(e, 'origoY'), 'z': z + sz / 2,
+                'sizeX': sx, 'sizeZ': sz, 'implemented': False,
+            })
     climates = []
     for entry in world.findall('climate/belts/entry'):
         e = resolve(entry[1])
@@ -100,6 +117,7 @@ def export():
         'groundLevel': number(world, 'worldGroundLevel'), 'cellSize': 40,
         'spawn': {axis.lower(): number(pos, 'viewPosition' + axis) for axis in 'XYZ'},
         'layers': layers, 'climates': climates, 'landmarks': landmarks,
+        'additionalMapMarkers': additional_markers,
     }
     OUTPUT.write_text(json.dumps(data, separators=(',', ':')) + '\n')
     print(f'Exported {len(layers)} layers, {len(climates)} climate belts, {len(landmarks)} landmarks; {OUTPUT.stat().st_size:,} bytes')

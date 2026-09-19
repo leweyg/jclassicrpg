@@ -8,9 +8,9 @@ Homepage: https://leweyg.github.io/jclassicrpg/
 # Web Port TODO List
 
 - DONE: Basic systems, sim and playable world.
-- TODO: Cube map sky has flipped X axis (Y seems fine)
-- TODO: Map when clicked needs to expand show in full mode (defaults to mini-map of surrounding area, double the radius of the visible area)
-- TODO: Map needs to show mission/puzzle areas, shrines, any other key items
+- [x] Correct the cube-map sky’s X reflection while preserving Y.
+- [x] Click the nearby map to expand it; its 116-unit radius is twice the visible radius.
+- [x] Show saved shrines, settlements, dungeon/maze districts, cave regions and storage, including unimplemented locations. Mission/puzzle marker types are supported, but this save contains no such records.
 
 
 ## Frozen-world exploration
@@ -40,9 +40,23 @@ of 32 × 32 units are resident; crossing a boundary overwrites departing slots.
 The renderer reuses terrain/instance buffers and shares a fixed set of models,
 materials and textures. There are no per-area downloads or growing visited-area
 caches. The movement/look path uses scalar math and reusable scratch objects;
-chunk generation runs only on transitions, and HUD updates run at 4 Hz. Three.js
-may still allocate internally. Fog ends before the edge of the resident area.
+chunk generation runs only on transitions. Rendering wakes for movement, looking,
+teleporting and resize events. Frames repeat only while the movement stick is held
+off-center; at rest there is no animation loop or repeating HUD timer. Opening the
+map, losing focus or hiding the page cancels movement. HUD/map updates are capped
+at 10 Hz during movement and refreshed on the final input change. Three.js may
+still allocate internally. Fog ends before the edge of the resident area.
+
+Click the minimap or top-bar Map button to open the full world map. Click a marker
+or a searchable location-list entry to teleport to its X/Z on the rendered surface.
+Click the map background, Close, or Escape to return to the minimap. All recorded
+locations are shown, with dashed markers for unimplemented gameplay. Cave-region
+markers identify saved cave areas, not confirmed entrances. The export also carries
+map-only dungeon/maze and storage locations without changing surface generation.
+The full map has type filters and a location search. A single cached terrain raster
+is shared by both maps, and neither map has its own timer or frame loop.
 
 Run the headless checks with `node --test jCRPG-engine/js/tests/*.test.mjs`
 (Node 22+). They cover saved-map coverage, hashing, cache reuse over 1,000 moves,
-revisits, terrain seams, world wrapping and camera-relative swipe direction.
+revisits, terrain seams, world wrapping, camera-relative swipe direction, map
+markers (including unknown types), sky orientation and idle frame scheduling.

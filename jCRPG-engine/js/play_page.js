@@ -10,6 +10,7 @@
 import { GameSim } from "./game_sim.js";
 import { SceneRenderer } from "./render_engine.js";
 import { TERRAIN_NAMES } from "./frozen_world.js";
+import { WorldMap } from "./world_map.js";
 
 function pickActiveMember(party) {
 	return party.members.find((m) => m.foreName === "ELMARA") ?? party.members[0];
@@ -56,24 +57,30 @@ async function main() {
 		renderHud(sim.gameState);
 		const renderer = new SceneRenderer(canvas);
 		await renderer.buildWorld(sim.gameState);
-		renderer.start();
+		const worldMap = new WorldMap(sim.gameState, renderer);
+		window.__worldMap = worldMap;
 		window.__sceneRenderer = renderer;
 		window.__gameState = sim.gameState;
 		if (status) status.textContent = "";
 		appendLog("Saved world loaded. Drag on the left to walk; drag on the right to look.");
 		const location = document.getElementById('hud-location');
-		let lastArea = '';
-		const updateLocation = () => {
+		let lastArea = '', lastLocation = '', lastUpdate = -Infinity;
+		const updateLocation = (now = performance.now(), force = false) => {
+			if (!force && now - lastUpdate < 100) return;
+			lastUpdate = now;
 			const state = sim.gameState, p = state.party.position, world = state.exploration.world;
 			const landmark = world.landmarkAt(p.x, p.z);
 			const area = landmark?.name ?? TERRAIN_NAMES[world.typeAt(p.x, p.z)];
-			location.textContent = `${area} · ${Math.floor(p.x)}, ${Math.floor(p.z)}`;
+			const text = `${area} · ${Math.floor(p.x)}, ${Math.floor(p.z)}`;
+			if (text !== lastLocation) { location.textContent = text; lastLocation = text; }
+			worldMap.update();
 			if (area !== lastArea) { appendLog(`Entering ${area}.`); lastArea = area; }
 		};
+		renderer.onViewChange = updateLocation;
 		updateLocation();
-		// HUD strings/DOM work are deliberately outside the animation loop.
-		const hudTimer = setInterval(updateLocation, 250);
-		window.addEventListener('pagehide', () => { clearInterval(hudTimer); renderer.stop(); }, { once: true });
+		renderer.start();
+		// No repeating HUD timers. Changes are driven by input/render events only.
+		window.addEventListener('pagehide', () => renderer.stop(), { once: true });
 		window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
 	} catch (err) {
 		if (status) status.textContent = `Failed to load world: ${err.message}`;

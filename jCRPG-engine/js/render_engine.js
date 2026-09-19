@@ -13,6 +13,8 @@
 
 import * as THREE from "./threejs/three.module.js";
 import { WorldView } from "./world_view.js";
+import { VISIBLE_RADIUS } from "./map_model.js";
+import { createSky } from "./sky.js";
 
 const MOVE_SPEED = 4; // world units/sec at full stick deflection
 const STICK_RADIUS = 55; // px a "move" stick drag is clamped to
@@ -30,7 +32,7 @@ export class SceneRenderer {
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-		this.scene.fog = new THREE.Fog(0x9fb98a, 25, 58);
+		this.scene.fog = new THREE.Fog(0x9fb98a, 25, VISIBLE_RADIUS);
 
 		this._yaw = Math.PI; // facing -Z into the scene
 		this._pitch = -0.08;
@@ -42,6 +44,10 @@ export class SceneRenderer {
 		this._stick = { x: 0, y: 0 };
 		this._lookTarget = new THREE.Vector3();
 		this._frameId = null;
+		this._running = false;
+		this._inputEnabled = true;
+		this._boundFrame = now => this._renderFrame(now);
+		this.onViewChange = null;
 		this._joystickEl = this._createJoystickIndicator();
 		this._bindControls();
 
@@ -78,6 +84,7 @@ export class SceneRenderer {
 		};
 
 		c.addEventListener("pointerdown", (e) => {
+			if (!this._inputEnabled) return;
 			c.setPointerCapture?.(e.pointerId);
 			const side = sideForClientX(e.clientX);
 			this._pointers.set(e.pointerId, { side, startX: e.clientX, startY: e.clientY, curX: e.clientX, curY: e.clientY });
@@ -108,6 +115,7 @@ export class SceneRenderer {
 				this._joystickEl.knob.style.left = `calc(50% + ${Math.cos(angle) * dist}px)`;
 				this._joystickEl.knob.style.top = `calc(50% + ${Math.sin(angle) * dist}px)`;
 			}
+			this.requestRender();
 		};
 		const endPointer = (e) => {
 			const p = this._pointers.get(e.pointerId);
@@ -116,16 +124,17 @@ export class SceneRenderer {
 				this._joystickEl.style.display = "none";
 			}
 			this._pointers.delete(e.pointerId);
+			this.requestRender();
 		};
 
 		c.addEventListener("pointermove", onMove);
 		c.addEventListener("pointerup", endPointer);
 		c.addEventListener("pointercancel", endPointer);
 		c.addEventListener("lostpointercapture", endPointer);
-		window.addEventListener("blur", () => {
-			this._pointers.clear();
-			this._movePointer = null;
-			this._joystickEl.style.display = "none";
+		window.addEventListener("blur", () => this.cancelInput());
+		document.addEventListener("visibilitychange", () => {
+			this.cancelInput();
+			if (!document.hidden) this.requestRender();
 		});
 		c.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") endPointer(e); });
 	}
@@ -165,6 +174,7 @@ export class SceneRenderer {
 		this.camera.aspect = w / h;
 		this.camera.updateProjectionMatrix();
 		this.renderer.setSize(w, h, false);
+		this.requestRender();
 	}
 
 	_applyLook() {
@@ -189,7 +199,9 @@ export class SceneRenderer {
 					reject
 				);
 			});
-			this.scene.background = texture;
+			texture.colorSpace = THREE.SRGBColorSpace;
+			this._sky = createSky(texture);
+			this.scene.add(this._sky);
 		} catch {
 			this.scene.background = new THREE.Color(0x9fc2d1);
 		}
@@ -222,22 +234,61 @@ export class SceneRenderer {
 		this._applyLook();
 	}
 
-	start() {
-		if (this._frameId !== null) return;
+	_hasMovement() {
+		const p = this._movePointer;
+		return this._inputEnabled && p && (p.curX !== p.startX || p.curY !== p.startY);
+	}
+
+	/** One frame for changes; repeat only while a movement stick is held off-center. */
+	requestRender() {
+		if (!this._running || document.hidden || this._frameId !== null) return;
+		this._frameId = requestAnimationFrame(this._boundFrame);
+	}
+
+	_renderFrame(now) {
+		this._frameId = null;
+		if (!this._running || document.hidden) return;
+		const moving = this._hasMovement();
+		const dt = this._lastFrameTime === null ? 0 : Math.min((now - this._lastFrameTime) / 1000, 0.1);
+		if (moving) this._updateMovement(dt);
+		this._applyLook();
+		this.renderer.render(this.scene, this.camera);
+		this.onViewChange?.(now, !moving);
+		this._lastFrameTime = moving ? now : null;
+		if (moving) this.requestRender();
+	}
+
+	cancelInput() {
+		this._pointers.clear();
+		this._movePointer = null;
+		this._joystickEl.style.display = "none";
 		this._lastFrameTime = null;
-		const loop = (now) => {
-			const dt = this._lastFrameTime == null ? 0 : Math.min((now - this._lastFrameTime) / 1000, 0.1);
-			this._lastFrameTime = now;
-			this._updateMovement(dt);
-			this._applyLook();
-			this.renderer.render(this.scene, this.camera);
-			this._frameId = requestAnimationFrame(loop);
-		};
-		this._frameId = requestAnimationFrame(loop);
+		if (this._frameId !== null) cancelAnimationFrame(this._frameId);
+		this._frameId = null;
+		this.onViewChange?.(performance.now(), true);
+	}
+
+	setInputEnabled(enabled) {
+		this._inputEnabled = enabled;
+		this.cancelInput();
+	}
+
+	teleportTo(x, z) {
+		if (!Number.isFinite(x) || !Number.isFinite(z)) return;
+		this.cancelInput();
+		const p = this.gameState.party.position;
+		if (this.gameState.moveParty(x - p.x, z - p.z)) this.worldView.sync();
+		this._syncCamera();
+		this.requestRender();
+	}
+
+	start() {
+		this._running = true;
+		this.requestRender();
 	}
 
 	stop() {
-		if (this._frameId !== null) cancelAnimationFrame(this._frameId);
-		this._frameId = null;
+		this._running = false;
+		this.cancelInput();
 	}
 }

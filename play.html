@@ -52,7 +52,7 @@
 		overflow-x: auto;
 		pointer-events: auto;
 	}
-	#hud-topbar span {
+	#hud-topbar span, #hud-topbar button {
 		padding: 0.5rem clamp(0.4rem, 2vw, 1rem);
 		color: #e8d9b8;
 		white-space: nowrap;
@@ -105,20 +105,53 @@
 	#hud-minimap {
 		bottom: calc(0.5rem + env(safe-area-inset-bottom));
 		right: calc(0.4rem + env(safe-area-inset-right));
-		width: clamp(64px, 20vw, 110px);
-		height: clamp(64px, 20vw, 110px);
-		background: #000;
-		border: 2px solid #8a6a3a;
-		border-radius: 3px;
+		width: clamp(96px, 22vw, 144px);
+		padding: 0;
+		background: #17251b;
+		border: 2px solid #b39050;
+		border-radius: 5px;
+		pointer-events: auto;
+		cursor: pointer;
+		color: #fff0cf;
 	}
-	#hud-minimap::after {
-		content: "";
-		position: absolute;
-		top: 50%; left: 50%;
-		width: 6px; height: 6px;
-		background: #d33;
-		border-radius: 50%;
-		transform: translate(-50%, -50%);
+	#minimap-canvas { display: block; width: 100%; aspect-ratio: 1; }
+	#hud-minimap span { display: block; padding: 3px; font-size: 0.65rem; }
+	#hud-topbar button { background: transparent; border: 0; font: inherit; cursor: pointer; }
+	button:focus-visible, input:focus-visible { outline: 2px solid #ffdc89; outline-offset: 2px; }
+	#world-map-dialog {
+		box-sizing: border-box;
+		width: min(1100px, calc(100vw - 24px));
+		height: min(900px, calc(100dvh - 24px));
+		max-width: none; max-height: none;
+		padding: 1rem;
+		background: #17201f; color: #eee5cd;
+		border: 2px solid #967545; border-radius: 9px;
+		touch-action: pan-y;
+	}
+	#world-map-dialog[open] { display: flex; flex-direction: column; gap: 0.7rem; }
+	#world-map-dialog::backdrop { background: #000b; }
+	.map-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+	.map-heading h2 { margin: 0; font-size: 1.25rem; }
+	#map-close { padding: 0.6rem 1rem; color: inherit; background: #343c35; border: 1px solid #967545; border-radius: 5px; cursor: pointer; }
+	#map-filters { display: flex; flex-wrap: wrap; gap: 0.35rem 0.8rem; font-size: 0.8rem; }
+	#map-filters label { display: flex; align-items: center; gap: 0.2rem; cursor: pointer; }
+	.map-notes { margin: 0; font-size: 0.75rem; line-height: 1.4; color: #bdc8bf; }
+	.map-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 1rem; min-height: 0; flex: 1; }
+	.map-visual { min-width: 0; overflow: auto; }
+	.map-frame { max-width: min(100%, calc(100dvh - 245px)); margin: auto; }
+	#world-map-canvas { display: block; width: 100%; aspect-ratio: 1; cursor: pointer; border: 1px solid #71816b; box-sizing: border-box; }
+	#map-detail { margin: 0.5rem 0; font-size: 0.8rem; line-height: 1.4; min-height: 2.8em; }
+	.map-sidebar { display: flex; flex-direction: column; min-height: 0; gap: 0.5rem; }
+	#map-search { box-sizing: border-box; width: 100%; padding: 0.65rem; background: #0f1717; color: #eee5cd; border: 1px solid #71816b; font: inherit; border-radius: 4px; }
+	#map-location-count { font-size: 0.75rem; }
+	#map-locations { overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+	#map-locations button { display: block; width: 100%; margin-bottom: 0.4rem; padding: 0.6rem; text-align: left; background: #26342e; color: inherit; border: 1px solid #49604d; border-radius: 4px; cursor: pointer; font: inherit; font-size: 0.8rem; line-height: 1.5; }
+	@media (max-width: 700px) {
+		.map-layout { display: block; overflow-y: auto; }
+		.map-frame { max-width: 100%; }
+		.map-visual { overflow: visible; }
+		.map-sidebar { margin-top: 0.8rem; height: 260px; }
+		#world-map-dialog { padding: 0.7rem; }
 	}
 	#hud-location {
 		top: calc(4.8rem + env(safe-area-inset-top));
@@ -170,7 +203,7 @@
 <div id="load-status">Loading scene…</div>
 
 <div id="hud-topbar" class="hud">
-	<span>Menu</span><span>Map</span><span>Camp</span><span>Order</span><span>Behvr.</span><span>Action</span><span>Search</span>
+	<span>Menu</span><button id="map-open" type="button" aria-haspopup="dialog">Map</button><span>Camp</span><span>Order</span><span>Behvr.</span><span>Action</span><span>Search</span>
 </div>
 <div id="hud-portrait-card" class="hud">
 	<img id="hud-portrait" alt="Active character portrait">
@@ -179,11 +212,25 @@
 </div>
 <div id="hud-log" class="hud"></div>
 <div id="hud-location" class="hud" aria-live="off"></div>
-<div id="hud-minimap" class="hud"></div>
+<button id="hud-minimap" class="hud" type="button" aria-label="Open world map" aria-haspopup="dialog" title="Nearby map: 116-unit radius, twice the visible area">
+	<canvas id="minimap-canvas" width="256" height="256" aria-hidden="true"></canvas>
+	<span>Map · 116-unit radius</span>
+</button>
 <div id="hud-nav" class="hud">
 	<a href="index.html">Summary</a><a href="sim.html">Sim</a>
 </div>
 <div id="hud-hint" class="hud"><span>◐ move</span><span>look ◑</span></div>
+
+<dialog id="world-map-dialog" aria-labelledby="map-title">
+	<div class="map-heading"><h2 id="map-title">World map · N ↑</h2><button id="map-close" type="button" autofocus>Close</button></div>
+	<div id="map-filters" role="group" aria-label="Visible marker types"></div>
+	<p class="map-notes">Red arrow: you. Dashed markers: unimplemented locations, still available for surface teleport. Nearby map: twice the visible radius; white ring: visible area.</p>
+	<p id="map-mission-note" class="map-notes"></p>
+	<div class="map-layout">
+		<div class="map-visual"><div class="map-frame"><canvas id="world-map-canvas" width="800" height="800" role="img" aria-label="Saved world terrain and locations. Use the location list to teleport with a keyboard."></canvas></div><p id="map-detail">Tap a marker to teleport, or tap the map background to close.</p></div>
+		<div class="map-sidebar"><label for="map-search">Find a location</label><input id="map-search" type="search" placeholder="Name, type or coordinates" autocomplete="off"><div id="map-location-count"></div><div id="map-locations" aria-label="Teleport destinations"></div></div>
+	</div>
+</dialog>
 
 <!-- Frozen saved-world exploration; terrain and shared model assets stream through a fixed pool. -->
 <script type="module" src="jCRPG-engine/js/play_page.js"></script>
