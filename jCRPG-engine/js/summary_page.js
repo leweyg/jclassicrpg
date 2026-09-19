@@ -6,7 +6,7 @@
  * port logic lives in game_static_core.js and its sibling modules.
  */
 
-import { GameStaticCore } from "./game_static_core.js";
+import { GameStaticCore, worldsRef, worldAssetsRef, charactersRef, gameAssetsRef } from "./game_static_core.js";
 
 function renderSystemCard(system) {
 	const card = document.createElement("section");
@@ -88,6 +88,109 @@ function renderSystemCard(system) {
 	return card;
 }
 
+function makeSection(title) {
+	const section = document.createElement("section");
+	section.className = "system-card";
+	const h = document.createElement("h3");
+	h.textContent = title;
+	section.appendChild(h);
+	return section;
+}
+
+function appendChips(parent, label, items) {
+	const l = document.createElement("div");
+	l.className = "field-label";
+	l.textContent = label;
+	parent.appendChild(l);
+	const list = document.createElement("div");
+	list.className = "chip-list";
+	for (const item of items) {
+		const chip = document.createElement("span");
+		chip.className = "chip";
+		chip.textContent = item;
+		list.appendChild(chip);
+	}
+	parent.appendChild(list);
+}
+
+function appendKeyValues(parent, label, obj) {
+	const l = document.createElement("div");
+	l.className = "field-label";
+	l.textContent = label;
+	parent.appendChild(l);
+	const dl = document.createElement("dl");
+	dl.className = "kv-list";
+	for (const [k, v] of Object.entries(obj)) {
+		const dt = document.createElement("dt");
+		dt.textContent = k;
+		const dd = document.createElement("dd");
+		dd.textContent = typeof v === "object" ? JSON.stringify(v) : String(v);
+		dl.appendChild(dt);
+		dl.appendChild(dd);
+	}
+	parent.appendChild(dl);
+}
+
+async function renderFirstWorldSummary(container) {
+	const [worlds, assets, characters, gameAssets] = await Promise.all([
+		worldsRef.load(),
+		worldAssetsRef.load(),
+		charactersRef.load(),
+		gameAssetsRef.load(),
+	]);
+
+	const boot = makeSection("First World — Boot Sequence");
+	const bootDesc = document.createElement("p");
+	bootDesc.className = "description";
+	bootDesc.textContent = worlds.description;
+	boot.appendChild(bootDesc);
+	const ol = document.createElement("ol");
+	for (const step of worlds.bootSequence) {
+		const li = document.createElement("li");
+		li.textContent = step;
+		ol.appendChild(li);
+	}
+	boot.appendChild(ol);
+	for (const note of worlds.notes) {
+		const p = document.createElement("p");
+		p.className = "web-approach";
+		p.textContent = `Note: ${note}`;
+		boot.appendChild(p);
+	}
+	appendKeyValues(boot, "Default game state", worlds.defaultGameState);
+	container.appendChild(boot);
+
+	const params = makeSection("World Generation Parameters (WorldParams schema)");
+	appendKeyValues(params, "Fields", worlds.worldParamsSchema.fields);
+	appendChips(params, "Known geography types", worlds.worldParamsSchema.knownGeographyTypes);
+	appendChips(params, "Known climate belts", worlds.worldParamsSchema.knownClimateBelts);
+	container.appendChild(params);
+
+	const chars = makeSection("Default Character Creation");
+	appendChips(chars, "Selectable races", characters.races.map((r) => r.id));
+	appendChips(chars, "Selectable professions", characters.professions.filter((p) => !p.note).map((p) => p.id));
+	container.appendChild(chars);
+
+	const assetsSection = makeSection("First-World 3D Assets (by category)");
+	const assetsDesc = document.createElement("p");
+	assetsDesc.className = "description";
+	assetsDesc.textContent = assets.description;
+	assetsSection.appendChild(assetsDesc);
+	for (const cat of assets.categories) {
+		const label = document.createElement("div");
+		label.className = "field-label";
+		label.textContent = `${cat.id} (${cat.assets.length}) — ${cat.javaOwner}`;
+		assetsSection.appendChild(label);
+	}
+	container.appendChild(assetsSection);
+
+	const gameAssetsSection = makeSection("Engine/UI/Audio Assets");
+	appendChips(gameAssetsSection, "Fonts", gameAssets.fonts.map((f) => f.id));
+	appendKeyValues(gameAssetsSection, "Audio settings", gameAssets.audio.settings);
+	appendKeyValues(gameAssetsSection, "Render settings (sample)", gameAssets.renderSettings.selected);
+	container.appendChild(gameAssetsSection);
+}
+
 async function main() {
 	const container = document.getElementById("systems-summary");
 	const status = document.getElementById("load-status");
@@ -103,6 +206,18 @@ async function main() {
 	} catch (err) {
 		if (status) status.textContent = `Failed to load static core data: ${err.message}`;
 		console.error(err);
+	}
+
+	const firstWorldContainer = document.getElementById("first-world-summary");
+	if (firstWorldContainer) {
+		try {
+			await renderFirstWorldSummary(firstWorldContainer);
+		} catch (err) {
+			const p = document.createElement("p");
+			p.textContent = `Failed to load first-world reference data: ${err.message}`;
+			firstWorldContainer.appendChild(p);
+			console.error(err);
+		}
 	}
 }
 

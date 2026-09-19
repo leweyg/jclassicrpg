@@ -1,0 +1,111 @@
+{
+  "description": "Catalogue of the original engine's pre-cached 3D model assets (Wavefront .obj) used to render the first world: terrain/ground tiles, vegetation, buildings, humanoids, fauna, monsters and items. Sourced from jCRPG-engine/cache/medium (also mirrored at lower/higher detail in cache/low, cache/low_png, cache/high). These are the geometry building blocks GeoTileLoader/ModelLoader/CubeInterpreter assemble into rendered scenes.",
+  "sourceDirs": {
+    "medium": "jCRPG-engine/cache/medium",
+    "low": "jCRPG-engine/cache/low",
+    "lowPng": "jCRPG-engine/cache/low_png",
+    "high": "jCRPG-engine/cache/high"
+  },
+  "namingConvention": "models_<category>_<subcategory?>_<name>.obj — category maps to a Java package/type under org.jcrpg.world or org.jcrpg.threed; 'sides_*.obj' are Side/Cube face geometry used directly by the space-grid interpreter.",
+  "webPort": {
+    "approach": "Convert/re-export .obj assets to glTF (or load .obj directly via three.js OBJLoader) and reference them from this catalogue by category so RenderEngine (jCRPG-engine/js/render_engine.js) can batch-load per biome/scene.",
+    "loaderNote": "ModelLoader/ModelPool pooled and instanced these meshes for performance in Java; the web port should use three.js InstancedMesh for repeated props (trees, rocks, bushes)."
+  },
+  "categories": [
+    {
+      "id": "ground",
+      "javaOwner": "org.jcrpg.threed / org.jcrpg.space (CubeInterpreter)",
+      "description": "Terrain cube geometry: flat/steep ground tiles, cave floors/walls, rock faces used to build the voxel-like world grid.",
+      "assets": [
+        "models_ground_ground_1.obj", "models_ground_ground_2.obj", "models_ground_ground_3.obj",
+        "models_ground_ground_thick.obj", "models_ground_ground_under.obj", "models_ground_ground_under2.obj",
+        "models_ground_ground_farview.obj", "models_ground_ground_steep_1.obj", "models_ground_ground_steep_2.obj",
+        "models_ground_ground_steep_3.obj", "models_ground_ground_cave.obj", "models_ground_cave_entrance.obj",
+        "models_ground_cave_entrance_tex.obj", "models_ground_cave_rock.obj", "models_ground_hillintersect.obj",
+        "models_ground_mountain_rock.obj", "models_ground_rockcorner.obj", "models_ground_rocksteep.obj",
+        "models_ground_wall_cave.obj", "models_ground_wall_cave_rev.obj", "models_ground_water_rock_side.obj"
+      ]
+    },
+    {
+      "id": "sides",
+      "javaOwner": "org.jcrpg.space.sidetype",
+      "description": "Cube 'Side' geometry referenced directly by the space-partitioning grid (walls/ground overlays for special material types).",
+      "assets": ["sides_cactus.obj", "sides_maze_ground.obj", "sides_maze_wall_thick.obj"]
+    },
+    {
+      "id": "vegetation_tree",
+      "javaOwner": "org.jcrpg.threed.VegetationSetup",
+      "description": "Billboard/impostor tree models placed by vegetation generation, varying per climate (acacia/palm/coconut = tropical-desert, pine/great_pine = continental/arctic, cherry = temperate).",
+      "assets": [
+        "models_tree_acacia_bb1.obj", "models_tree_acacia_bb_2_1.obj", "models_tree_cherry_bb1.obj",
+        "models_tree_cherry_bb_2_1.obj", "models_tree_coconut_bb1.obj", "models_tree_great_pine_bb1.obj",
+        "models_tree_great_succ_bb1.obj", "models_tree_great_succ_bb2_e.obj", "models_tree_great_succ_bb3_e.obj",
+        "models_tree_high_bb_1.obj", "models_tree_palm_02.obj", "models_tree_pine_bb1.obj"
+      ]
+    },
+    {
+      "id": "vegetation_bush",
+      "javaOwner": "org.jcrpg.threed.VegetationSetup",
+      "description": "Smaller ground-cover vegetation props.",
+      "assets": ["models_bush_Bush_01.obj", "models_bush_bush1.obj", "models_bush_bush2.obj"]
+    },
+    {
+      "id": "building_external",
+      "javaOwner": "org.jcrpg.world.place.economic.residence",
+      "description": "Modular exterior building pieces (walls/roof/door/window/steps) plus standalone structures (hut, igloo, shrine, guard tower, shop) matching the Residence subclasses (House, Hut, Igloo, RoadShrine, GuardTowerSmall, SimpleShop, WoodenHouse, BrickHouse, SandIgloo).",
+      "assets": [
+        "models_external_House_01_door.obj", "models_external_House_01_externalgr.obj", "models_external_House_01_roof_corner.obj",
+        "models_external_House_01_roof_straight.obj", "models_external_House_01_steps_wooden.obj", "models_external_House_01_wall.obj",
+        "models_external_House_01_window.obj", "models_external_desertbrick_desertbrick1.obj", "models_external_ext_steps.obj",
+        "models_external_furniture_log_bench.obj", "models_external_guardtower_guard_tower_pos.obj", "models_external_hut_hut_big.obj",
+        "models_external_igloo_igloo.obj", "models_external_maze_2_pillars.obj", "models_external_maze_4_pillars.obj",
+        "models_external_maze_NormalTest_Pillar_01.obj", "models_external_maze_maze-door1rot.obj",
+        "models_external_sandigloo_sandigloo1.obj", "models_external_shop_shop_pos.obj", "models_external_shrine_shrine1.obj",
+        "models_external_stonebase_stonebase1.obj"
+      ]
+    },
+    {
+      "id": "inside",
+      "javaOwner": "org.jcrpg.threed",
+      "description": "Interior connector geometry (e.g. stairs) linking indoor floor levels.",
+      "assets": ["models_inside_steps_steps.obj"]
+    },
+    {
+      "id": "storage_items",
+      "javaOwner": "org.jcrpg.world.object",
+      "description": "World-placed container props (not inventory icons): barrels, baskets, chests, crates, and a throwing-knife ammo pickup model.",
+      "assets": [
+        "models_item_storage_barrel.obj", "models_item_storage_basket.obj", "models_item_storage_chest.obj",
+        "models_item_storage_crate.obj", "models_item_storage_pav.obj", "models_item_ammo_throwingknife.obj"
+      ]
+    },
+    {
+      "id": "humanoid",
+      "javaOwner": "org.jcrpg.world.ai.humanoid",
+      "description": "Base humanoid meshes for the player race (Human) and one non-selectable humanoid NPC race (Anatipion) plus a Yeti creature-humanoid.",
+      "assets": [
+        "models_humanoid_human_human_male_1.obj", "models_humanoid_human_human_female_1.obj",
+        "models_humanoid_anatipion_anatipion1.obj", "models_humanoid_yeti_yeti1.obj"
+      ]
+    },
+    {
+      "id": "fauna",
+      "javaOwner": "org.jcrpg.world.ai.fauna",
+      "description": "Wildlife models used by the Ecology/EcologyGenerator to populate the world (huntable/ambient animals).",
+      "assets": [
+        "models_fauna_deer.obj", "models_fauna_fem.obj", "models_fauna_gorilla_texture.obj", "models_fauna_heron.obj",
+        "models_fauna_lizard_exp.obj", "models_fauna_male.obj", "models_fauna_polarbear_tex.obj", "models_fauna_redfox.obj",
+        "models_fauna_spider.obj", "models_fauna_warbear_tex.obj", "models_fauna_warthog_model.obj", "models_fauna_wolf.obj"
+      ]
+    },
+    {
+      "id": "monster",
+      "javaOwner": "org.jcrpg.world.ai (hostile EntityDescriptions)",
+      "description": "Hostile creature models used in encounters (J3DEncounterEngine / EncounterLogic).",
+      "assets": [
+        "models_monster_evilrip_beast_stand.obj", "models_monster_eyebat_eyebat.obj", "models_monster_plantobite_plantobite.obj",
+        "models_monster_scorpoholder_beholder.obj", "models_monster_worpion_worpion.obj"
+      ]
+    }
+  ]
+}

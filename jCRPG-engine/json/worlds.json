@@ -1,0 +1,69 @@
+{
+  "description": "Describes how the very first game world/session is created in jCRPG, since there is no single fixed 'level 1' map: the world is procedurally generated at New Game time from a scenario's data files. This mirrors org.jcrpg.util.saveload.SaveLoadNewGame.newGame(), org.jcrpg.world.generator.WorldGenerator and org.jcrpg.game.scenario.Scenario.",
+  "bootSequence": [
+    "1. J3DCore starts a ScenarioLoader pointed at a scenario directory (default './scenario' relative dir, historically '../scenario/jclassicrpg') and lists available ScenarioDescriptions (scenario.properties: name/author/desc/version/seed).",
+    "2. User picks (or the default/only) ScenarioDescription; SaveLoadNewGame.newGame() is invoked with it plus CharacterCreationRules and chosen party members.",
+    "3. A new GameStateContainer is created; HashUtil.WORLD_RANDOM_SEED is set from desc.seed (0 by default); charCreationRules is attached.",
+    "4. An Engine (world clock/turn driver) is created, its Time is set to hour=12/day=0/year=0 (noon start), numberOfTurn=0, and run on its own thread.",
+    "5. gameState.onLoad() loads the Scenario itself: Scenario.load() reads worldparams.xml, ecology.xml and events.xml from the scenario directory.",
+    "6. WorldParamsConfigLoader parses worldparams.xml into a WorldParams object (see worldParamsSchema below).",
+    "7. WorldGenerator.generateWorld(new DefaultGenProgram(...)) procedurally builds the World (terrain/geography/political/economic layers) from those WorldParams.",
+    "8. A WorldOrbiterHandler is attached with a 'sun' (SimpleSun) and 'moon' (SimpleMoon) orbiter for day/night and lighting.",
+    "9. EcologyGenerator reads ecology.xml and populates the World with an Ecology (fauna/flora/humanoid population groups, settlements).",
+    "10. The starting position is chosen near world center (realSizeX/2, realSizeZ/2, offset by tunable xDiff/yDiff/zDiff) then snapped to the nearest RoadShrine along the road network (world.economyContainer.roadNetwork.shrines) so the party starts on a road.",
+    "11. A PartyInstance is created at that position and each selected PersistentMemberInstance (character) is added to it; GameLogic ties core/engine/world/ecology/party together and is stored on GameStateContainer.",
+    "12. Scenario.initiateScenario() plays the scenario's intro Event exactly once (tracked via ScenarioState flag Scenario.INTRO_PLAYED) unless already played or in a test session."
+  ],
+  "notes": [
+    "The actual scenario content (worldparams.xml, ecology.xml, events.xml, scenario.properties) lives outside this repository, in a sibling 'scenario' directory that is not checked in here — so there is no single fixed 'first world' to read verbatim; the values below are the schema/defaults implied by the Java code.",
+    "Because generation is seeded (WorldParams.randomSeed / desc.seed, default 0), the web port can reproduce the same first world deterministically once a matching worldparams.xml + ecology.xml + PRNG algorithm are ported."
+  ],
+  "defaultGameState": {
+    "gameId": "game1",
+    "engine": { "startHour": 12, "startDay": 0, "startYear": 0, "numberOfTurn": 0 },
+    "encounterModePosition": { "viewPositionX": 46, "viewPositionZ": 41, "origoX": 46, "origoZ": 41 },
+    "startPositionRule": "world center (realSizeX/2, realSizeZ/2) offset by (xDiff=-15, yDiff=0, zDiff=66), then snapped to nearest RoadShrine on the road network",
+    "orbiters": ["sun (SimpleSun)", "moon (SimpleMoon)"],
+    "randomSeedDefault": 0
+  },
+  "worldParamsSchema": {
+    "javaType": "org.jcrpg.world.generator.WorldParams",
+    "fields": {
+      "magnification": "int - world grid magnification factor applied to sizeX/Y/Z to get realSize",
+      "sizeX": "int - world width in magnification units",
+      "sizeY": "int - world height (vertical layers) in magnification units",
+      "sizeZ": "int - world depth in magnification units",
+      "landDensity": "int 0-100 - how dense land mass generation is",
+      "landMass": "int 0-100 - land vs sea ratio",
+      "heightRatio": "float - overall terrain height multiplier",
+      "randomSeed": "int - world generation seed, 0 by default",
+      "climates": "string[] - climate belt keys listed north-to-south, one of: arctic, continental, desert, tropical, generic",
+      "climateSizeMuls": "int[] - relative size multiplier per climate band, parallel to climates[]",
+      "foundationGeo": "string - base geography key covering the whole world before overlays (e.g. Ocean)",
+      "geos": "string[] - geography keys to place, e.g. Plain, Forest, Mountain",
+      "geoLikenessValues": "int[] - likeliness weight per geos[] entry",
+      "additionalGeos": "string[] - secondary/rarer geography overlays",
+      "additionalGeoLikenessValues": "int[] - likeliness weight per additionalGeos[] entry",
+      "geoNormalSize": "int - baseline patch size for a geography region"
+    },
+    "knownGeographyTypes": ["Plain", "Forest", "Mountain", "Cave", "Ocean", "River"],
+    "knownClimateBelts": ["arctic", "continental", "desert", "tropical", "generic"]
+  },
+  "characterCreationDefaults": {
+    "javaType": "org.jcrpg.game.CharacterCreationRules",
+    "selectableRaces": ["Human", "Elf", "Dwarf", "Catkind"],
+    "selectableProfessions": [
+      "Warrior", "Shadow", "Enlightened", "Crusader", "Thief", "Ranger", "Mage", "Priest",
+      "Witch", "WitchMaster", "Bard", "Psionic", "Alchemist", "Demonist", "Wise", "Lobbist",
+      "Negotiator", "Jester", "Swindler"
+    ]
+  },
+  "sampleSaves": [
+    {
+      "id": "game1_20100426-004720.124",
+      "path": "jCRPG-engine/save/game1_20100426-004720.124/desc.txt",
+      "descRaw": "3\n(2010.04.26 00:47 Seed:0)",
+      "meaning": "party size 3, saved 2010.04.26 00:47, world random seed 0 (the engine's default/example seed)"
+    }
+  ]
+}

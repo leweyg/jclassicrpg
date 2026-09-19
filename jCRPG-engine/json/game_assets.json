@@ -1,0 +1,44 @@
+{
+  "description": "Non-world (engine/UI/audio) static assets referenced by the first-run game session: fonts, UI textures, and the audio channel setup. World geometry assets are catalogued separately in world_assets.json.",
+  "fonts": [
+    {
+      "id": "vinque",
+      "javaOwner": "org.jcrpg.ui.FontUtils / org.jcrpg.ui.BasicText",
+      "files": ["jCRPG-engine/src/main/resources/org/jcrpg/ui/vinque.fnt", "jCRPG-engine/src/main/resources/org/jcrpg/ui/vinque_0.png"],
+      "format": "BMFont (.fnt + glyph atlas .png), loaded via threed.BMFontLoader",
+      "webPort": "Use as a standard bitmap/MSDF web font (or re-export via a BMFont-to-CSS/Canvas loader) for the UIOverlay stub."
+    }
+  ],
+  "textureLibraries": {
+    "jme": {
+      "path": "jCRPG-engine/src/main/resources/org/jcrpg/threed/jme",
+      "javaOwner": "org.jcrpg.threed (legacy jME2 renderer assets)",
+      "note": "Bundled shader/texture support resources for the jME2 rendering backend; not needed once the web port uses three.js/WebGL shaders instead."
+    }
+  },
+  "audio": {
+    "javaOwner": "org.jcrpg.audio.AudioServer / org.jcrpg.audio.Channel",
+    "settings": {
+      "SOUND_ENABLED": true,
+      "MUSIC_VOLUME_PERCENT": 100,
+      "EFFECT_VOLUME_PERCENT": 60
+    },
+    "description": "AudioServer manages named Channels (e.g. music vs. effects) with independent volume; original backend is LWJGL's OpenAL bindings.",
+    "webPort": "Map each Channel to a Web Audio GainNode feeding a shared AudioContext destination; volumes above map directly to GainNode.gain values (0-100 -> 0.0-1.0)."
+  },
+  "renderSettings": {
+    "source": "jCRPG-engine/config.properties",
+    "selected": {
+      "RENDER_DISTANCE": 80,
+      "VIEW_DISTANCE": 50,
+      "RENDER_GRASS_DISTANCE": 20,
+      "RENDER_SHADOW_DISTANCE": 30,
+      "ANTIALIAS_SAMPLES": 0,
+      "SHADOWS": true,
+      "WATER_SHADER": true,
+      "ANIMATED_GRASS": true,
+      "ANIMATED_TREES": true
+    },
+    "webPort": "These map to three.js scene/camera far-plane, fog distance, and renderer feature toggles (shadow maps, water shader material, animated foliage via vertex shader time uniform)."
+  }
+}

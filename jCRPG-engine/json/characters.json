@@ -1,0 +1,48 @@
+{
+  "description": "Default playable races and professions from org.jcrpg.game.CharacterCreationRules (used when no custom rule set is supplied), plus the example saved characters shipped with the engine for the first scenario.",
+  "races": [
+    { "id": "Human", "javaClass": "org.jcrpg.world.ai.humanoid.modifier.race.Human", "modelAsset": "models_humanoid_human_human_male_1.obj / models_humanoid_human_human_female_1.obj" },
+    { "id": "Elf", "javaClass": "org.jcrpg.world.ai.humanoid.modifier.race.Elf" },
+    { "id": "Dwarf", "javaClass": "org.jcrpg.world.ai.humanoid.modifier.race.Dwarf" },
+    { "id": "Catkind", "javaClass": "org.jcrpg.world.ai.humanoid.modifier.race.Catkind" }
+  ],
+  "professions": [
+    { "id": "Warrior", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Warrior" },
+    { "id": "Shadow", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Shadow" },
+    { "id": "Enlightened", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Enlightened" },
+    { "id": "Crusader", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Crusader" },
+    { "id": "Thief", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Thief" },
+    { "id": "Ranger", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Ranger" },
+    { "id": "Mage", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Mage" },
+    { "id": "Priest", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Priest" },
+    { "id": "Witch", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Witch" },
+    { "id": "WitchMaster", "javaClass": "org.jcrpg.world.ai.profession.adventurer.WitchMaster" },
+    { "id": "Bard", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Bard" },
+    { "id": "Psionic", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Psionic" },
+    { "id": "Alchemist", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Alchemist" },
+    { "id": "Demonist", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Demonist" },
+    { "id": "Wise", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Wise" },
+    { "id": "Lobbist", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Lobbist" },
+    { "id": "Negotiator", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Negotiator" },
+    { "id": "Jester", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Jester" },
+    { "id": "Swindler", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Swindler" },
+    { "id": "Monk", "javaClass": "org.jcrpg.world.ai.profession.adventurer.Monk", "note": "present in source tree but not in the default CharacterCreationRules selectable list" }
+  ],
+  "partyModel": {
+    "javaType": "org.jcrpg.world.ai.player.PartyInstance",
+    "description": "A PartyInstance groups one or more PersistentMemberInstance characters, is added to the world's Ecology as an entity, and is positioned/roamed via a DistanceBasedBoundary sized per member (m.description.getRoamingSize()).",
+    "startupNotes": [
+      "Each member's memberState is maximized at start (maximizeAtStart()) so a new game begins at full health/resources.",
+      "Party boundary sizes are recalculated (recalcBoundarySizes()) after all members are added."
+    ]
+  },
+  "exampleSavedCharacters": [
+    { "id": "ELMO", "path": "jCRPG-engine/chars/20102303-21.05.43.470_ELMO/character.zip", "savedAt": "2023-10-23T21:05:43.470", "format": "zipped XStream-serialized character" },
+    { "id": "ELMARA", "path": "jCRPG-engine/chars/20102403-00.26.37.338_ELMARA/character.zip", "savedAt": "2024-10-23T00:26:37.338", "format": "zipped XStream-serialized character" },
+    { "id": "PALMANO", "path": "jCRPG-engine/chars/20102503-23.01.09.574_PALMANO/character.zip", "savedAt": "2025-10-23T23:01:09.574", "format": "zipped XStream-serialized character" }
+  ],
+  "webPort": {
+    "approach": "Represent races/professions as plain data records driving stat/skill modifiers (see ItemSystem/GameLogic stubs); character save files are XStream-serialized XML in a zip — the web port replaces these with a JSON character object persisted via SaveLoad (localStorage/IndexedDB).",
+    "targetFiles": ["jCRPG-engine/js/game_logic.js", "jCRPG-engine/js/save_load.js"]
+  }
+}

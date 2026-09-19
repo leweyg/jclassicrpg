@@ -15,6 +15,12 @@
 
 export const STATIC_CORE_DATA_URL = "jCRPG-engine/json/static_core_data.json";
 
+// Reference data lists describing the first-world/first-scenario boot state.
+export const WORLDS_DATA_URL = "jCRPG-engine/json/worlds.json";
+export const WORLD_ASSETS_DATA_URL = "jCRPG-engine/json/world_assets.json";
+export const CHARACTERS_DATA_URL = "jCRPG-engine/json/characters.json";
+export const GAME_ASSETS_DATA_URL = "jCRPG-engine/json/game_assets.json";
+
 /**
  * Loads and caches the static core data JSON (subsystem catalogue).
  */
@@ -42,6 +48,33 @@ export class GameStaticCore {
 		return this.getSystems().find((s) => s.id === id);
 	}
 }
+
+/**
+ * Generic fetch-once-and-cache loader for the reference JSON data lists
+ * (worlds, world_assets, characters, game_assets).
+ */
+export class StaticJsonRef {
+	constructor(dataUrl) {
+		this.dataUrl = dataUrl;
+		this.data = null;
+	}
+
+	async load() {
+		if (this.data) return this.data;
+		const response = await fetch(this.dataUrl);
+		if (!response.ok) {
+			throw new Error(`Failed to load ${this.dataUrl}: ${response.status} ${response.statusText}`);
+		}
+		this.data = await response.json();
+		return this.data;
+	}
+}
+
+// Ready-to-use singletons for the first-world reference data lists.
+export const worldsRef = new StaticJsonRef(WORLDS_DATA_URL);
+export const worldAssetsRef = new StaticJsonRef(WORLD_ASSETS_DATA_URL);
+export const charactersRef = new StaticJsonRef(CHARACTERS_DATA_URL);
+export const gameAssetsRef = new StaticJsonRef(GAME_ASSETS_DATA_URL);
 
 /*
  * Below: one stub class per major subsystem, named after and reflecting the
