@@ -201,6 +201,7 @@ export class SceneRenderer {
 			});
 			texture.colorSpace = THREE.SRGBColorSpace;
 			this._sky = createSky(texture);
+			texture.dispose(); // The six face maps now own the decoded images.
 			this.scene.add(this._sky);
 		} catch {
 			this.scene.background = new THREE.Color(0x9fc2d1);

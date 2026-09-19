@@ -34,13 +34,33 @@ test('nearby map doubles sight radius and projects markers across the globe seam
 	assert.equal(wrappedDelta(1, 1599, 1600), 2);
 });
 
-test('sky corrects only the default X reflection', () => {
+test('sky is a closed cube with aligned geometry and calibrated face UVs', () => {
 	const texture = new THREE.CubeTexture();
 	const sky = createSky(texture);
-	assert.equal(sky.material.uniforms.tFlip.value, 1);
-	assert.equal(sky.material.uniforms.tCube.value, texture);
-	assert.match(sky.material.fragmentShader, /tFlip \* vWorldDirection.x, vWorldDirection.yz/);
-	sky.geometry.dispose(); sky.material.dispose(); texture.dispose();
+	assert.equal(sky.material.length, 6);
+	const geometry = sky.geometry, positions = geometry.attributes.position, uv = geometry.attributes.uv;
+	// Every geometric edge (including each face's diagonal) occurs in exactly two triangles.
+	const edges = new Map();
+	const key = i => `${positions.getX(i)},${positions.getY(i)},${positions.getZ(i)}`;
+	for (let i = 0; i < geometry.index.count; i += 3) {
+		const triangle = [0, 1, 2].map(j => geometry.index.getX(i + j));
+		for (let j = 0; j < 3; j++) {
+			const edge = [key(triangle[j]), key(triangle[(j + 1) % 3])].sort().join('|');
+			edges.set(edge, (edges.get(edge) ?? 0) + 1);
+		}
+	}
+	assert.ok([...edges.values()].every(count => count === 2));
+	// Top's (0,1) corner becomes (1,0); walls' (0,1) becomes (1,1).
+	assert.deepEqual([uv.getX(8), uv.getY(8)], [1, 0]);
+	assert.deepEqual([uv.getX(0), uv.getY(0)], [1, 1]);
+	assert.ok([...uv.array].every(value => value === 0 || value === 1));
+	for (const material of sky.material) {
+		assert.equal(material.map.wrapS, THREE.ClampToEdgeWrapping);
+		assert.equal(material.map.wrapT, THREE.ClampToEdgeWrapping);
+		assert.equal(material.map.generateMipmaps, false);
+		material.map.dispose(); material.dispose();
+	}
+	geometry.dispose(); texture.dispose();
 });
 
 test('render scheduler sleeps when idle, wakes for input, and stops on cancellation', () => {
