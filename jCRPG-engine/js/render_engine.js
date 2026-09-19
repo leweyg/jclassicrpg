@@ -159,7 +159,7 @@ export class SceneRenderer {
 		const stick = this._moveVector();
 		if (stick.x === 0 && stick.y === 0) return;
 		const forward = new THREE.Vector3(Math.sin(this._yaw), 0, Math.cos(this._yaw));
-		const right = new THREE.Vector3(Math.cos(this._yaw), 0, -Math.sin(this._yaw));
+		const right = new THREE.Vector3(-Math.cos(this._yaw), 0, Math.sin(this._yaw));
 		const speed = MOVE_SPEED * dt;
 		// stick.y > 0 means dragging downward, which should move backward.
 		this.camera.position.addScaledVector(forward, -stick.y * speed);
