@@ -67,6 +67,7 @@ async function main() {
 	const renderer = new SceneRenderer(canvas);
 	await renderer.buildForestClearing({ seed: sim.gameState.world.seed });
 	renderer.start();
+	window.__sceneRenderer = renderer; // debug hook for manual inspection in devtools
 }
 
 main();

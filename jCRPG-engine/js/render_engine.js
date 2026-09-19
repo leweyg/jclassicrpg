@@ -3,8 +3,10 @@
  *
  * First rendering pass: builds a three.js forest-clearing scene out of the
  * real jCRPG media/models assets (ground tiles + trees + bushes), a real sky
- * cubemap from media/textures/sky, and basic mouse-look. This is aimed at
- * getting visually close to the reference screenshot in
+ * cubemap from media/textures/sky, and touch/mouse dual-stick style controls
+ * (left half of the screen = move, right half = look; both work with mouse
+ * drag or one-or-more simultaneous touches via the Pointer Events API). This
+ * is aimed at getting visually close to the reference screenshot in
  * jCRPG-engine/save/game1_20100426-004720.124/screen1272235643909.jpg, not at
  * reproducing exact procedural world generation (that is a later pass).
  */
@@ -25,6 +27,10 @@ const VEGETATION_LIBRARY = [
 	{ dir: BUSH_DIR, file: "bush1.obj", kind: "bush", scale: [1.2, 2.0] },
 	{ dir: BUSH_DIR, file: "bush2.obj", kind: "bush", scale: [1.2, 2.0] },
 ];
+
+const MOVE_SPEED = 4; // world units/sec at full stick deflection
+const STICK_RADIUS = 55; // px a "move" stick drag is clamped to
+const LOOK_SENSITIVITY = 0.006;
 
 /** Small deterministic PRNG (mulberry32) so a given world seed always scatters vegetation the same way. */
 function mulberry32(seed) {
@@ -53,27 +59,111 @@ export class SceneRenderer {
 
 		this._yaw = Math.PI; // facing -Z into the scene
 		this._pitch = -0.08;
-		this._dragging = false;
-		this._lastX = 0;
-		this._lastY = 0;
-		this._bindLookControls();
+		this._lastFrameTime = null;
+
+		// Dual-stick touch/mouse input: pointerId -> { side: 'move'|'look', startX, startY, curX, curY }.
+		this._pointers = new Map();
+		this._joystickEl = this._createJoystickIndicator();
+		this._bindControls();
 
 		window.addEventListener("resize", () => this._onResize());
 		this._onResize();
 	}
 
-	_bindLookControls() {
-		const c = this.canvas;
-		c.addEventListener("pointerdown", (e) => { this._dragging = true; this._lastX = e.clientX; this._lastY = e.clientY; });
-		window.addEventListener("pointerup", () => { this._dragging = false; });
-		window.addEventListener("pointermove", (e) => {
-			if (!this._dragging) return;
-			const dx = e.clientX - this._lastX;
-			const dy = e.clientY - this._lastY;
-			this._lastX = e.clientX; this._lastY = e.clientY;
-			this._yaw -= dx * 0.005;
-			this._pitch = Math.max(-1.2, Math.min(1.2, this._pitch - dy * 0.005));
+	/** A small on-screen circle+knob shown under the finger/mouse while a "move" stick is active. */
+	_createJoystickIndicator() {
+		const base = document.createElement("div");
+		Object.assign(base.style, {
+			position: "fixed", width: "110px", height: "110px", marginLeft: "-55px", marginTop: "-55px",
+			borderRadius: "50%", border: "2px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.08)",
+			pointerEvents: "none", zIndex: "4", display: "none",
 		});
+		const knob = document.createElement("div");
+		Object.assign(knob.style, {
+			position: "absolute", left: "50%", top: "50%", width: "44px", height: "44px",
+			marginLeft: "-22px", marginTop: "-22px", borderRadius: "50%", background: "rgba(255,255,255,0.35)",
+		});
+		base.appendChild(knob);
+		base.knob = knob;
+		document.body.appendChild(base);
+		return base;
+	}
+
+	_bindControls() {
+		const c = this.canvas;
+		c.style.touchAction = "none";
+
+		const sideForClientX = (clientX) => {
+			const rect = c.getBoundingClientRect();
+			return clientX - rect.left < rect.width / 2 ? "move" : "look";
+		};
+
+		c.addEventListener("pointerdown", (e) => {
+			c.setPointerCapture?.(e.pointerId);
+			const side = sideForClientX(e.clientX);
+			this._pointers.set(e.pointerId, { side, startX: e.clientX, startY: e.clientY, curX: e.clientX, curY: e.clientY });
+			if (side === "move") {
+				this._joystickEl.style.left = `${e.clientX}px`;
+				this._joystickEl.style.top = `${e.clientY}px`;
+				this._joystickEl.style.display = "block";
+			}
+		});
+
+		const onMove = (e) => {
+			const p = this._pointers.get(e.pointerId);
+			if (!p) return;
+			if (p.side === "look") {
+				const dx = e.clientX - p.curX;
+				const dy = e.clientY - p.curY;
+				this._yaw -= dx * LOOK_SENSITIVITY;
+				this._pitch = Math.max(-1.2, Math.min(1.2, this._pitch - dy * LOOK_SENSITIVITY));
+			}
+			p.curX = e.clientX;
+			p.curY = e.clientY;
+			if (p.side === "move") {
+				const dx = p.curX - p.startX;
+				const dy = p.curY - p.startY;
+				const dist = Math.min(Math.hypot(dx, dy), STICK_RADIUS);
+				const angle = Math.atan2(dy, dx);
+				this._joystickEl.knob.style.left = `calc(50% + ${Math.cos(angle) * dist}px)`;
+				this._joystickEl.knob.style.top = `calc(50% + ${Math.sin(angle) * dist}px)`;
+			}
+		};
+		const endPointer = (e) => {
+			const p = this._pointers.get(e.pointerId);
+			if (p?.side === "move") this._joystickEl.style.display = "none";
+			this._pointers.delete(e.pointerId);
+		};
+
+		c.addEventListener("pointermove", onMove);
+		c.addEventListener("pointerup", endPointer);
+		c.addEventListener("pointercancel", endPointer);
+		c.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") endPointer(e); });
+	}
+
+	/** Reads the current "move" stick (if any) as a normalized {x, y} in [-1, 1] (x=strafe, y=forward). */
+	_moveVector() {
+		for (const p of this._pointers.values()) {
+			if (p.side !== "move") continue;
+			const dx = p.curX - p.startX;
+			const dy = p.curY - p.startY;
+			const dist = Math.hypot(dx, dy);
+			const clamped = Math.min(dist, STICK_RADIUS) / STICK_RADIUS;
+			if (dist < 1e-6) return { x: 0, y: 0 };
+			return { x: (dx / dist) * clamped, y: (dy / dist) * clamped };
+		}
+		return { x: 0, y: 0 };
+	}
+
+	_updateMovement(dt) {
+		const stick = this._moveVector();
+		if (stick.x === 0 && stick.y === 0) return;
+		const forward = new THREE.Vector3(Math.sin(this._yaw), 0, Math.cos(this._yaw));
+		const right = new THREE.Vector3(Math.cos(this._yaw), 0, -Math.sin(this._yaw));
+		const speed = MOVE_SPEED * dt;
+		// stick.y > 0 means dragging downward, which should move backward.
+		this.camera.position.addScaledVector(forward, -stick.y * speed);
+		this.camera.position.addScaledVector(right, stick.x * speed);
 	}
 
 	_onResize() {
@@ -206,7 +296,10 @@ export class SceneRenderer {
 	}
 
 	start() {
-		const loop = () => {
+		const loop = (now) => {
+			const dt = this._lastFrameTime == null ? 0 : Math.min((now - this._lastFrameTime) / 1000, 0.1);
+			this._lastFrameTime = now;
+			this._updateMovement(dt);
 			this._applyLook();
 			this.renderer.render(this.scene, this.camera);
 			requestAnimationFrame(loop);
