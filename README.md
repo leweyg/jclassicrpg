@@ -1,5 +1,5 @@
 # jclassicrpg
-Web port of jClassicRPG (version jCRPG-engine-fix20100607 )
+very much in progress port of jClassicRPG (version jCRPG-engine-fix20100607 )
 
 Play at: https://leweyg.github.io/jclassicrpg/play.html
 
@@ -7,6 +7,9 @@ Homepage: https://leweyg.github.io/jclassicrpg/
 
 # Web Port TODO List
 
+- [ ] Port over buildings, shrines, etc
+- [ ] Port over caves, and exportable buildings (procedural?)
+- [ ] Port over character interactions a
 - DONE: Basic systems, sim and playable world.
 - [x] Correct the cube-map sky’s X reflection while preserving Y.
 - [x] Click the nearby map to expand it; its 116-unit radius is twice the visible radius.
