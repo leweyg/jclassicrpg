@@ -1,0 +1,82 @@
+{
+  "description": "Ground-truth reference data mined directly from the engine's own example save file (jCRPG-engine/save/game1_20100426-004720.124/savegame.zip -> gamestate.xml, an XStream-serialized org.jcrpg.game.GameStateContainer). This is a real, fully generated instance of the default 'JClassicRPG' scenario at seed 0 — not a guess at the schema. It was captured a few turns into play (numberOfTurn=9), so party/engine fields reflect that mid-game moment, but the world geography/settlements/roads were fixed at New Game time and are authentic.",
+  "howExtracted": "unzip savegame.zip -> gamestate.xml (26MB XStream XML), then regex-extracted specific elements (this file is far too large to port/parse in full; treat it as a mineable source, not something to copy wholesale).",
+  "scenario": {
+    "name": "JClassicRPG",
+    "descText": "Default Scenario. Wandering around, discovering the world of jClassicRPG.",
+    "date": "2009",
+    "license": "LGPL",
+    "author": "Pal Zoltan Illes",
+    "version": "0.1",
+    "seed": 0,
+    "directoryPath": "../scenario/jclassicrpg"
+  },
+  "world": {
+    "realSizeX": 1600,
+    "realSizeY": 80,
+    "realSizeZ": 1600,
+    "magnification": 40,
+    "worldGroundLevel": 0,
+    "impliedWorldParams": "magnification=40 with realSize 1600x80x1600 implies WorldParams sizeX=40, sizeY=2, sizeZ=40 (realSize = size * magnification)"
+  },
+  "engineAtCapture": {
+    "numberOfTurn": 9,
+    "worldMeanTime": { "year": 0, "day": 0, "hour": 14, "minute": 30, "second": 20 },
+    "note": "Not the New Game starting time (that is hour=12, turn=0 per SaveLoadNewGame); this is a few turns later."
+  },
+  "playerPositionAtCapture": {
+    "viewPositionX": 800, "viewPositionY": 41, "viewPositionZ": 907,
+    "note": "Position after some turns of play, not the New Game spawn point."
+  },
+  "roadShrines": {
+    "javaType": "org.jcrpg.world.place.economic.residence.RoadShrine",
+    "totalRealInstances": 285,
+    "description": "RoadShrines mark road-network waypoints/shrines the new-game spawn snaps to the nearest of. Coordinates are [origoX, origoY, origoZ].",
+    "sampleCoords": [
+      [63, 40, 103], [182, 40, 103], [183, 40, 183], [222, 40, 182], [103, 40, 103],
+      [143, 40, 103], [62, 40, 342], [63, 40, 303], [63, 40, 303], [62, 40, 342]
+    ]
+  },
+  "settlementsDistricts": {
+    "javaType": "org.jcrpg.world.place.economic.population.SimpleDistrict",
+    "totalRealInstances": 13,
+    "description": "Populated settlement districts placed by EcologyGenerator/EconomyContainer; id encodes the population/ecology group and an instance number.",
+    "instances": [
+      { "id": "populationAnatipionCatchers#119", "origoX": 272, "origoY": 39, "origoZ": 592, "sizeX": 4, "sizeY": 3, "sizeZ": 8 },
+      { "id": "populationYetiHunters#34", "origoX": 40, "origoY": 39, "origoZ": 44, "sizeX": 36, "sizeY": 3, "sizeZ": 36 },
+      { "id": "populationBoarmanTribe#4", "origoX": 16, "origoY": 39, "origoZ": 300, "sizeX": 8, "sizeY": 3, "sizeZ": 20 },
+      { "id": "populationAnatipionCatchers#43", "origoX": 60, "origoY": 40, "origoZ": 464, "sizeX": 12, "sizeY": 2, "sizeZ": 16 },
+      { "id": "populationHumanCommoners#21", "origoX": 4, "origoY": 40, "origoZ": 884, "sizeX": 4, "sizeY": 3, "sizeZ": 4 },
+      { "id": "populationBoarmanTribe#23", "origoX": 0, "origoY": 41, "origoZ": 940, "sizeX": 20, "sizeY": 10, "sizeZ": 12 },
+      { "id": "populationBoarmanTribe#61", "origoX": 56, "origoY": 43, "origoZ": 864, "sizeX": 8, "sizeY": 7, "sizeZ": 12 },
+      { "id": "populationHumanCommoners#27", "origoX": 16, "origoY": 40, "origoZ": 1300, "sizeX": 8, "sizeY": 3, "sizeZ": 20 },
+      { "id": "populationHumanCommoners#364", "origoX": 844, "origoY": 40, "origoZ": 344, "sizeX": 20, "sizeY": 3, "sizeZ": 8 },
+      { "id": "populationBoarmanTribe#379", "origoX": 812, "origoY": 41, "origoZ": 820, "sizeX": 8, "sizeY": 11, "sizeZ": 20 },
+      { "id": "populationHumanCommoners#414", "origoX": 860, "origoY": 40, "origoZ": 760, "sizeX": 12, "sizeY": 3, "sizeZ": 40 },
+      { "id": "populationHumanCommoners#417", "origoX": 864, "origoY": 42, "origoZ": 860, "sizeX": 12, "sizeY": 8, "sizeZ": 12 },
+      { "id": "populationHumanCommoners#403", "origoX": 896, "origoY": 40, "origoZ": 380, "sizeX": 16, "sizeY": 4, "sizeZ": 12 }
+    ],
+    "observedPopulationGroups": ["populationHumanCommoners", "populationBoarmanTribe", "populationAnatipionCatchers", "populationYetiHunters"]
+  },
+  "characterBaseAttributes": {
+    "javaType": "org.jcrpg.world.ai.abs.attribute.FantasyAttributes",
+    "description": "Confirmed real default base attribute set for a new party (all start at 10).",
+    "attributes": ["CHARISMA", "PSYCHE", "CONSTITUTION", "KARMA", "PIETY", "CONCENTRATION", "SPEED", "STRENGTH"],
+    "defaultValue": 10
+  },
+  "characterBaseResistances": {
+    "javaType": "org.jcrpg.world.ai.abs.attribute.FantasyResistances",
+    "description": "Confirmed real default base resistance set (partial list observed; all start at 10).",
+    "resistancesObserved": ["RESIST_CHEMICAL", "RESIST_MENTAL", "RESIST_PIERCE"],
+    "defaultValue": 10
+  },
+  "recommendation": {
+    "runningOriginalEngine": "Not attempted: no JRE or Maven is installed in this environment, the project targets Java 1.5 with 15-year-old ardor3d/lwjgl/jinput native binaries (x86, not arm64/Apple Silicon compatible), and the actual scenario data files (worldparams.xml/ecology.xml) referenced by ScenarioLoader are not present in this repository anyway. Standing the original renderer back up would be a large yak-shave for uncertain payoff.",
+    "cachingFinding": "cache/{low,medium,high,low_png} only ever store converted 3D model geometry (see world_assets.json) — there is no cached *generated world* data there. The only real generated-world snapshot in this repo is this save file (gamestate.xml inside save/game1_20100426-004720.124/savegame.zip), which is why it was mined here instead.",
+    "suggestedNextSteps": [
+      "Treat this file's numbers as authentic reference/validation data for a from-scratch JS world generator, not something to load verbatim (the full XML is 26MB of XStream-specific serialization and not worth parsing in the browser).",
+      "Build the initial UI selection flow (scenario picker stub + character creation using characters.json races/professions/attributes) now — it does not depend on world-gen fidelity.",
+      "Port world generation conceptually (WorldParams-driven terrain/road/settlement placement) rather than transliterating the Java 1:1, using this file's real magnification/size/shrine-count/district-count as a sanity check for the JS port's output."
+    ]
+  }
+}
