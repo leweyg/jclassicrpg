@@ -1,5 +1,5 @@
 {
-  "description": "Non-world (engine/UI/audio) static assets referenced by the first-run game session: fonts, UI textures, and the audio channel setup. World geometry assets are catalogued separately in world_assets.json.",
+  "description": "Non-world (engine/UI/audio) static assets referenced by the first-run game session: fonts, UI textures, and the audio channel setup. World geometry assets are catalogued separately in world_assets.json; the full shader inventory (custom + third-party bundled) and the missing-external-media findings are catalogued in rendering_assets.json.",
   "fonts": [
     {
       "id": "vinque",
@@ -11,10 +11,13 @@
   ],
   "textureLibraries": {
     "jme": {
-      "path": "jCRPG-engine/src/main/resources/org/jcrpg/threed/jme",
-      "javaOwner": "org.jcrpg.threed (legacy jME2 renderer assets)",
-      "note": "Bundled shader/texture support resources for the jME2 rendering backend; not needed once the web port uses three.js/WebGL shaders instead."
+      "path": "jCRPG-engine/src/main/resources/org/jcrpg/threed/jme/effects/shader/",
+      "javaOwner": "org.jcrpg.threed.engine.effects (DepthOfFieldRenderPass, ModelGeometryBatch)",
+      "note": "This is actually the game's own custom GLSL shader source tree (DOF, shadow map, normal/parallax mapping, SSAO) despite the 'jme' folder name — see rendering_assets.json -> shaders.customInRepo for the full breakdown; not leftover jME2 binary assets."
     }
+  },
+  "uiAndPortraitImages": {
+    "status": "NOT present in this repository — see rendering_assets.json -> uiAndPortraitImages for the external '../media/{ui,portraits,textures/icons/objects}/' paths the engine expects."
   },
   "audio": {
     "javaOwner": "org.jcrpg.audio.AudioServer / org.jcrpg.audio.Channel",

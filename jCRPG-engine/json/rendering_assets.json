@@ -1,0 +1,144 @@
+{
+  "description": "Consolidated map of every rendering-related asset the original engine touches: shaders (custom and third-party), fonts, UI/portrait/icon images, and 3D model sources vs. their compiled cache form. Cross-references world_assets.json (model catalogue) and game_assets.json (fonts/audio/render settings).",
+  "keyFinding_externalMediaTree": {
+    "summary": "Most *visual* source assets (raw .obj/.mtl models, all textures, UI art, portraits, icons) are NOT in this repository. They live in a sibling '../media/' directory (same pattern as the missing '../scenario/jclassicrpg' scenario data found earlier) that was never checked in here.",
+    "evidence": [
+      "org.jcrpg.ui.UIBase registers resource locators pointing at ../media/ui/, ../media/portraits/, ../media/textures/icons/objects/ for UI art, character portraits, and inventory/item icons respectively.",
+      "org.jcrpg.apps.BinaryConverter (the tool that produced jCRPG-engine/cache/*) reads raw .obj files by recursively scanning modelsDir='../media/' and reads their textures from ../media/textures/models/<quality>/, ../media/textures/models/common/, ../media/textures/orbiters/, ../media/textures/flare/.",
+      "org.jcrpg.threed.engine.TrimeshGeometryBatch.shaderDirectory = '../media/shaders/' — an additional (apparently unused/legacy) external shader lookup path, separate from the in-repo custom shaders and the ones bundled in the ardor3d jars."
+    ],
+    "implication": "The web port cannot recover original textures, UI art, or portrait images from this repo alone; those must be re-created/re-sourced, or obtained from a copy of the original './media' tree if the user has one, or substituted with new web-native art."
+  },
+  "modelCacheFormatCorrection": {
+    "note": "Earlier cataloguing (world_assets.json) assumed jCRPG-engine/cache/*.obj were plain-text Wavefront OBJ. Verified by inspection they are NOT: each file is gzip-compressed, and decompresses to a binary Ardor3D 'BinaryExporter' scene-graph dump (serialized Spatial/TextureState/ColorRGBA/etc. — visible strings like 'com.ardor3d.image.Texture2D', 'com.ardor3d.math.ColorRGBA').",
+    "producedBy": "org.jcrpg.apps.BinaryConverter: ObjImporter loads a real .obj from ../media/**, builds an Ardor3D Spatial, then BinaryExporter.save() serializes the whole scenegraph (geometry + material/texture state) which is written to cache/<TEXDIR>/<flattened-path>.obj and is gzip-compressed on disk.",
+    "namingConvention": "Cache filename = the source file's path relative to '../media/' with '/' replaced by '_', extension kept as .obj. E.g. cache 'models_external_House_01_wall.obj' <- source '../media/models/external/House_01_wall.obj'; cache 'sides_maze_wall_thick.obj' <- source '../media/sides/maze_wall_thick.obj' (top-level 'sides' tree, not under 'models').",
+    "webPortImplication": [
+      "Real per-vertex mesh data (vertex/face/normal/uv counts, material assignments) cannot be read directly as text from these cache files.",
+      "Options to recover real geometry: (a) locate the original '../media' source tree with raw .obj/.mtl files (preferred — trivial to parse as plain Wavefront OBJ), (b) write a small Ardor3D BinaryExporter-format reader (gzip -> custom binary chunk parser) to pull geometry back out of cache/*, or (c) treat these as opaque and author fresh placeholder/replacement meshes for the web port.",
+      "Given (a) is unavailable in this repo and (b) is a non-trivial reverse-engineering effort, the pragmatic default for early web-port milestones is (c): simple placeholder primitives (boxes for buildings, billboards/cones for trees, etc.) keyed by the same category names in world_assets.json, upgraded later if the real media tree is found."
+    ]
+  },
+  "shaders": {
+    "customInRepo": {
+      "basePath": "jCRPG-engine/src/main/resources/org/jcrpg/threed/jme/effects/shader/",
+      "javaLoaders": ["org.jcrpg.threed.engine.effects.DepthOfFieldRenderPass", "org.jcrpg.threed.engine.ModelGeometryBatch"],
+      "families": [
+        {
+          "id": "depthOfField",
+          "configFlags": ["DOF_EFFECT", "DOF_DETAILED"],
+          "files": ["dof_fullscreen.vert", "dof_fullscreen.frag", "dof_1_depth.vert", "dof_1_depth.frag", "dof_1_depth_nv.vert", "dof_1_depth_nv.frag", "dof_1_depth_3.frag", "dof_2_gauss.frag", "dof_3_dof.frag", "dof_3_dof_2.frag", "dof_3_dof_3.frag", "dof_simple.vert"],
+          "description": "Multi-pass depth-of-field: render depth buffer (1_depth / 1_depth_nv variants for nvidia-specific depth fetch), gaussian blur (2_gauss), then combine near/far blur with sharp focus (3_dof variants) into a fullscreen composite."
+        },
+        {
+          "id": "shadowMap",
+          "configFlags": ["SHADOWS", "RENDER_SHADOW_DISTANCE"],
+          "files": ["shadowMap.vert", "shadowMap.frag"],
+          "description": "Custom project-space shadow mapping shader (distinct from Ardor3D's bundled PSSM shadow shaders below; used by the older jME2-based render path)."
+        },
+        {
+          "id": "normalMappingAndParallax",
+          "configFlags": ["NORMALMAP_ENABLED", "NORMALMAP_DETAILED"],
+          "files": ["normalmap/normalmap.vert", "normalmap/normalmap.frag", "normalmap/normalmap_pointlight.vert", "normalmap/parallax.vert", "normalmap/parallax.frag", "normalmap/parallax2.vert", "normalmap/parallax2.frag", "normalmap/parallax_pointlight.vert", "normalmap/parallax_pointlight.frag"],
+          "description": "Per-pixel normal mapping and parallax-mapping variants (plain + point-light variants) used for detailed ground/wall/model surfaces; referenced in code as 'org/jcrpg/threed/jme/effects/shader/normalmap/parallax'."
+        },
+        {
+          "id": "ssao",
+          "configFlags": [],
+          "files": ["SSAO/PreRenderDepth_vp.glsl", "SSAO/PreRenderDepth_fp.glsl", "SSAO/PreRender_vp.glsl", "SSAO/PreRender_fp.glsl", "SSAO/SSAO_vp.glsl", "SSAO/SSAO_fp.glsl", "SSAO/cSSAO_fp.glsl", "SSAO/BlurX_vp.glsl", "SSAO/BlurX_fp.glsl", "SSAO/BlurY_vp.glsl", "SSAO/BlurY_fp.glsl", "SSAO/Texturing_vp.glsl", "SSAO/Texturing_fp.glsl"],
+          "description": "A full screen-space ambient occlusion pipeline (pre-render depth pass, SSAO pass + a 'cSSAO' cone/color variant, separable X/Y blur, final texturing composite). Present in the resource tree but not confirmed wired into an active Java render pass in the packages searched — likely an experimental/unused feature."
+        }
+      ]
+    },
+    "bundledInLibraries": {
+      "description": "Real GLSL shader source text bundled directly inside the third-party jars in jCRPG-engine/lib/ (plain resource files inside the jar's zip structure — extractable with a plain unzip, no decompilation needed).",
+      "families": [
+        {
+          "id": "water",
+          "jar": "jCRPG-engine/lib/ardor3d/ardor3d-effects-0.7-SNAPSHOT.jar",
+          "javaOwner": "org.jcrpg.threed.engine.effects.WaterRenderPass",
+          "configFlags": ["WATER_SHADER", "WATER_DETAILED"],
+          "files": ["com/ardor3d/extension/effect/water/flatwatershader.vert", "com/ardor3d/extension/effect/water/flatwatershader.frag", "com/ardor3d/extension/effect/water/flatwatershader_refraction.vert", "com/ardor3d/extension/effect/water/flatwatershader_refraction.frag", "com/ardor3d/extension/effect/water/projectedwatershader.vert", "com/ardor3d/extension/effect/water/projectedwatershader.frag", "com/ardor3d/extension/effect/water/projectedwatershader_refraction.vert", "com/ardor3d/extension/effect/water/projectedwatershader_refraction.frag"],
+          "description": "Flat vs. projected-grid water, each with a plain and a refraction-enabled variant; WaterRenderPass.simpleShaderStr/projectedShaderStr pick which pair loads at runtime."
+        },
+        {
+          "id": "bloom",
+          "jar": "jCRPG-engine/lib/ardor3d/ardor3d-effects-0.7-SNAPSHOT.jar",
+          "javaOwner": "org.jcrpg.threed.engine.effects.ThrottledQuadRenderPass",
+          "configFlags": ["BLOOM_EFFECT"],
+          "files": ["com/ardor3d/extension/effect/bloom/bloom_extract.vert", "com/ardor3d/extension/effect/bloom/bloom_extract.frag", "com/ardor3d/extension/effect/bloom/bloom_blur.vert", "com/ardor3d/extension/effect/bloom/bloom_blur.frag", "com/ardor3d/extension/effect/bloom/bloom_blur_horizontal5.frag", "com/ardor3d/extension/effect/bloom/bloom_blur_horizontal7.frag", "com/ardor3d/extension/effect/bloom/bloom_blur_horizontal9.frag", "com/ardor3d/extension/effect/bloom/bloom_blur_vertical5.frag", "com/ardor3d/extension/effect/bloom/bloom_blur_vertical5_down.frag", "com/ardor3d/extension/effect/bloom/bloom_blur_vertical7.frag", "com/ardor3d/extension/effect/bloom/bloom_blur_vertical9.frag", "com/ardor3d/extension/effect/bloom/bloom_final.vert", "com/ardor3d/extension/effect/bloom/bloom_final.frag"],
+          "description": "Bright-pass extract -> separable gaussian blur (5/7/9-tap horizontal+vertical variants, with a downsampled vertical5 pass) -> final additive composite."
+        },
+        {
+          "id": "pssmShadows",
+          "jar": "jCRPG-engine/lib/ardor3d/ardor3d-effects-0.7-SNAPSHOT.jar",
+          "javaOwner": "com.ardor3d.extension.shadow.map (used by the newer Ardor3D-based render path)",
+          "configFlags": ["SHADOWS"],
+          "files": ["com/ardor3d/extension/shadow/map/pssm.vert", "com/ardor3d/extension/shadow/map/pssm.frag", "com/ardor3d/extension/shadow/map/pssmDebug.vert", "com/ardor3d/extension/shadow/map/pssmDebug.frag"],
+          "description": "Parallel-Split Shadow Maps (cascaded shadow maps) plus a debug-visualization variant."
+        },
+        {
+          "id": "terrainClipmap",
+          "jar": "jCRPG-engine/lib/ardor3d/ardor3d-effects-0.7-SNAPSHOT.jar",
+          "javaOwner": "org.jcrpg.threed.core.texture.GeometryClipmapTerrain, org.jcrpg.threed.core.TexturedGeometryClipmapTerrain",
+          "configFlags": ["TEXTURE_SPLATTING", "SECONDARY_TEXTURES"],
+          "files": ["com/ardor3d/extension/terrain/geometryClipmapShader.vert", "com/ardor3d/extension/terrain/geometryClipmapShader.frag", "com/ardor3d/extension/terrain/geometryClipmapShaderSpecular.vert", "com/ardor3d/extension/terrain/geometryClipmapShaderSpecular.frag", "com/ardor3d/extension/terrain/texturedGeometryClipmapShader.vert", "com/ardor3d/extension/terrain/texturedGeometryClipmapShader.frag", "com/ardor3d/extension/effect/texture/textureClipmapShader.vert", "com/ardor3d/extension/effect/texture/textureClipmapShader.frag"],
+          "description": "Geometry clipmap terrain LOD rendering (with a specular variant) plus a generic texture-clipmap shader used for large splatted ground textures."
+        },
+        {
+          "id": "skeletalSkinning",
+          "jar": "jCRPG-engine/lib/ardor3d/ardor3d-animation-0.7-SNAPSHOT.jar",
+          "javaOwner": "not directly referenced under org.jcrpg.* in this codebase search — likely unused (engine primarily uses billboard/rigid models, see world_assets.json)",
+          "configFlags": [],
+          "files": ["com/ardor3d/extension/animation/skeletal/skinning_gpu.vert", "com/ardor3d/extension/animation/skeletal/skinning_gpu.frag", "com/ardor3d/extension/animation/skeletal/skinning_gpu_mat4.vert"],
+          "description": "GPU vertex-skinning shaders for skeletal animation, part of the ardor3d-animation extension the game depends on but may not exercise for its (mostly static/billboard) creature and humanoid models."
+        },
+        {
+          "id": "legacyJmeShadowMap",
+          "jar": "jCRPG-engine/lib/jme2/jme.jar",
+          "javaOwner": "legacy jME2 render path (superseded by Ardor3D pssm shaders above)",
+          "configFlags": [],
+          "files": ["com/jme/renderer/pass/shadowMap.vert", "com/jme/renderer/pass/shadowMap.frag"],
+          "description": "Old jME2 shadow-map shader, kept only because jme.jar is still a dependency; not the shader family actually driving current SHADOWS behavior (that's the in-repo custom shadowMap.* or Ardor3D pssm.*)."
+        }
+      ]
+    },
+    "webPort": {
+      "approach": "Port each family to WebGL2/GLSL ES via three.js ShaderMaterial/RawShaderMaterial: water and bloom map almost 1:1 to common three.js postprocessing passes (three/examples/jsm/postprocessing); PSSM shadows can be replaced wholesale by three.js's built-in CSM (cascaded shadow maps) support; DOF and SSAO likewise have off-the-shelf three.js passes and don't need the original GLSL ported verbatim.",
+      "targetFiles": ["jCRPG-engine/js/render_engine.js"]
+    }
+  },
+  "fonts": {
+    "customInRepo": {
+      "id": "vinque",
+      "files": ["jCRPG-engine/src/main/resources/org/jcrpg/ui/vinque.fnt", "jCRPG-engine/src/main/resources/org/jcrpg/ui/vinque_0.png"],
+      "format": "BMFont (Angel Code) — .fnt descriptor + glyph atlas PNG",
+      "javaOwner": "org.jcrpg.ui.FontUtils / org.jcrpg.ui.BasicText via threed.BMFontLoader",
+      "usage": "The game's actual in-scene UI/HUD text font."
+    },
+    "bundledFallback": {
+      "id": "arial-24-bold-regular",
+      "jar": "jCRPG-engine/lib/ardor3d/ardor3d-core-0.7-SNAPSHOT.jar",
+      "files": ["com/ardor3d/ui/text/arial-24-bold-regular.fnt", "com/ardor3d/ui/text/arial-24-bold-regular_00.png"],
+      "format": "BMFont, same format as vinque",
+      "usage": "Ardor3D's own default UI text font; present as a library fallback, not the game's chosen font."
+    },
+    "legacy": {
+      "id": "jme-defaultfont",
+      "jar": "jCRPG-engine/lib/jme2/jme.jar",
+      "files": ["com/jme/app/defaultfont.tga"],
+      "usage": "jME2's built-in default font texture; leftover from the older render path, not used by the current UI (which uses vinque)."
+    },
+    "webPort": "Convert vinque.fnt/png (or re-render at higher res) to a standard BMFont-compatible web renderer, or use it as an MSDF font source; no external art needed here since it's already in-repo."
+  },
+  "uiAndPortraitImages": {
+    "status": "NOT present in this repository",
+    "javaOwner": "org.jcrpg.ui.UIBase",
+    "resourceLocatorPaths": {
+      "RES_TYPE_UI": "../media/ui/ (.dds/.png/.jpg)",
+      "RES_TYPE_CHARS (portraits)": "../media/portraits/ (.dds/.png/.jpg) — matches pictureId values seen in starter_party.json e.g. 'francesco_hayez1.png'",
+      "RES_TYPE_GAME_2D (item/inventory icons)": "../media/textures/icons/objects/ (.dds/.png/.jpg) — matches getIconFilePath() calls in UIImageCache usages across ui/window/interaction/*"
+    },
+    "webPort": "These need to be re-sourced (original '../media' tree, if the user has an archived copy) or re-created for the web port; UIOverlay (jCRPG-engine/js/ui_overlay.js) should key its image lookups the same way (by RES_TYPE + relative filename) so a future asset pack can drop straight in."
+  }
+}

@@ -6,7 +6,7 @@
  * port logic lives in game_static_core.js and its sibling modules.
  */
 
-import { GameStaticCore, worldsRef, worldAssetsRef, charactersRef, gameAssetsRef } from "./game_static_core.js";
+import { GameStaticCore, worldsRef, worldAssetsRef, charactersRef, gameAssetsRef, renderingAssetsRef } from "./game_static_core.js";
 
 function renderSystemCard(system) {
 	const card = document.createElement("section");
@@ -132,11 +132,12 @@ function appendKeyValues(parent, label, obj) {
 }
 
 async function renderFirstWorldSummary(container) {
-	const [worlds, assets, characters, gameAssets] = await Promise.all([
+	const [worlds, assets, characters, gameAssets, rendering] = await Promise.all([
 		worldsRef.load(),
 		worldAssetsRef.load(),
 		charactersRef.load(),
 		gameAssetsRef.load(),
+		renderingAssetsRef.load(),
 	]);
 
 	const boot = makeSection("First World — Boot Sequence");
@@ -189,6 +190,36 @@ async function renderFirstWorldSummary(container) {
 	appendKeyValues(gameAssetsSection, "Audio settings", gameAssets.audio.settings);
 	appendKeyValues(gameAssetsSection, "Render settings (sample)", gameAssets.renderSettings.selected);
 	container.appendChild(gameAssetsSection);
+
+	const renderingSection = makeSection("Rendering & Asset Pipeline");
+	const mediaNote = document.createElement("p");
+	mediaNote.className = "web-approach";
+	mediaNote.textContent = `Key finding: ${rendering.keyFinding_externalMediaTree.summary}`;
+	renderingSection.appendChild(mediaNote);
+	const cacheNote = document.createElement("p");
+	cacheNote.className = "web-approach";
+	cacheNote.textContent = rendering.modelCacheFormatCorrection.note;
+	renderingSection.appendChild(cacheNote);
+	appendChips(
+		renderingSection,
+		"Custom shaders (in-repo)",
+		rendering.shaders.customInRepo.families.map((f) => `${f.id} (${f.files.length})`)
+	);
+	appendChips(
+		renderingSection,
+		"Bundled library shaders (Ardor3D/jME jars)",
+		rendering.shaders.bundledInLibraries.families.map((f) => `${f.id} (${f.files.length})`)
+	);
+	appendChips(renderingSection, "Fonts", [
+		rendering.fonts.customInRepo.id + " (in-repo)",
+		rendering.fonts.bundledFallback.id + " (library fallback)",
+		rendering.fonts.legacy.id + " (unused legacy)",
+	]);
+	const uiNote = document.createElement("p");
+	uiNote.className = "web-approach";
+	uiNote.textContent = `UI/portrait/icon images: ${rendering.uiAndPortraitImages.status}.`;
+	renderingSection.appendChild(uiNote);
+	container.appendChild(renderingSection);
 }
 
 async function main() {

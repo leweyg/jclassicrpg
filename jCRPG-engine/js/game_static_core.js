@@ -20,6 +20,9 @@ export const WORLDS_DATA_URL = "jCRPG-engine/json/worlds.json";
 export const WORLD_ASSETS_DATA_URL = "jCRPG-engine/json/world_assets.json";
 export const CHARACTERS_DATA_URL = "jCRPG-engine/json/characters.json";
 export const GAME_ASSETS_DATA_URL = "jCRPG-engine/json/game_assets.json";
+export const RENDERING_ASSETS_DATA_URL = "jCRPG-engine/json/rendering_assets.json";
+export const STARTER_PARTY_DATA_URL = "jCRPG-engine/json/starter_party.json";
+export const WORLD_SEED0_SAMPLE_DATA_URL = "jCRPG-engine/json/world_seed0_sample.json";
 
 /**
  * Loads and caches the static core data JSON (subsystem catalogue).
@@ -75,6 +78,9 @@ export const worldsRef = new StaticJsonRef(WORLDS_DATA_URL);
 export const worldAssetsRef = new StaticJsonRef(WORLD_ASSETS_DATA_URL);
 export const charactersRef = new StaticJsonRef(CHARACTERS_DATA_URL);
 export const gameAssetsRef = new StaticJsonRef(GAME_ASSETS_DATA_URL);
+export const renderingAssetsRef = new StaticJsonRef(RENDERING_ASSETS_DATA_URL);
+export const starterPartyRef = new StaticJsonRef(STARTER_PARTY_DATA_URL);
+export const worldSeed0SampleRef = new StaticJsonRef(WORLD_SEED0_SAMPLE_DATA_URL);
 
 /*
  * Below: one stub class per major subsystem, named after and reflecting the

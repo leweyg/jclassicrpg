@@ -1,14 +1,15 @@
 {
-  "description": "Catalogue of the original engine's pre-cached 3D model assets (Wavefront .obj) used to render the first world: terrain/ground tiles, vegetation, buildings, humanoids, fauna, monsters and items. Sourced from jCRPG-engine/cache/medium (also mirrored at lower/higher detail in cache/low, cache/low_png, cache/high). These are the geometry building blocks GeoTileLoader/ModelLoader/CubeInterpreter assemble into rendered scenes.",
+  "description": "Catalogue of the original engine's pre-cached 3D model assets used to render the first world: terrain/ground tiles, vegetation, buildings, humanoids, fauna, monsters and items. Sourced from jCRPG-engine/cache/medium (also mirrored at lower/higher detail in cache/low, cache/low_png, cache/high). These are the geometry building blocks GeoTileLoader/ModelLoader/CubeInterpreter assemble into rendered scenes.",
+  "formatCorrection": "IMPORTANT: despite the .obj extension, these files are NOT plain-text Wavefront OBJ. Verified by inspection: each is gzip-compressed and decompresses to a binary Ardor3D BinaryExporter scene-graph dump (produced by org.jcrpg.apps.BinaryConverter from real .obj sources under an external '../media/' tree that is not part of this repo). See jCRPG-engine/json/rendering_assets.json -> modelCacheFormatCorrection for the full explanation, the cache filename<->source path naming convention, and recovery options.",
   "sourceDirs": {
     "medium": "jCRPG-engine/cache/medium",
     "low": "jCRPG-engine/cache/low",
     "lowPng": "jCRPG-engine/cache/low_png",
     "high": "jCRPG-engine/cache/high"
   },
-  "namingConvention": "models_<category>_<subcategory?>_<name>.obj — category maps to a Java package/type under org.jcrpg.world or org.jcrpg.threed; 'sides_*.obj' are Side/Cube face geometry used directly by the space-grid interpreter.",
+  "namingConvention": "models_<category>_<subcategory?>_<name>.obj — category maps to a Java package/type under org.jcrpg.world or org.jcrpg.threed; 'sides_*.obj' are Side/Cube face geometry used directly by the space-grid interpreter. (This is also literally the flattened relative path under the missing '../media/' source tree — see rendering_assets.json.)",
   "webPort": {
-    "approach": "Convert/re-export .obj assets to glTF (or load .obj directly via three.js OBJLoader) and reference them from this catalogue by category so RenderEngine (jCRPG-engine/js/render_engine.js) can batch-load per biome/scene.",
+    "approach": "Real per-vertex geometry is not recoverable as plain text from these cache files (see formatCorrection). For early milestones, author placeholder primitives per category (boxes for buildings, billboard quads for trees/bushes, capsules for creatures) keyed by these same category/asset ids, and swap in real geometry later if the original '../media' source or a binary-format reader becomes available.",
     "loaderNote": "ModelLoader/ModelPool pooled and instanced these meshes for performance in Java; the web port should use three.js InstancedMesh for repeated props (trees, rocks, bushes)."
   },
   "categories": [
