@@ -1,0 +1,83 @@
+Exported 6 layers, 8 climate belts, 356 landmarks; 262,618 bytes
+Generating saved districts and semantic volumes…
+Baking natural cave components and entrance links…
+Writing 2,500 chunks (1166 structures; 190935 cave cells)…
+{
+  "formatVersion": 1,
+  "generatorVersion": "web-baked-v1",
+  "sourceSha256": "cfb2c978d58ada22e2471a4e5995fad4e195210b75621dabcd099a329eed960a",
+  "districts": 208,
+  "structures": 1166,
+  "dungeons": 25,
+  "caveCells": 190935,
+  "caveEntrances": 489,
+  "chunks": 2500,
+  "regions": 100,
+  "bytes": {
+    "raw": 209841373,
+    "gzip": 18763766,
+    "brotli": 15926295
+  },
+  "locationGzipBytes": {
+    "spawn": 133069,
+    "town": 86085,
+    "dungeon": 128929,
+    "cave": 107844
+  },
+  "validation": {
+    "semanticBounds": true,
+    "uniqueStructureIds": true,
+    "mazeConnectivity": true,
+    "knownAssets": true,
+    "javaParity": "24 hash vectors and 80 complete maze grids match unmodified Java; district/house/cave cube parity not yet certified",
+    "mobileGPU": "requires device profiling"
+  },
+  "deviations": [
+    "Existing web terrain/water adapter; not exact Java surface parity.",
+    "Normalized house perimeter corners and face conventions.",
+    "Cave entrance links use web surface slopes; occupancy is not carved.",
+    "Cave floors use bounded two-cell presentation with closed boundary walls.",
+    "Roof pieces are calibrated to closed semantic ceilings.",
+    "Hut/igloo/brick variants use assembled semantic walls and distinct textured roofs; whole-building legacy mesh parity remains unverified.",
+    "Shrines are visible scenery; shrine gameplay is not implemented."
+  ]
+}
+✔ baked data is usable from a plain static file host and matches manifest hashes (59.436042ms)
+✔ 1000 chunk moves retain 25 slots, reuse buffers, wrap content and bound cache (6540.921584ms)
+✔ late completion after a teleport cannot commit stale data (22.787625ms)
+✔ missing collision fails closed and retry recovers (13.073042ms)
+✔ a baked house doorway admits traversal and its adjacent wall rejects it (70.903125ms)
+✔ cave portal destination has floor and absent cave cells are impassable (23.697541ms)
+✔ overlapping teleports only commit the latest destination (6.961333ms)
+✔ one-chunk movement fetches exactly five new chunks and repeat visits hit bounded cache (12.789083ms)
+✔ multi-floor stairs have distinct up/down landings and retain the correct floor (41.427791ms)
+✔ map includes unimplemented saved locations and retains unknown/future marker types (1.028167ms)
+✔ nearby map doubles sight radius and projects markers across the globe seam (0.056458ms)
+✔ sky is a closed cube with aligned geometry and calibrated face UVs (0.882417ms)
+✔ render scheduler sleeps when idle, wakes for input, and stops on cancellation (0.200625ms)
+✔ normalizer resolves all saved districts, templates, NPC ownership and exact longs (1.080292ms)
+✔ maze recursion preserves walls/doors, symmetric edges and connected interiors (18.659917ms)
+✔ grown layouts use saved tier, exact seed, fixed overrides and rejected water blocks (4.131917ms)
+✔ all 25 saved dungeons have stable output and reachable storage (12.629625ms)
+✔ house doors pass, windows block, corners close, stairs have landings (0.282292ms)
+✔ cave occupancy follows density polarity and baked portals use real open components (1.915042ms)
+✔ save deltas are version checked, portable and independent of generated chunks (0.194625ms)
+✔ scene contract is canonical and rejects invalid transforms/world identity (0.200917ms)
+✔ Java golden vectors: exact signed hash values and every byte of 80 maze grids (2.215833ms)
+✔ nested scene transforms match Three.js XYZ composition and degree precedence (25.300291ms)
+✔ every dungeon shell entrance reaches every generated chest (20.5705ms)
+✔ frozen export covers the saved world and captured spawn, including landmarks beyond the sample (1.571792ms)
+✔ Java hash preserves known signed-overflow values (0.052042ms)
+✔ chunk crossings recycle only the departing row and retain every buffer (1071.366834ms)
+✔ revisited areas and wrapped coordinates reproduce identical terrain and vegetation (3.407417ms)
+✔ neighboring chunk edges agree, including world seam (3.287833ms)
+✔ party movement preserves position identity, follows terrain and wraps at world edges (1.402167ms)
+✔ left swipe moves camera-left at every heading and stick/look scratch objects are reused (2.443791ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6852.774833

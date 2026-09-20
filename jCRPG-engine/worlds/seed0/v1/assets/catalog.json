@@ -1,0 +1,394 @@
+{
+  "wall": {
+    "source": "media/models/external/House_01_wall.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.05,
+      0.5,
+      1,
+      0.05
+    ],
+    "texture": "Wall_Tex_Bake_01.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "window": {
+    "source": "media/models/external/House_01_window.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.05,
+      0.5,
+      1,
+      0.05
+    ],
+    "texture": "Window_Tex_Bake_03.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "roofCorner": {
+    "source": "media/models/external/House_01_roof_corner.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.5,
+      0.5,
+      0.55,
+      0.5
+    ],
+    "texture": "RoofCorner_Tex_Bake_01.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "roofEdge": {
+    "source": "media/models/external/House_01_roof_straight.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.5,
+      0.5,
+      0.55,
+      0.5
+    ],
+    "texture": "Roof_Tex_Bake_01.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "mazeWall": {
+    "source": "media/sides/maze_wall_thick.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.06,
+      0.5,
+      1,
+      0.06
+    ],
+    "texture": "maze_stone_2.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "caveWall": {
+    "source": "media/models/ground/wall_cave.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.08,
+      0.5,
+      1,
+      0.08
+    ],
+    "texture": "cave_wall.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "pillar": {
+    "source": "media/models/external/maze/NormalTest_Pillar_01.obj",
+    "bounds": [
+      -0.11,
+      0,
+      -0.11,
+      0.11,
+      2,
+      0.11
+    ],
+    "texture": "maze_stone_2.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "chest": {
+    "source": "media/models/item/storage/chest.obj",
+    "bounds": [
+      -0.275,
+      0,
+      -0.2,
+      0.275,
+      0.38,
+      0.2
+    ],
+    "texture": "Wood_Tex_General.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "barrel": {
+    "source": "media/models/item/storage/barrel.obj",
+    "bounds": [
+      -0.175,
+      0,
+      -0.175,
+      0.175,
+      0.5,
+      0.175
+    ],
+    "texture": "barrel.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "crate": {
+    "source": "media/models/item/storage/crate.obj",
+    "bounds": [
+      -0.2,
+      0,
+      -0.2,
+      0.2,
+      0.4,
+      0.2
+    ],
+    "texture": "crate.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "basket": {
+    "source": "media/models/item/storage/basket.obj",
+    "bounds": [
+      -0.175,
+      0,
+      -0.175,
+      0.175,
+      0.3,
+      0.175
+    ],
+    "texture": "LM_Basket_02.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "bookcase": {
+    "source": "media/models/inside/furniture/bookcase.obj",
+    "bounds": [
+      -0.325,
+      0,
+      -0.09,
+      0.325,
+      0.8,
+      0.09
+    ],
+    "texture": "Wood_Tex_General.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "caveEntrance": {
+    "source": "media/models/ground/cave_entrance.obj",
+    "bounds": [
+      -1,
+      0,
+      -0.5,
+      1,
+      1.8,
+      0.5
+    ],
+    "texture": "cave_ent.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "shrine": {
+    "source": "media/models/external/shrine/shrine1.obj",
+    "bounds": [
+      -1.5,
+      0,
+      -1.5,
+      1.5,
+      2,
+      1.5
+    ],
+    "texture": "shrine1.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "brickWall": {
+    "source": "media/models/external/House_01_wall.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.05,
+      0.5,
+      1,
+      0.05
+    ],
+    "texture": "desertbrick1.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "hutWall": {
+    "source": "media/models/external/House_01_wall.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.05,
+      0.5,
+      1,
+      0.05
+    ],
+    "texture": "hut.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "iglooWall": {
+    "source": "media/models/external/House_01_wall.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.05,
+      0.5,
+      1,
+      0.05
+    ],
+    "texture": "igloo.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "sandWall": {
+    "source": "media/models/external/House_01_wall.obj",
+    "bounds": [
+      -0.5,
+      0,
+      -0.05,
+      0.5,
+      1,
+      0.05
+    ],
+    "texture": "sandigloo1.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "floor": {
+    "source": "procedural",
+    "bounds": [
+      -0.5,
+      0,
+      -0.5,
+      0.5,
+      0,
+      0.5
+    ],
+    "texture": "Wood_Tex_General.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "stone": {
+    "source": "procedural",
+    "bounds": [
+      -0.5,
+      0,
+      -0.5,
+      0.5,
+      0,
+      0.5
+    ],
+    "texture": "maze_stone_2.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "street": {
+    "source": "procedural",
+    "bounds": [
+      -0.5,
+      0,
+      -0.5,
+      0.5,
+      0,
+      0.5
+    ],
+    "texture": "stone.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "caveFloor": {
+    "source": "procedural",
+    "bounds": [
+      -0.5,
+      0,
+      -0.5,
+      0.5,
+      0,
+      0.5
+    ],
+    "texture": "cave_ground.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "roof": {
+    "source": "procedural",
+    "bounds": [
+      -0.5,
+      0,
+      -0.5,
+      0.5,
+      0,
+      0.5
+    ],
+    "texture": "Roof_Tex_Bake_01.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "iglooRoof": {
+    "source": "procedural",
+    "bounds": [
+      -2,
+      0,
+      -2,
+      2,
+      1,
+      2
+    ],
+    "texture": "igloo.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "sandRoof": {
+    "source": "procedural",
+    "bounds": [
+      -2,
+      0,
+      -2,
+      2,
+      1,
+      2
+    ],
+    "texture": "sandigloo1.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "hutRoof": {
+    "source": "procedural",
+    "bounds": [
+      -2,
+      0,
+      -2,
+      2,
+      1,
+      2
+    ],
+    "texture": "hut.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "door": {
+    "source": "procedural",
+    "bounds": [
+      -0.5,
+      0,
+      -0.07,
+      0.5,
+      1,
+      0.07
+    ],
+    "texture": "Wood_Tex_General.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  },
+  "stairs": {
+    "source": "procedural",
+    "bounds": [
+      -0.5,
+      0,
+      -0.5,
+      0.5,
+      1,
+      0.5
+    ],
+    "texture": "Wood_Tex_General.png",
+    "axis": "Y",
+    "anchor": "floor-center"
+  }
+}

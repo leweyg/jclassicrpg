@@ -7,8 +7,8 @@ Homepage: https://leweyg.github.io/jclassicrpg/
 
 # Web Port TODO List
 
-- [ ] Port over buildings, shrines, etc
-- [ ] Port over caves, and exportable buildings (procedural?)
+- [x] Add explorable baked buildings, streets, and shrine scenery (web-v1)
+- [x] Add baked natural caves, procedural labyrinths, and exportable JSON scenes (web-v1)
 - [ ] Port over character interactions a
 - DONE: Basic systems, sim and playable world.
 - [x] Correct the cube-map sky’s X reflection while preserving Y.
@@ -29,33 +29,32 @@ It retains the fixed 1,600 × 1,600 map rather than generating a replacement wor
 Rebuild it with `python3 scripts/export_frozen_world.py`; the export records the
 source XML's SHA-256 and resolves XStream references. No Java runtime is required.
 
-`FrozenWorld` queries those records and adapts the original Java HashUtil and
-Plain/Forest/Mountain height formulas. The first surface renderer uses a two-unit
-triangle grid, coarse ocean coasts and simplified river channels. Flora is
-coordinate-stable decoration using the existing model assets. Settlement/shrine
-footprints are tinted ground; buildings, roads, cave interiors, original flora
-rules, collisions, swimming restrictions and encounters are not ported yet.
-Movement follows the rendered surface, including water, and wraps at world edges.
-This is exploration state in memory; reloading starts at the captured position.
+The offline compiler now reconstructs all 208 saved districts, adds ordinary
+buildings/streets, 25 labyrinths, shrine scenery, and natural cave interiors.
+The browser loads versioned `lewcid_object` JSON through 25 reusable 32-unit
+chunk slots. Collision gates movement until each chunk is ready; stale downloads
+cannot replace a reassigned slot. Shared meshes and bounded normalized caches
+are reused across visits.
 
-`GameState` owns the party position and a transient `WorldStream`. Only 25 chunks
-of 32 × 32 units are resident; crossing a boundary overwrites departing slots.
-The renderer reuses terrain/instance buffers and shares a fixed set of models,
-materials and textures. There are no per-area downloads or growing visited-area
-caches. The movement/look path uses scalar math and reusable scratch objects;
-chunk generation runs only on transitions. Rendering wakes for movement, looking,
-teleporting and resize events. Frames repeat only while the movement stick is held
-off-center; at rest there is no animation loop or repeating HUD timer. Opening the
-map, losing focus or hiding the page cancels movement. HUD/map updates are capped
-at 10 Hz during movement and refreshed on the final input change. Three.js may
-still allocate internally. Fog ends before the edge of the resident area.
+Walk with the left stick or WASD/arrow keys; look with the right stick. Use **E**
+or the contextual toolbar button for stairs, cave entrances/exits, and chests.
+Local save deltas persist the player position, discoveries, and searched chests;
+Export/Import save provides portable JSON. On subsequent visits the saved local
+position takes precedence over the original spawn.
+
+Rebuild and validate with `node scripts/build_world.mjs` (Node 22+, Python 3).
+The generated world and validation report are in `jCRPG-engine/worlds/seed0/v1`.
+See [the review guide](docs/procedural-review.md) for controls, reproducibility,
+editor scene entry points, Java golden fixtures, and explicit compatibility limits.
+This is `web-baked-v1`: hash and maze bytes match Java, while the existing surface
+adapter, cave entrance presentation, and some architectural geometry are adapted.
 
 Click the minimap or top-bar Map button to open the full world map. Click a marker
 or a searchable location-list entry to teleport to its X/Z on the rendered surface.
 Click the map background, Close, or Escape to return to the minimap. All recorded
-locations are shown, with dashed markers for unimplemented gameplay. Cave-region
-markers identify saved cave areas, not confirmed entrances. The export also carries
-map-only dungeon/maze and storage locations without changing surface generation.
+locations are shown, with dashed markers for unimplemented gameplay. Dashed cave-region
+markers identify saved cave areas; solid Cave entrance markers provide entry links. The export also carries
+dungeon/maze and storage locations alongside the generated world.
 The full map has type filters and a location search. A single cached terrain raster
 is shared by both maps, and neither map has its own timer or frame loop.
 

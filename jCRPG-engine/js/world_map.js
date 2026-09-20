@@ -93,7 +93,7 @@ export class WorldMap {
 			label.append(input, text); filters.append(label);
 		}
 		if (!this.markers.some(m => m.kind === 'mission' || m.kind === 'puzzle')) {
-			document.getElementById('map-mission-note').textContent = 'No mission or puzzle markers are recorded in this save. Dungeon / maze and cave locations are shown even though their gameplay is unimplemented.';
+			document.getElementById('map-mission-note').textContent = 'No mission or puzzle markers are recorded in this save. Towns and labyrinths are explorable. Confirmed cave entrances support Enter cave; dashed cave-region markers show approximate saved areas.';
 		}
 	}
 

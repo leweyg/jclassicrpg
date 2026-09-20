@@ -1,4 +1,5 @@
 import * as THREE from './threejs/three.module.js';
+import { BakedView } from './world/baked_view.js';
 import { loadObjModel } from './obj_mtl_loader.js';
 import { CHUNK_SIZE, GRID_SIDE, GRID_STEP, VEGETATION_PER_CHUNK } from './world_stream.js';
 
@@ -14,12 +15,13 @@ const CLIMATE_COLORS = [0xffffff, 0xdbe4e7, 0xd5b97f, 0x85ab61].map(c => new THR
  * Once ready, walking performs no model fetches and creates no scene objects.
  */
 export class WorldView {
-	constructor(scene, stream) {
+	constructor(scene, stream, wake = null) {
 		this.scene = scene;
 		this.stream = stream;
 		this.slots = [];
 		this.dummy = new THREE.Object3D();
 		this.color = new THREE.Color();
+		this.bakedView = stream.manifest ? new BakedView(scene, stream, wake) : null;
 	}
 
 	async build() {
@@ -69,7 +71,13 @@ export class WorldView {
 		this.sync();
 	}
 
+	setRealm(realm, save) {
+		for (const slot of this.slots) slot.group.visible = realm !== 'cave';
+		this.bakedView?.setRealm(realm, save);
+	}
+
 	sync() {
+		this.bakedView?.sync();
 		for (let i = 0; i < this.slots.length; i++) {
 			const slot = this.slots[i], chunk = this.stream.chunks[i];
 			if (slot.revision === chunk.revision) continue;
@@ -90,7 +98,7 @@ export class WorldView {
 			for (let j = 0; j < chunk.plantCount; j++) {
 				const p = j * 6, plants = chunk.vegetation;
 				let species = Math.floor(plants[p + 3] * SPECIES.length);
-				const climate = this.stream.world.climateAt(chunk.x * CHUNK_SIZE + plants[p], chunk.z * CHUNK_SIZE + plants[p + 2]);
+				const climate = chunk.climates[Math.min(16, Math.floor(plants[p + 2] / 2)) * GRID_SIDE + Math.min(16, Math.floor(plants[p] / 2))];
 				if (species === 2 && climate < 2) species = 0; // palms only in warmer belts
 				const scale = SPECIES[species][2] + plants[p + 4] * (SPECIES[species][3] - SPECIES[species][2]);
 				this.dummy.position.set(plants[p], plants[p + 1], plants[p + 2]);

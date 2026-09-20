@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jclassicrpg.local/schema/world-scene-v1",
+  "title": "jCRPG lewcid_object scene v1",
+  "type": "object",
+  "required": ["name", "metadata", "userData", "children"],
+  "properties": {
+    "name": {"type": "string"},
+    "metadata": {"type": "object", "required": ["version", "type"], "properties": {"version": {"const": 0.2}, "type": {"const": "lewcid_object"}, "camera": {"type": "object"}}},
+    "userData": {"type": "object", "required": ["jcrpg"], "properties": {"jcrpg": {"type": "object", "required": ["schemaVersion", "worldId"], "properties": {"schemaVersion": {"const": 1}, "worldId": {"const": "seed0-web-v1"}}}}},
+    "children": {"type": "array", "maxItems": 100000, "items": {"$ref": "#/$defs/node"}}
+  },
+  "$defs": {
+    "vector": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number"}},
+    "node": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"}, "source": {"type": "string", "pattern": "\\.(json|obj|glb)$"},
+        "position": {"$ref": "#/$defs/vector"}, "rotation": {"$ref": "#/$defs/vector"},
+        "rotation_degrees": {"$ref": "#/$defs/vector"}, "scale": {"$ref": "#/$defs/vector"},
+        "userData": {"type": "object"}, "children": {"type": "array", "items": {"$ref": "#/$defs/node"}}
+      }
+    }
+  }
+}

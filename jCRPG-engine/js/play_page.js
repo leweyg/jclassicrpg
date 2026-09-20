@@ -55,6 +55,7 @@ async function main() {
 		if (status) status.textContent = "Loading saved world…";
 		await sim.gameState.startExploration();
 		renderHud(sim.gameState);
+		if(sim.gameState.saveDeltas.error)appendLog(sim.gameState.saveDeltas.error);
 		const renderer = new SceneRenderer(canvas);
 		await renderer.buildWorld(sim.gameState);
 		const worldMap = new WorldMap(sim.gameState, renderer);
@@ -70,13 +71,37 @@ async function main() {
 			lastUpdate = now;
 			const state = sim.gameState, p = state.party.position, world = state.exploration.world;
 			const landmark = world.landmarkAt(p.x, p.z);
-			const area = landmark?.name ?? TERRAIN_NAMES[world.typeAt(p.x, p.z)];
+			const cell = state.exploration.cellAt?.(p.x,p.y,p.z,state.realm);
+			const area = state.realm==='cave' ? 'Natural cave' : cell?.structure.kind==='SimpleDungeonPart' ? 'Labyrinth' : landmark?.name ?? TERRAIN_NAMES[world.typeAt(p.x, p.z)];
 			const text = `${area} · ${Math.floor(p.x)}, ${Math.floor(p.z)}`;
 			if (text !== lastLocation) { location.textContent = text; lastLocation = text; }
 			worldMap.update();
 			if (area !== lastArea) { appendLog(`Entering ${area}.`); lastArea = area; }
 		};
-		renderer.onViewChange = updateLocation;
+		renderer.onStatus = appendLog;
+		renderer.onInteract = () => renderer.interact();
+		document.getElementById('world-interact').addEventListener('click', () => renderer.interact());
+		document.getElementById('world-retry').addEventListener('click', () => sim.gameState.exploration.retry());
+		document.getElementById('world-save').addEventListener('click', () => {
+			const state=sim.gameState;state.saveDeltas.persist(state.party.position,state.realm);
+			const url=URL.createObjectURL(new Blob([state.saveDeltas.export()],{type:'application/json'}));
+			const a=document.createElement('a');a.href=url;a.download='jcrpg-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+		});
+		document.getElementById('world-import').addEventListener('change', async event => {
+			const file=event.target.files[0];if(!file)return;
+			try { const state=sim.gameState, previous=state.saveDeltas.data, save=JSON.parse(await file.text());
+				state.saveDeltas.import(JSON.stringify(save));
+				try { if(save.player) await state.teleport(save.player.x,save.player.z,save.player.y,save.player.realm); }
+				catch(error) { state.saveDeltas.data=previous;throw error; }
+				renderer.worldView.sync();renderer._syncCamera();renderer.requestRender();appendLog('Save imported.');
+			} catch(error) { appendLog('Import failed: '+error.message); }
+		});
+		renderer.onViewChange = (now,force) => {
+			updateLocation(now,force);
+			const state=sim.gameState, action=state.exploration.nearby(state.party.position,state.realm);
+			const button=document.getElementById('world-interact');
+			button.textContent=action ? `${action.label} [E]` : 'Explore · WASD / drag';button.disabled=!action;
+		};
 		updateLocation();
 		renderer.start();
 		// No repeating HUD timers. Changes are driven by input/render events only.

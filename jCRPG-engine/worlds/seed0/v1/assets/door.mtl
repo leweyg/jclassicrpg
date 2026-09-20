@@ -1,0 +1,4 @@
+newmtl door
+Kd 0.42 0.27 0.13
+d 1
+map_Kd textures/Wood_Tex_General.png

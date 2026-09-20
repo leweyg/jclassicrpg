@@ -52,7 +52,7 @@
 		overflow-x: auto;
 		pointer-events: auto;
 	}
-	#hud-topbar span, #hud-topbar button {
+	#hud-topbar span, #hud-topbar button, #hud-topbar label {
 		padding: 0.5rem clamp(0.4rem, 2vw, 1rem);
 		color: #e8d9b8;
 		white-space: nowrap;
@@ -203,7 +203,7 @@
 <div id="load-status">Loading scene…</div>
 
 <div id="hud-topbar" class="hud">
-	<span>Menu</span><button id="map-open" type="button" aria-haspopup="dialog">Map</button><span>Camp</span><span>Order</span><span>Behvr.</span><span>Action</span><span>Search</span>
+	<span>Menu</span><button id="map-open" type="button" aria-haspopup="dialog">Map</button><button id="world-interact" type="button">Explore · WASD / drag</button><button id="world-save" type="button">Export save</button><label style="cursor:pointer">Import save<input id="world-import" type="file" accept="application/json" hidden></label><button id="world-retry" type="button">Retry loading</button>
 </div>
 <div id="hud-portrait-card" class="hud">
 	<img id="hud-portrait" alt="Active character portrait">

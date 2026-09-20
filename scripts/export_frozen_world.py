@@ -67,13 +67,72 @@ def export():
         e = records(kind)[0]
         layer = {'kind': kind, 'id': e.findtext('id')}
         for field in ['worldGroundLevel', 'worldRelHeight', 'blockSize', 'magnification',
-                      'depth', 'noWaterPercentage', 'density', 'width', 'curvedness', 'curveLength']:
+                      'depth', 'noWaterPercentage', 'density', 'width', 'curvedness', 'curveLength',
+                      'worldHeight', 'levelSize', 'maxLevels', 'entranceSide', 'sizeY',
+                      'ENTRANCE__DISTANCE', 'ENTRANCE__LEVEL']:
             if e.find(field) is not None:
                 layer[field] = number(e, field)
         layer['cells'] = boundary(e, layer['worldGroundLevel'])
         if kind == 'River':
             layer['flowDirections'] = ''.join(e.findtext('flowDirections/bytes').split())
         layers.append(layer)
+
+    # Keep longs as strings: geography IDs cannot round-trip through a JS Number.
+    districts, towns = [], {}
+    for kind in ['SimpleDistrict', 'DungeonDistrict']:
+        for e in records(kind):
+            if number(e, 'sizeX') <= 0:
+                continue
+            soil = resolve(e.find('soilGeo'))
+            owner = resolve(e.find('owner'))
+            description = resolve(owner.find('description'))
+            template = resolve(description.find('economyTemplate'))
+            infra = resolve(e.find('infrastructure'))
+            soil_kind = soil.get('class', soil.tag).rsplit('.', 1)[-1]
+            def types(field):
+                for entry in resolve(template.find(field)):
+                    if entry[0].text.rsplit('.', 1)[-1] == soil_kind:
+                        return [c.text.rsplit('.', 1)[-1] for c in resolve(entry[1])]
+                raise ValueError(f'Missing {field} for {e.findtext("id")} / {soil_kind}')
+            fixed = []
+            members = resolve(owner.find('fixMembers'))
+            for entry in members if members is not None else []:
+                member = resolve(entry[-1])
+                properties = resolve(member.find('ownedInfrastructures'))
+                for prop in properties if properties is not None else []:
+                    prop = resolve(prop)
+                    item = {f: int(number(prop, f, -1)) for f in
+                            ['relOrigoX', 'relOrigoY', 'relOrigoZ', 'sizeX', 'sizeY', 'sizeZ']}
+                    item['type'] = (prop.findtext('type') or '').rsplit('.', 1)[-1]
+                    item['ownerMemberId'] = member.findtext('id') or member.findtext('numericId')
+                    fixed.append(item)
+            town = resolve(e.find('town'))
+            town_name = town.findtext('foundationName') if town is not None else e.findtext('foundationName')
+            district = {
+                'id': e.findtext('id'), 'kind': kind, 'name': e.findtext('foundationName'),
+                'blockStart': [int(number(e, 'blockStartX')), int(number(e, 'blockStartZ'))],
+                'center': [int(number(e, 'centerX')), int(number(e, 'centerZ'))],
+                'savedBounds': [int(number(e, f)) for f in ['origoX', 'origoY', 'origoZ', 'sizeX', 'sizeY', 'sizeZ']],
+                'soilGeographyId': soil.findtext('id'), 'soilKind': soil_kind,
+                'soilNumericId': soil.findtext('numericId'), 'blockSize': int(number(soil, 'blockSize')),
+                'ownerEntityId': owner.findtext('id'), 'ownerType': description.get('class', description.tag).rsplit('.', 1)[-1],
+                'savedInhabitantNumber': int(number(infra, 'savedInhabitantNumber')),
+                'residenceTypes': types('residenceTypes'), 'groundTypes': types('groundTypes'),
+                'fixedInfrastructure': fixed, 'townName': town_name,
+            }
+            districts.append(district)
+            # The same town object may be reached through many XStream references.
+            town_key = id(town) if town is not None else id(e)
+            towns.setdefault(town_key, {'name': town_name, 'districtIds': []})['districtIds'].append(district['id'])
+    districts.sort(key=lambda d: d['id'])
+    town_list = sorted(towns.values(), key=lambda t: min(t['districtIds']))
+    for town in town_list:
+        town['districtIds'].sort()
+        town['id'] = 'town:' + town['districtIds'][0]
+        ds = [d for d in districts if d['id'] in town['districtIds']]
+        town['center'] = [sum(d['center'][i] for d in ds) / len(ds) for i in range(2)]
+        for d in ds:
+            d['townId'] = town['id']
 
     landmarks = []
     for kind in ['SimpleDistrict', 'RoadShrine']:
@@ -118,6 +177,7 @@ def export():
         'spawn': {axis.lower(): number(pos, 'viewPosition' + axis) for axis in 'XYZ'},
         'layers': layers, 'climates': climates, 'landmarks': landmarks,
         'additionalMapMarkers': additional_markers,
+        'districts': districts, 'towns': town_list,
     }
     OUTPUT.write_text(json.dumps(data, separators=(',', ':')) + '\n')
     print(f'Exported {len(layers)} layers, {len(climates)} climate belts, {len(landmarks)} landmarks; {OUTPUT.stat().st_size:,} bytes')

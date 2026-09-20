@@ -1,0 +1,4 @@
+newmtl roofEdge
+Kd 0.8 0.8 0.8
+d 1
+map_Kd textures/Roof_Tex_Bake_01.png

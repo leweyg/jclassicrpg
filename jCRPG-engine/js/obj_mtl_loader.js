@@ -17,6 +17,7 @@
 import * as THREE from "./threejs/three.module.js";
 
 const objTextCache = new Map();
+const modelCache = new Map();
 const mtlCache = new Map();
 const textureCache = new Map();
 const textureLoader = new THREE.TextureLoader();
@@ -130,7 +131,7 @@ function resolveIndex(idx, count) {
  * Parses OBJ text into per-material non-indexed vertex buffers
  * (positions/normals/uvs), fan-triangulating n-gon faces.
  */
-function parseObj(text) {
+export function parseObj(text, yUp = false) {
 	const positions = [];
 	const normals = [];
 	const uvs = [];
@@ -179,10 +180,10 @@ function parseObj(text) {
 			currentMaterial = rest.trim();
 		} else if (key === "v") {
 			const [x, y, z] = rest.split(/\s+/).map(Number);
-			positions.push(toThreeAxis(x, y, z));
+			positions.push(yUp ? [x, y, z] : toThreeAxis(x, y, z));
 		} else if (key === "vn") {
 			const [x, y, z] = rest.split(/\s+/).map(Number);
-			normals.push(toThreeAxis(x, y, z));
+			normals.push(yUp ? [x, y, z] : toThreeAxis(x, y, z));
 		} else if (key === "vt") {
 			const [u, v] = rest.split(/\s+/).map(Number);
 			uvs.push([u, v]);
@@ -205,10 +206,16 @@ function parseObj(text) {
  * Loads an OBJ (+ its MTL, if any) into a THREE.Group with one Mesh per
  * material group. dirUrl is the folder the .obj/.mtl live in.
  */
-export async function loadObjModel(dirUrl, objFilename) {
+export function loadObjModel(dirUrl, objFilename, { yUp = false } = {}) {
+	const key = `${dirUrl}/${objFilename}|${yUp}`;
+	if (!modelCache.has(key)) modelCache.set(key, buildObjModel(dirUrl, objFilename, yUp).catch(error => { modelCache.delete(key); throw error; }));
+	return modelCache.get(key);
+}
+
+async function buildObjModel(dirUrl, objFilename, yUp) {
 	const objUrl = `${dirUrl}/${objFilename}`;
 	const text = await fetchText(objUrl);
-	const { groupsByMaterial, mtllib } = parseObj(text);
+	const { groupsByMaterial, mtllib } = parseObj(text, yUp);
 	const materials = mtllib ? await loadMtl(`${dirUrl}/${mtllib}`) : {};
 
 	const group = new THREE.Group();
@@ -220,6 +227,8 @@ export async function loadObjModel(dirUrl, objFilename) {
 		geometry.setAttribute("position", new THREE.Float32BufferAttribute(buf.positions, 3));
 		geometry.setAttribute("normal", new THREE.Float32BufferAttribute(buf.normals, 3));
 		geometry.setAttribute("uv", new THREE.Float32BufferAttribute(buf.uvs, 2));
+		geometry.computeVertexNormals();
+		geometry.computeBoundingBox();
 
 		const matDesc = materials[matName];
 		const color = matDesc ? new THREE.Color(matDesc.Kd[0], matDesc.Kd[1], matDesc.Kd[2]) : new THREE.Color(0.6, 0.6, 0.6);

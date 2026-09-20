@@ -1,0 +1,41 @@
+{
+  "report": [
+    {
+      "file": "fixture.scene.json",
+      "meshes": 3,
+      "gameData": 1,
+      "sceneChildren": [
+        "DefaultLight",
+        "Format fixture"
+      ]
+    },
+    {
+      "file": "calibration.scene.json",
+      "meshes": 28,
+      "gameData": 29,
+      "sceneChildren": [
+        "DefaultLight",
+        "Architecture asset calibration"
+      ]
+    },
+    {
+      "file": "chunks/x004_z044.scene.json",
+      "meshes": 354,
+      "gameData": 355,
+      "sceneChildren": [
+        "DefaultLight",
+        "seed0_x004_z044.scene.json"
+      ]
+    },
+    {
+      "file": "regions/r000_008.scene.json",
+      "meshes": 6422,
+      "gameData": 6448,
+      "sceneChildren": [
+        "DefaultLight",
+        "region_0_8"
+      ]
+    }
+  ],
+  "errors": []
+}

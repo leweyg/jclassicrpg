@@ -1,0 +1,215 @@
+{
+  "errors": [],
+  "samples": [
+    {
+      "name": "spawn",
+      "position": {
+        "x": 800,
+        "y": 40.599998474121094,
+        "z": 907
+      },
+      "realm": "surface",
+      "ready": 25,
+      "cache": 50,
+      "stats": {
+        "fetchedBytes": 3983868,
+        "fetches": 50,
+        "cacheHits": 0,
+        "stale": 0,
+        "failures": 0
+      },
+      "render": {
+        "frame": 7,
+        "calls": 203,
+        "triangles": 75202,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 43,
+        "textures": 24
+      },
+      "assetFailures": []
+    },
+    {
+      "name": "town",
+      "position": {
+        "x": 147,
+        "y": 40,
+        "z": 1433
+      },
+      "realm": "surface",
+      "ready": 25,
+      "cache": 50,
+      "stats": {
+        "fetchedBytes": 6694687,
+        "fetches": 75,
+        "cacheHits": 0,
+        "stale": 0,
+        "failures": 0
+      },
+      "render": {
+        "frame": 11,
+        "calls": 165,
+        "triangles": 65702,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 53,
+        "textures": 24
+      },
+      "assetFailures": []
+    },
+    {
+      "name": "house-interior",
+      "position": {
+        "x": 142,
+        "y": 40,
+        "z": 1429.5
+      },
+      "realm": "surface",
+      "ready": 25,
+      "cache": 50,
+      "stats": {
+        "fetchedBytes": 6694687,
+        "fetches": 75,
+        "cacheHits": 0,
+        "stale": 0,
+        "failures": 0
+      },
+      "render": {
+        "frame": 13,
+        "calls": 151,
+        "triangles": 84680,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 55,
+        "textures": 25
+      },
+      "assetFailures": []
+    },
+    {
+      "name": "dungeon",
+      "position": {
+        "x": 213.5,
+        "y": 40,
+        "z": 688.5
+      },
+      "realm": "surface",
+      "ready": 25,
+      "cache": 50,
+      "stats": {
+        "fetchedBytes": 9601750,
+        "fetches": 100,
+        "cacheHits": 0,
+        "stale": 0,
+        "failures": 0
+      },
+      "render": {
+        "frame": 18,
+        "calls": 242,
+        "triangles": 129532,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 55,
+        "textures": 25
+      },
+      "assetFailures": []
+    },
+    {
+      "name": "cave",
+      "position": {
+        "x": 90.5,
+        "y": 42,
+        "z": 10.5
+      },
+      "realm": "cave",
+      "ready": 25,
+      "cache": 50,
+      "stats": {
+        "fetchedBytes": 11152133,
+        "fetches": 125,
+        "cacheHits": 0,
+        "stale": 0,
+        "failures": 0
+      },
+      "render": {
+        "frame": 23,
+        "calls": 12,
+        "triangles": 34408,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 55,
+        "textures": 25
+      },
+      "assetFailures": []
+    },
+    {
+      "name": "mobile-cave",
+      "position": {
+        "x": 90.5,
+        "y": 42,
+        "z": 10.5
+      },
+      "realm": "cave",
+      "ready": 25,
+      "cache": 50,
+      "stats": {
+        "fetchedBytes": 11152133,
+        "fetches": 125,
+        "cacheHits": 0,
+        "stale": 0,
+        "failures": 0
+      },
+      "render": {
+        "frame": 25,
+        "calls": 12,
+        "triangles": 34408,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 55,
+        "textures": 25
+      },
+      "assetFailures": []
+    }
+  ],
+  "performance": {
+    "environment": "Chrome headless software renderer; mobile viewport emulation, not physical mobile GPU",
+    "cpuRenderSubmitMs": [
+      0.10000000009313226,
+      0.10000000009313226,
+      0.09999999962747097,
+      0.20000000018626451,
+      0.3000000002793968,
+      0.2999999998137355,
+      0.10000000009313226,
+      0.10000000009313226,
+      0.10000000009313226,
+      0.20000000018626451,
+      0.2999999998137355,
+      0.19999999972060323,
+      0.20000000018626451,
+      0.09999999962747097,
+      0.10000000009313226,
+      0.10000000009313226,
+      0.19999999972060323,
+      0.10000000009313226,
+      0.10000000009313226,
+      0.19999999972060323
+    ],
+    "geometryBufferBytes": 668180,
+    "instanceBufferBytes": 2132992,
+    "textureBytesEstimate": 9524565,
+    "gpuFrameTime": "not measured",
+    "cacheEntries": 50
+  }
+}

@@ -33,6 +33,7 @@ export class FrozenWorld {
 		this.sizeX = data.sizeX;
 		this.sizeZ = data.sizeZ;
 		this.seed = data.seed;
+		this.sourceSha256 = data.xmlSha256;
 		this.geographySeed = data.geographySeed;
 		this.groundLevel = data.groundLevel;
 		this.spawn = data.spawn;
@@ -87,6 +88,7 @@ export class FrozenWorld {
 	}
 
 	typeAt(x, z) {
+		if(this.compiledMap) return this.compiledMap[Math.floor(wrap(z,this.sizeZ)/4)*400+Math.floor(wrap(x,this.sizeX)/4)];
 		x = wrap(x, this.sizeX); z = wrap(z, this.sizeZ);
 		const landmark = this.landmarkAt(x, z);
 		if (landmark) return landmark.kind === 'RoadShrine' ? Terrain.SHRINE : Terrain.SETTLEMENT;

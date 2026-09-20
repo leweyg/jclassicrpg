@@ -22,7 +22,7 @@ export function buildMapMarkers(world, additional = []) {
 		id: `${l.kind}:${l.id}:${l.x}:${l.z}`,
 		kind: l.kind === 'RoadShrine' ? 'shrine' : 'settlement',
 		name: l.name, x: wrap(l.x + l.sizeX / 2, world.sizeX), y: l.y,
-		z: wrap(l.z + l.sizeZ / 2, world.sizeZ), implemented: false,
+		z: wrap(l.z + l.sizeZ / 2, world.sizeZ), implemented: world.compiled && l.kind === 'SimpleDistrict',
 	}));
 	for (const marker of additional) {
 		if (!Number.isFinite(marker.x) || !Number.isFinite(marker.z)) continue;

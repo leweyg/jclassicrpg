@@ -1,0 +1,4 @@
+newmtl sandRoof
+Kd 0.8 0.8 0.8
+d 1
+map_Kd textures/sandigloo1.png

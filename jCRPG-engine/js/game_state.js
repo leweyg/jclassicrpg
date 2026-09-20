@@ -12,7 +12,8 @@
  */
 
 import { loadFrozenWorld, wrap } from "./frozen_world.js";
-import { WorldStream } from "./world_stream.js";
+import { loadBakedStream } from "./world/baked_stream.js";
+import { SaveDeltas } from "./world/save_deltas.js";
 
 import { starterPartyRef, worldsRef, ChangeEvents } from "./game_static_core.js";
 
@@ -148,19 +149,97 @@ export class GameState {
 		const frozen = await loadFrozenWorld();
 		this.world = new WorldDescriptor({ name: 'Frozen JClassicRPG', sizeX: frozen.sizeX, sizeY: 80, sizeZ: frozen.sizeZ, seed: frozen.seed });
 		Object.assign(this.party.position, frozen.spawn);
-		this.exploration = new WorldStream(frozen);
+		this.exploration = await loadBakedStream(frozen);
+		if (this.exploration.manifest.files.map) {
+			const r=await fetch(new URL(this.exploration.manifest.files.map.url,this.exploration.baseURL));
+			if(!r.ok)throw Error('Compiled map unavailable');
+			const map=await r.json();if(map.types.length!==160000)throw Error('Invalid compiled map');
+			frozen.compiledMap=Uint8Array.from(map.types);
+		}
+		let storage = null;
+		try { storage = globalThis.localStorage; } catch {}
+		this.saveDeltas = new SaveDeltas(storage);
+		this.realm = this.saveDeltas.data.player?.realm ?? 'surface';
+		if (this.saveDeltas.data.player) {
+			const {x,y,z} = this.saveDeltas.data.player;
+			Object.assign(this.party.position, {x,y,z});
+		}
 		this.exploration.update(this.party.position.x, this.party.position.z);
+		await this.exploration.settled();
+		if (!this.exploration.getChunk(this.party.position.x, this.party.position.z)) throw Error(this.exploration.chunks.find(c=>c.error)?.error ?? 'Starting chunk unavailable; traversal is blocked.');
+		const floor = this.exploration.floorAt(this.party.position.x, this.party.position.y, this.party.position.z, this.realm);
+		if (Number.isFinite(floor)) this.party.position.y = floor;
+		else { this.realm='surface';this.party.position.y=this.exploration.heightAt(this.party.position.x,this.party.position.z); }
+		// Confirmed entrances augment the saved map's cave-region markers.
+		const response = await fetch(new URL('portals.json', this.exploration.baseURL));
+		if (response.ok) {
+			this.exploration.portalIndex = await response.json();
+			frozen.additionalMapMarkers = [...frozen.additionalMapMarkers.map(m=>({...m,implemented:m.kind==='dungeon'||m.implemented})),
+				...this.exploration.portalIndex.filter(p=>p.kind==='cave').map(p=>({id:p.id,name:'Cave entrance',kind:'cave',x:p.from[0],y:p.from[1],z:p.from[2],implemented:true,note:'Use Enter cave at the entrance'}))];
+		}
+		frozen.compiled = true;
 		return this.exploration;
 	}
 
 	/** Mutates the existing position object; returns whether nearby areas changed. */
 	moveParty(dx, dz) {
-		if (!this.exploration) return false;
+		if (!this.exploration || this._teleporting) return false;
 		const world = this.exploration.world;
+		if (this.exploration.canMove) {
+			const p = this.party.position, stream = this.exploration;
+			const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dz)) / 0.15));
+			for (let i=0;i<steps;i++) {
+				for (const axis of ['x','z']) {
+					const delta = (axis==='x'?dx:dz)/steps;
+					const nx=p.x+(axis==='x'?delta:0), nz=p.z+(axis==='z'?delta:0);
+					if (!stream.canMove(p.x,p.y,p.z,nx,nz,this.realm)) continue;
+					// Small body radius keeps the camera out of wall thickness.
+					const sx=axis==='x'?Math.sign(delta)*0.12:0, sz=axis==='z'?Math.sign(delta)*0.12:0;
+					if (!stream.canMove(nx,p.y,nz,nx+sx,nz+sz,this.realm)) continue;
+					const y=stream.floorAt(nx,p.y,nz,this.realm);
+					if (!Number.isFinite(y)) continue;
+					p.x=wrap(nx,world.sizeX);p.z=wrap(nz,world.sizeZ);p.y=y;
+				}
+			}
+			return stream.update(p.x,p.z);
+		}
 		this.party.position.x = wrap(this.party.position.x + dx, world.sizeX);
 		this.party.position.z = wrap(this.party.position.z + dz, world.sizeZ);
 		this.party.position.y = this.exploration.heightAt(this.party.position.x, this.party.position.z);
 		return this.exploration.update(this.party.position.x, this.party.position.z);
+	}
+
+	async teleport(x,z,y=null,realm='surface') {
+		const stream=this.exploration, p=this.party.position, revision=(this._teleportRevision??0)+1;
+		this._teleportRevision=revision;this._teleporting=true;
+		try {
+			x=wrap(x,stream.world.sizeX);z=wrap(z,stream.world.sizeZ);
+			stream.update(x,z);await stream.settled();
+			if(this._teleportRevision!==revision)return false;
+			if (!stream.getChunk(x,z)) { stream.update(p.x,p.z); throw Error('Destination unavailable; please retry.'); }
+			const floor=y===null?stream.heightAt(x,z):stream.floorAt(x,y,z,realm);
+			if(!Number.isFinite(floor)){stream.update(p.x,p.z);throw Error('Destination has no walkable floor.');}
+			Object.assign(p,{x,y:floor,z});this.realm=realm;
+			this.saveDeltas?.persist(p,realm);
+			return true;
+		} finally { if(this._teleportRevision===revision)this._teleporting=false; }
+	}
+
+	async interact() {
+		const action=this.exploration.nearby?.(this.party.position,this.realm);
+		if (!action) return 'Nothing nearby to use.';
+		if (action.kind==='chest') {
+			const id=action.object.id;
+			if (this.saveDeltas.data.openedContainers[id]) return 'This chest has already been searched.';
+			this.saveDeltas.open(id);this.saveDeltas.persist(this.party.position,this.realm);
+			return this.saveDeltas.error ? 'Chest searched. '+this.saveDeltas.error : 'Chest searched. Your discovery has been saved.';
+		}
+		const portal=action.portal, dest=portal[action.side==='from'?'to':'from'];
+		const realm=portal.kind==='cave'?(this.realm==='cave'?'surface':'cave'):this.realm;
+		await this.teleport(dest[0],dest[2],dest[1],realm);
+		this.saveDeltas.data.discoveredLocations[portal.id]=true;
+		this.saveDeltas.persist(this.party.position,this.realm);
+		return portal.kind==='cave'?(realm==='cave'?'Entered the cave.':'Returned to the surface.'):'Changed floor.';
 	}
 
 	/** Placeholder turn step — no economy/ecology/combat mechanics yet, just advances the mock clock. */
