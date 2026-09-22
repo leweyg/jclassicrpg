@@ -246,15 +246,17 @@
 <dialog id="game-menu" aria-labelledby="game-menu-title">
 	<header><h2 id="game-menu-title">Game menu</h2><button id="menu-close" type="button" autofocus>Close</button></header>
 	<div class="game-menu-actions">
-		<button id="map-open" type="button">Map</button>
 		<button id="world-journal" type="button">Journal</button>
+		<button id="map-open" type="button">Map</button>
+		<a href="index.html">Homepage</a>
+		
+		<div>Older dev stuff:</div>
 		<button id="world-inventory" type="button">Inventory</button>
 		<button id="world-save" type="button">Export save</button>
 		<button id="world-import-open" type="button">Import save</button>
 		<input id="world-import" type="file" accept="application/json" hidden>
 		<button id="world-retry" type="button">Retry loading</button>
-		<a href="index.html">Summary</a>
-		<a href="sim.html">Sim</a>
+		
 	</div>
 </dialog>
 <button id="hud-portrait-card" class="hud" type="button" aria-label="Open game menu" title="Open game menu" aria-haspopup="dialog" aria-controls="game-menu" aria-expanded="false" disabled>
