@@ -152,7 +152,7 @@ async function main() {
 		});
 		renderer.onViewChange = (now,force) => {
 			updateLocation(now,force);
-			const state=sim.gameState, action=state.nearbyInteraction([-Math.sin(renderer._yaw),-Math.cos(renderer._yaw)]);
+			const action=renderer.nearbyInteraction();
 			const button=document.getElementById('world-interact');
 			renderer.highlightInteraction(action);
 			button.hidden=!action;button.disabled=!action;

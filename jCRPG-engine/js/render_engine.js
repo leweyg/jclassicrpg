@@ -39,6 +39,8 @@ export class SceneRenderer {
 
 		this._yaw = Math.PI; // facing -Z into the scene
 		this._pitch = -0.08;
+		this._interactionForward = new THREE.Vector3();
+		this._interactionFacing = [0, 0, 0];
 		this._lastFrameTime = null;
 
 		// Dual-stick touch/mouse input: pointerId -> { side: 'move'|'look', startX, startY, curX, curY }.
@@ -319,6 +321,10 @@ export class SceneRenderer {
 		finally { this.setInputEnabled(true); }
 	}
 
+    nearbyInteraction() {
+        this.camera.getWorldDirection(this._interactionForward);
+        return this.gameState.nearbyInteraction(this._interactionForward.toArray(this._interactionFacing),this.camera.position);
+    }
     highlightInteraction(action) {
         const changed=this.highlightedAction?.id!==action?.id;
         this.highlightedAction=action;
@@ -345,7 +351,7 @@ export class SceneRenderer {
 	async interact() {
 		if (this._interacting || !this._inputEnabled) return;
 		this._interacting=true;
-        const action=this.highlightedAction??this.gameState.nearbyInteraction();
+        const action=this.nearbyInteraction();
         this.cancelInput();
 		try { await this.attentionPulse(action);const message=await this.gameState.interact(action);this.onStatus?.(message);this.onInteractionPanel?.();this.worldView.sync();this._syncCamera();this.requestRender(); }
 		catch(error) { this.onStatus?.(error.message); }

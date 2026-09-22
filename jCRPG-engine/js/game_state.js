@@ -228,8 +228,8 @@ export class GameState {
 		} finally { if(this._teleportRevision===revision)this._teleporting=false; }
 	}
 
-    nearbyInteraction(facing=null) {
-        const action=this.exploration.nearby?.(this.party.position,this.realm,1.8,{facing,priority:a=>this.interactions?.priority(a)??a.priority});
+    nearbyInteraction(facing=null,viewPosition=this.party.position) {
+        const action=this.exploration.nearby?.(this.party.position,this.realm,1.8,{facing,viewPosition,priority:a=>this.interactions?.priority(a)??a.priority});
         return this.interactions?.describe(action)??action;
     }
 	async interact(action=this.nearbyInteraction()) {
