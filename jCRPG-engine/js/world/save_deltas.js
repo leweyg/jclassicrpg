@@ -1,6 +1,8 @@
 import {WORLD_ID,GENERATOR_VERSION} from './format.js';
 import {INTERACTION_VERSION,STATES} from '../interactions/format.js';
 const KEY='jcrpg:'+WORLD_ID+':save', OLD_KEY='jcrpg:seed0-web-v1:save';
+// Clear the legacy fallback too, so a new game cannot restore an older save.
+export function resetStoredSave(storage){storage.removeItem(OLD_KEY);storage.removeItem(KEY);}
 const dictionaries=['openedContainers','discoveredLocations','containers','shrines','puzzles','missions','actors','flags','evidence','commitments','settlements','mazeGenerators','shrineRoutes'];
 export function emptySave(){return {saveVersion:2,worldId:WORLD_ID,generatorVersion:GENERATOR_VERSION,interactionContentVersion:INTERACTION_VERSION,player:null,inventory:{items:{},order:[]},...Object.fromEntries(dictionaries.map(k=>[k,{}])),lastTransaction:0,deltaRevision:0};}
 function cleanJSON(value,depth=0){

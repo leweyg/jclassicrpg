@@ -27,7 +27,6 @@ export class WorldMap {
 		miniButton.querySelector('span').textContent = `Map · ${MINIMAP_RADIUS}-unit radius`;
 		miniButton.title = `Nearby map: ${MINIMAP_RADIUS}-unit radius, twice the visible area`;
 		miniButton.addEventListener('click', () => this.open());
-		document.getElementById('map-open').addEventListener('click', () => this.open());
 		document.getElementById('map-close').addEventListener('click', () => this.close());
 		this.dialog.addEventListener('click', event => { if (event.target === this.dialog) this.close(); });
 		this.dialog.addEventListener('cancel', event => { event.preventDefault(); this.close(); });

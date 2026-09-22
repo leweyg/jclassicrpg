@@ -7,7 +7,6 @@ export class InteractionUI {
   document.body.append(this.dialog);this.body=this.dialog.querySelector('#interaction-body');this.title=this.dialog.querySelector('h2');
   this.dialog.querySelector('header button').onclick=()=>this.close();this.dialog.addEventListener('cancel',e=>{e.preventDefault();this.close();});
   this.dialog.addEventListener('keydown',e=>{if(e.repeat)return;if(e.key.toLowerCase()==='e'){e.preventDefault();(this.dialog.contains(document.activeElement)&&document.activeElement.tagName==='BUTTON'?document.activeElement:this.body.querySelector('button'))?.click();}if(['ArrowDown','ArrowUp','w','s'].includes(e.key)){e.preventDefault();const buttons=[...this.body.querySelectorAll('button')],index=buttons.indexOf(document.activeElement),direction=['ArrowUp','w'].includes(e.key)?-1:1;buttons[(index+direction+buttons.length)%buttons.length]?.focus();}});
-  document.getElementById('world-journal').onclick=()=>this.openJournal();document.getElementById('world-inventory').onclick=()=>this.openInventory();
  }
  text(tag,value,parent=this.body){const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;}
  button(label,action,parent=this.body){const b=this.text('button',label,parent);b.type='button';b.onclick=()=>{try{action();}catch(error){this.log(error.message);}};return b;}

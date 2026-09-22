@@ -12,6 +12,7 @@ import { GameSim } from "./game_sim.js";
 import { SceneRenderer } from "./render_engine.js";
 import { TERRAIN_NAMES } from "./frozen_world.js";
 import { WorldMap } from "./world_map.js";
+import { resetStoredSave } from "./world/save_deltas.js";
 
 function pickActiveMember(party) {
 	return party.members.find((m) => m.foreName === "ELMARA") ?? party.members[0];
@@ -45,6 +46,12 @@ async function main() {
 
 	let sim;
 	try {
+		const url = new URL(window.location.href);
+		if (url.searchParams.get("new") === "1") {
+			resetStoredSave(window.localStorage);
+			url.searchParams.delete("new");
+			window.history.replaceState(null, "", url);
+		}
 		sim = await GameSim.createDefault();
 	} catch (err) {
 		if (status) status.textContent = `Failed to initialize game state: ${err.message}`;
@@ -84,6 +91,34 @@ async function main() {
 		renderer.onStatus = appendLog;
 		renderer.onInteract = () => renderer.interact();
 		document.getElementById('world-interact').addEventListener('click', () => renderer.interact());
+		const menu = document.getElementById('game-menu');
+		const menuButton = document.getElementById('menu-open');
+		const closeMenu = () => {
+			menu.close();
+			menuButton.setAttribute('aria-expanded', 'false');
+			renderer.setInputEnabled(true);
+			menuButton.focus();
+			renderer.requestRender();
+		};
+		menuButton.disabled = false;
+		menuButton.addEventListener('click', () => {
+			renderer.setInputEnabled(false);
+			menu.showModal();
+			menuButton.setAttribute('aria-expanded', 'true');
+		});
+		document.getElementById('menu-close').addEventListener('click', closeMenu);
+		menu.addEventListener('cancel', event => { event.preventDefault(); closeMenu(); });
+		menu.addEventListener('click', event => {
+			if (event.target !== menu) return;
+			const rect = menu.getBoundingClientRect();
+			if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeMenu();
+		});
+		for (const [id, open] of [
+			['map-open', () => worldMap.open()],
+			['world-journal', () => interactionsUI.openJournal()],
+			['world-inventory', () => interactionsUI.openInventory()],
+		]) document.getElementById(id).addEventListener('click', () => { closeMenu(); open(); });
+		document.getElementById('world-import-open').addEventListener('click', () => document.getElementById('world-import').click());
 		document.getElementById('world-retry').addEventListener('click', () => sim.gameState.exploration.retry());
 		document.getElementById('world-save').addEventListener('click', () => {
 			const state=sim.gameState;state.saveDeltas.persist(state.party.position,state.realm);
@@ -92,20 +127,23 @@ async function main() {
 		});
 		document.getElementById('world-import').addEventListener('change', async event => {
 			const file=event.target.files[0];if(!file)return;
+			closeMenu();
 			try { const state=sim.gameState, previous=state.saveDeltas.data, save=JSON.parse(await file.text());
 				state.saveDeltas.import(JSON.stringify(save));
                 try { state.interactions.initialize(); } catch(error) {state.saveDeltas.data=previous;throw error;}
 				try { if(save.player) await state.teleport(save.player.x,save.player.z,save.player.y,save.player.realm); }
 				catch(error) { state.saveDeltas.data=previous;throw error; }
-				renderer.worldView.sync();renderer._syncCamera();renderer.requestRender();appendLog('Save imported.');
+				renderer.worldView.sync();renderer._syncCamera();renderer.requestRender();state.saveDeltas.persist(state.party.position,state.realm);appendLog('Save imported.');
 			} catch(error) { appendLog('Import failed: '+error.message); }
+			event.target.value='';
 		});
 		renderer.onViewChange = (now,force) => {
 			updateLocation(now,force);
 			const state=sim.gameState, action=state.nearbyInteraction([-Math.sin(renderer._yaw),-Math.cos(renderer._yaw)]);
 			const button=document.getElementById('world-interact');
 			renderer.highlightInteraction(action);
-			button.textContent=action ? `${action.label} [E]` : 'Explore · WASD / drag';button.disabled=!action;
+			button.hidden=!action;button.disabled=!action;
+			button.title=action ? `${action.label} [E]` : 'Interact [E]';
 		};
 		updateLocation();
 		renderer.start();
