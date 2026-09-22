@@ -42,7 +42,7 @@
 		pointer-events: none;
 	}
 	#hud-portrait-card {
-		top: calc(4rem + env(safe-area-inset-top));
+		top: calc(0.5rem + env(safe-area-inset-top));
 		left: calc(0.4rem + env(safe-area-inset-left));
 		display: flex;
 		flex-direction: column;
@@ -52,7 +52,15 @@
 		border-radius: 4px;
 		padding: 0.3rem;
 		width: clamp(56px, 18vw, 90px);
+		min-width: 48px;
+		min-height: 48px;
+		font-family: inherit;
+		pointer-events: auto;
+		touch-action: manipulation;
+		cursor: pointer;
 	}
+	#hud-portrait-card:disabled { opacity: 0.5; cursor: wait; }
+	#hud-portrait-card:focus-visible { outline: 3px solid #ffe29d; outline-offset: 2px; }
 	#hud-portrait {
 		width: 100%;
 		aspect-ratio: 1;
@@ -159,7 +167,7 @@
 		font-size: clamp(0.6rem, 2vw, 0.75rem);
 	}
 	#hud-nav button { pointer-events: auto; max-width: 100%; overflow-wrap: anywhere; }
-	#menu-open, #world-interact, #world-intuition, #game-menu button, #game-menu a {
+	#world-interact, #world-intuition, #game-menu button, #game-menu a {
 		box-sizing: border-box;
 		min-height: 48px;
 		min-width: 48px;
@@ -178,13 +186,6 @@
 		background: rgba(41, 55, 43, 0.08);
 		text-shadow: 0 1px 3px #000;
 	}
-	#menu-open {
-		top: calc(0.5rem + env(safe-area-inset-top));
-		left: calc(0.4rem + env(safe-area-inset-left));
-		pointer-events: auto;
-	}
-	#menu-open:disabled { opacity: 0.5; cursor: wait; }
-	#menu-open svg { display: block; width: 24px; height: 24px; }
 	#game-menu {
 		box-sizing: border-box;
 		position: fixed;
@@ -242,9 +243,6 @@
 <canvas id="scene-canvas"></canvas>
 <div id="load-status">Loading scene…</div>
 
-<button id="menu-open" class="hud" type="button" aria-label="Open game menu" aria-haspopup="dialog" aria-controls="game-menu" aria-expanded="false" disabled>
-	<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-</button>
 <dialog id="game-menu" aria-labelledby="game-menu-title">
 	<header><h2 id="game-menu-title">Game menu</h2><button id="menu-close" type="button" autofocus>Close</button></header>
 	<div class="game-menu-actions">
@@ -259,11 +257,11 @@
 		<a href="sim.html">Sim</a>
 	</div>
 </dialog>
-<div id="hud-portrait-card" class="hud">
+<button id="hud-portrait-card" class="hud" type="button" aria-label="Open game menu" title="Open game menu" aria-haspopup="dialog" aria-controls="game-menu" aria-expanded="false" disabled>
 	<img id="hud-portrait" alt="Active character portrait">
-	<div id="hud-name">—</div>
-	<div id="hud-profession">—</div>
-</div>
+	<span id="hud-name">—</span>
+	<span id="hud-profession">—</span>
+</button>
 <div id="hud-log" class="hud"></div>
 <button id="hud-minimap" class="hud" type="button" aria-label="Open world map" aria-haspopup="dialog" title="Nearby map: 116-unit radius, twice the visible area">
 	<canvas id="minimap-canvas" width="256" height="256" aria-hidden="true"></canvas>

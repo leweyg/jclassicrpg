@@ -106,7 +106,7 @@ async function main() {
 		document.getElementById('world-interact').addEventListener('click', () => renderer.interact());
 		document.getElementById('world-intuition').addEventListener('click', () => interactionsUI.openIntuition(renderer.nearbyInteraction()));
 		const menu = document.getElementById('game-menu');
-		const menuButton = document.getElementById('menu-open');
+		const menuButton = document.getElementById('hud-portrait-card');
 		const closeMenu = () => {
 			menu.close();
 			menuButton.setAttribute('aria-expanded', 'false');
