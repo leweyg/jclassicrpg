@@ -5,7 +5,7 @@ import * as THREE from './threejs/three.module.js';
 const foliage = {
  'pine_bb1.obj': {texture:'continental_pine_atlas.png',columns:2,column:0},
  'great_pine_bb1.obj': {texture:'continental_pine_atlas.png',columns:2,column:1},
- 'high_bb_1.obj': {texture:'continental_deciduous_atlas.png',columns:3,column:1},
+ 'high_bb_1.obj': {texture:'continental_deciduous_atlas.png',columns:3,column:1,rotateUV:true},
  'bush1.obj': {texture:'continental_deciduous_atlas.png',columns:3,column:0},
  'bush2.obj': {texture:'high_2.png',columns:1,column:0},
 };

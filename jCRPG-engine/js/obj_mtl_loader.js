@@ -227,7 +227,12 @@ async function buildObjModel(dirUrl, objFilename, yUp, vegetation) {
 	for (const [matName, buf] of groupsByMaterial.entries()) {
 		if (buf.positions.length === 0) continue;
 		const foliage = vegetation ? vegetationTexture(objFilename, matName) : null;
-		if (foliage) for (let i=0;i<buf.uvs.length;i+=2) buf.uvs[i]=(buf.uvs[i]+foliage.column)/foliage.columns;
+		if (foliage) for (let i=0;i<buf.uvs.length;i+=2) {
+			const u=buf.uvs[i],v=buf.uvs[i+1];
+			// The tall deciduous cards use -U for up; orient their foliage upright.
+			buf.uvs[i]=((foliage.rotateUV?v:u)+foliage.column)/foliage.columns;
+			buf.uvs[i+1]=foliage.rotateUV?1-u:v;
+		}
 		const geometry = new THREE.BufferGeometry();
 		geometry.setAttribute("position", new THREE.Float32BufferAttribute(buf.positions, 3));
 		geometry.setAttribute("normal", new THREE.Float32BufferAttribute(buf.normals, 3));

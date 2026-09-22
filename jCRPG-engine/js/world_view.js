@@ -5,7 +5,7 @@ import { CHUNK_SIZE, GRID_SIDE, GRID_STEP, VEGETATION_PER_CHUNK } from './world_
 
 const SPECIES = [
 	['tree', 'pine_bb1.obj', 1.2, 1.8], ['tree', 'great_pine_bb1.obj', 0.6, 0.9],
-	['tree', 'palm_02.obj', 1, 1.4], ['tree', 'high_bb_1.obj', 0.8, 1.2],
+	['tree', 'palm_02.obj', 1, 1.4], ['tree', 'high_bb_1.obj', 0.8, 1.2, 1.5],
 	['bush', 'Bush_01.obj', 1, 1.6], ['bush', 'bush1.obj', 1.2, 2], ['bush', 'bush2.obj', 1, 1.5],
 ];
 const COLORS = [0x9ca979, 0x6b8852, 0x939184, 0x397caa, 0xaa9874, 0xc0b38e].map(c => new THREE.Color(c));
@@ -103,7 +103,9 @@ export class WorldView {
 				const scale = SPECIES[species][2] + plants[p + 4] * (SPECIES[species][3] - SPECIES[species][2]);
 				this.dummy.position.set(plants[p], plants[p + 1], plants[p + 2]);
 				this.dummy.rotation.y = plants[p + 5];
-				this.dummy.scale.setScalar(scale);
+				// Broaden only the tall deciduous species; retain its original height.
+				const width = scale * (SPECIES[species][4] ?? 1);
+				this.dummy.scale.set(width, scale, width);
 				this.dummy.updateMatrix();
 				for (let k = 0; k < slot.vegetation[species].length; k++) slot.vegetation[species][k].setMatrixAt(slot.counts[species], this.dummy.matrix);
 				slot.counts[species]++;
