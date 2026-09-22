@@ -1,5 +1,7 @@
 import { buildMapMarkers, MARKER_STYLES, MINIMAP_RADIUS, VISIBLE_RADIUS, wrappedDelta } from './map_model.js';
 
+import {knownLocation,rememberLocations,discoverVisited,cameraMapOffset} from './map_discovery.js';
+
 const TERRAIN_COLORS = [[126, 143, 88], [59, 94, 59], [128, 123, 113], [49, 102, 134], [161, 128, 82], [204, 179, 104]];
 const DASHED = [3, 3], SOLID = [];
 
@@ -9,8 +11,24 @@ export class WorldMap {
 		this.state = gameState;
 		this.renderer = renderer;
 		this.world = gameState.exploration.world;
-		this.baseMarkers = buildMapMarkers(this.world, this.world.additionalMapMarkers);
-		this.markers = [...this.baseMarkers,...(gameState.interactions?.markers()??[])];
+		this.baseMarkers = buildMapMarkers(this.world, this.world.additionalMapMarkers).map(m=>m.kind==='shrine'?{...m,id:m.id.replace('RoadShrine:','shrine:'),implemented:true}:m);
+		const content=gameState.interactions?.content;
+		if(content?.settlements){
+			this.baseMarkers=this.baseMarkers.filter(m=>m.kind!=='settlement');
+			for(const town of content.settlements)this.baseMarkers.push({id:town.id,name:town.name,kind:'settlement',x:town.position[0],y:town.position[1],z:town.position[2],realm:town.realm,implemented:true,capital:['capital','secondary-capital'].includes(town.settlementTier),aliases:this.world.landmarks.filter(l=>town.districtIds.includes(l.id)).map(l=>l.name)});
+		}
+        if(content){
+            const extra=new Map();
+            for(const mission of content.missions){
+                const actor=gameState.interactions.maps.actors[mission.turnInActorId];
+                extra.set(mission.id,{id:mission.id,name:mission.title,kind:'mission',x:actor.position[0],y:actor.position[1],z:actor.position[2],realm:actor.realm,implemented:true,revealOnly:true});
+                for(const objective of mission.objectives)for(const goal of content.goals.filter(g=>objective.targetIds.includes(g.targetId)))extra.set(goal.id,{id:goal.id,name:objective.text,kind:'puzzle',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true,revealOnly:true});
+            }
+            this.baseMarkers.push(...extra.values());
+        }
+		this.state.mapMarkers=this.baseMarkers;
+		this.markers=[...this.baseMarkers];
+		this.showAll=false;
 		this.enabled = new Set(Object.keys(MARKER_STYLES));
 		this.query = '';
 		this.mini = document.getElementById('minimap-canvas');
@@ -23,6 +41,7 @@ export class WorldMap {
 		this.atlas.width = 400; this.atlas.height = 400;
 		this._buildAtlas();
 		this._buildFilters();
+		document.getElementById('map-show-all').addEventListener('change',event=>{this.showAll=event.target.checked;this.update(true);this._renderList();});
 		const miniButton = document.getElementById('hud-minimap');
 		miniButton.querySelector('span').textContent = `Map · ${MINIMAP_RADIUS}-unit radius`;
 		miniButton.title = `Nearby map: ${MINIMAP_RADIUS}-unit radius, twice the visible area`;
@@ -58,11 +77,12 @@ export class WorldMap {
 
 	_kind(marker) { return MARKER_STYLES[marker.kind] ? marker.kind : 'other'; }
 	_visible(marker) {
-		return this.enabled.has(this._kind(marker)) && (!this.query ||
+		return knownLocation(marker,this.state.saveDeltas?.data,this.showAll) && this.enabled.has(this._kind(marker)) && (!this.query ||
 			`${marker.name} ${marker.kind} ${Math.floor(marker.x)} ${Math.floor(marker.z)}`.toLowerCase().includes(this.query));
 	}
 	_label(marker) {
-		return `${marker.name} · ${MARKER_STYLES[this._kind(marker)].label} · ${Math.floor(marker.x)}, ${Math.floor(marker.z)}${marker.implemented ? '' : ' · Unimplemented'}${marker.note ? ` · ${marker.note}` : ''}`;
+		const visited=this.state.saveDeltas?.data.discoveredLocations['visited:'+marker.id];
+		return `${marker.name}${marker.capital?' · Capital':''}${visited?' · Visited':''} · ${MARKER_STYLES[this._kind(marker)].label} · ${Math.floor(marker.x)}, ${Math.floor(marker.z)}${marker.implemented ? '' : ' · Unimplemented'}${marker.note ? ` · ${marker.note}` : ''}`;
 	}
 
 	_buildAtlas() {
@@ -81,7 +101,7 @@ export class WorldMap {
 		const filters = document.getElementById('map-filters');
 		for (const [kind, style] of Object.entries(MARKER_STYLES)) {
 			const count = this.markers.filter(m => this._kind(m) === kind).length;
-			if (!count) continue;
+			if (!count && !['mission','puzzle'].includes(kind)) continue;
 			const label = document.createElement('label'), input = document.createElement('input');
 			input.type = 'checkbox'; input.checked = true;
 			input.addEventListener('change', () => {
@@ -89,7 +109,7 @@ export class WorldMap {
 				this._drawFull(); this._renderList(); this._drawMini();
 			});
 			const text = document.createElement('span');
-			text.textContent = `${style.symbol} ${style.label} (${count})`; text.style.color = style.color;
+			text.textContent = `${style.symbol} ${style.label}`; text.style.color = style.color;
 			label.append(input, text); filters.append(label);
 		}
 		if (!this.markers.some(m => m.kind === 'mission' || m.kind === 'puzzle')) {
@@ -102,7 +122,7 @@ export class WorldMap {
 		this.renderer.setInputEnabled(false);
 		this.detail.textContent = 'Tap a marker to teleport, or tap the map background to close.';
 		this.dialog.showModal();
-		this._drawFull(); this._renderList();
+		this.update(true); this._renderList();
 	}
 
 	close() {
@@ -153,26 +173,32 @@ export class WorldMap {
 		ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(style.symbol, x, y);
 	}
 
-	_player(ctx, x, y, size) {
-		ctx.save(); ctx.translate(x, y); ctx.rotate(this.renderer._yaw);
+	_player(ctx, x, y, size, yaw=this.renderer._yaw) {
+		ctx.save(); ctx.translate(x, y); ctx.rotate(yaw);
 		ctx.beginPath(); ctx.moveTo(0, -size); ctx.lineTo(size * 0.7, size); ctx.lineTo(0, size * 0.5); ctx.lineTo(-size * 0.7, size); ctx.closePath();
 		ctx.fillStyle = '#ff4949'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fill(); ctx.stroke(); ctx.restore();
 	}
 
 	_drawMini() {
 		const ctx = this.mini.getContext('2d'), size = this.mini.width, p = this.state.party.position;
+		const yaw=this.renderer._yaw;
+		ctx.clearRect(0,0,size,size);ctx.save();ctx.translate(size/2,size/2);ctx.rotate(-yaw);ctx.translate(-size/2,-size/2);
 		this._background(ctx, size, p.x - MINIMAP_RADIUS, p.z + MINIMAP_RADIUS, MINIMAP_RADIUS * 2);
+		ctx.restore();
 		const scale = size / (MINIMAP_RADIUS * 2);
 		ctx.strokeStyle = '#ffffff88'; ctx.setLineDash(DASHED); ctx.beginPath();
 		ctx.arc(size / 2, size / 2, VISIBLE_RADIUS * scale, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash(SOLID);
 		for (const marker of this.markers) {
-			if (!this.enabled.has(this._kind(marker))) continue;
+			if (!knownLocation(marker,this.state.saveDeltas?.data,this.showAll)||!this.enabled.has(this._kind(marker))) continue;
 			const dx = wrappedDelta(marker.x, p.x, this.world.sizeX), dz = wrappedDelta(marker.z, p.z, this.world.sizeZ);
-			if (Math.abs(dx) > MINIMAP_RADIUS || Math.abs(dz) > MINIMAP_RADIUS) continue;
-			this._marker(ctx, marker, size / 2 + dx * scale, size / 2 - dz * scale, 8);
+			const offset=cameraMapOffset(dx,dz,yaw);
+			if (Math.abs(offset.x) > MINIMAP_RADIUS || Math.abs(offset.y) > MINIMAP_RADIUS) continue;
+			this._marker(ctx, marker, size / 2 + offset.x * scale, size / 2 + offset.y * scale, 8);
 		}
-		this._player(ctx, size / 2, size / 2, 10);
-		ctx.fillStyle = '#fff'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('N', size / 2, 16);
+		this._player(ctx, size / 2, size / 2, 10, 0);
+		const north=cameraMapOffset(0,1,yaw),edge=(size/2-16)/Math.max(Math.abs(north.x),Math.abs(north.y));
+		ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=4;ctx.strokeStyle='#17251b';
+		ctx.strokeText('N',size/2+north.x*edge,size/2+north.y*edge);ctx.fillStyle='#fff';ctx.fillText('N',size/2+north.x*edge,size/2+north.y*edge);
 	}
 
 	_drawFull() {
@@ -199,9 +225,15 @@ export class WorldMap {
 	}
 
 	update(force = false) {
-        const revision=this.state.saveDeltas?.data.deltaRevision??0;
-        if(this._interactionRevision!==revision){this._interactionRevision=revision;force=true;const save=this.state.saveDeltas?.data;
-            this.markers=[...this.baseMarkers.map(m=>m.kind==='shrine'?{...m,implemented:true,note:save?.shrines?.[m.id.replace('RoadShrine:','shrine:')]?.activated?'Awake relay':'Dormant relay'}:m),...(this.state.interactions?.markers()??[])];
+        const save=this.state.saveDeltas;
+        if(save&&discoverVisited(save,this.baseMarkers,this.state.party.position,this.state.realm,this.world.sizeX,this.world.sizeZ))save.persist(this.state.party.position,this.state.realm);
+        const revision=save?.data.deltaRevision??0;
+        if(this._interactionRevision!==revision||this._saveData!==save?.data||force){
+            this._saveData=save?.data;
+            this._interactionRevision=revision;force=true;
+            const objectives=(this.state.interactions?.markers()??[]).map(m=>({...m,objective:true}));
+            if(save&&rememberLocations(save,objectives.flatMap(m=>[m.id,m.id.replace(/^route:/,'')]))){save.persist(this.state.party.position,this.state.realm);this._interactionRevision=save.data.deltaRevision;}
+            this.markers=[...new Map([...this.baseMarkers,...objectives].map(m=>[m.id,m])).values()];
             if(this.dialog.open)this._renderList();
         }
 		const p = this.state.party.position, yaw = this.renderer._yaw;

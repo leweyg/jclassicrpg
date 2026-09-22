@@ -116,6 +116,9 @@
 	.map-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 	.map-heading h2 { margin: 0; font-size: 1.25rem; }
 	#map-close { padding: 0.6rem 1rem; color: inherit; background: #343c35; border: 1px solid #967545; border-radius: 5px; cursor: pointer; }
+	#map-dev { flex-shrink: 0; max-height: 30vh; overflow-y: auto; }
+	#map-dev summary, #map-dev label { padding: 0.6rem 0; min-height: 24px; cursor: pointer; }
+	#map-dev summary:focus-visible { outline: 2px solid #ffdc89; }
 	#map-filters { display: flex; flex-wrap: wrap; gap: 0.35rem 0.8rem; font-size: 0.8rem; }
 	#map-filters label { display: flex; align-items: center; gap: 0.2rem; cursor: pointer; }
 	.map-notes { margin: 0; font-size: 0.75rem; line-height: 1.4; color: #bdc8bf; }
@@ -264,8 +267,13 @@
 
 <dialog id="world-map-dialog" aria-labelledby="map-title">
 	<div class="map-heading"><h2 id="map-title">World map · N ↑</h2><button id="map-close" type="button" autofocus>Close</button></div>
-	<div id="map-filters" role="group" aria-label="Visible marker types"></div>
-	<p class="map-notes">Red arrow: you. Dashed markers: unimplemented locations, still available for surface teleport. Nearby map: twice the visible radius; white ring: visible area.</p>
+	<details id="map-dev">
+		<summary>Dev options</summary>
+		<label><input id="map-show-all" type="checkbox"> Show undiscovered locations</label>
+		<div id="map-filters" role="group" aria-label="Visible marker types"></div>
+		<p class="map-notes">Dashed markers are unimplemented locations with surface teleport destinations.</p>
+	</details>
+	<p class="map-notes">Start and capitals are always known. Explore, accept missions, and read dialogue to reveal more places. The minimap follows your camera; N points north.</p>
 	<p id="map-mission-note" class="map-notes"></p>
 	<div class="map-layout">
 		<div class="map-visual"><div class="map-frame"><canvas id="world-map-canvas" width="800" height="800" role="img" aria-label="Saved world terrain and locations. Use the location list to teleport with a keyboard."></canvas></div><p id="map-detail">Tap a marker to teleport, or tap the map background to close.</p></div>

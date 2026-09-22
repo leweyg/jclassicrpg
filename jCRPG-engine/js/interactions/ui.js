@@ -1,3 +1,4 @@
+import {revealReadDialogue} from '../map_discovery.js';
 /** Accessible bounded panels; world movement pauses while a panel owns focus. */
 export class InteractionUI {
  constructor(state,renderer,log){
@@ -15,7 +16,7 @@ export class InteractionUI {
  close(){this.state.interactions.panel=null;this.dialog.close();this.renderer.setInputEnabled(true);this.returnFocus?.focus();this.renderer.requestRender();}
  commit(actions){const result=this.state.interactions.transact(actions);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.log(result.message);this.renderer.requestRender();return result;}
  show(){const engine=this.state.interactions,panel=engine.panel;if(!panel){if(this.dialog.open)this.close();return;}
-  if(panel.kind==='dialogue'){const d=engine.dialogue();this.open(d.actor.name);this.text('small',d.actor.role+' · '+d.knowledge);this.text('p',d.text);for(let i=0;i<d.choices.length;i++)this.button(d.choices[i].text,()=>{const r=engine.choose(i);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);if(r.message)this.log(r.message);this.show();this.renderer.requestRender();});}
+  if(panel.kind==='dialogue'){const d=engine.dialogue();this.open(d.actor.name);this.text('small',d.actor.role+' · '+d.knowledge);this.text('p',d.text);if(revealReadDialogue(this.state.saveDeltas,this.state.mapMarkers??[],d,engine.content.actors)){this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.renderer.requestRender();}for(let i=0;i<d.choices.length;i++)this.button(d.choices[i].text,()=>{const r=engine.choose(i);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);if(r.message)this.log(r.message);this.show();this.renderer.requestRender();});}
   else {const c=engine.maps.containers[panel.id],taken=this.state.saveDeltas.data.containers[c.id]?.takenItemIds??[];this.open(c.name);const items=c.items.filter(i=>!taken.includes(i.id));if(!items.length)this.text('p','This container is empty. Its contents are in your party inventory.');for(const i of items)this.button('Take '+engine.maps.itemTypes[i.typeId].name,()=>{this.commit([{op:'take',id:c.id,itemIds:[i.id]}]);this.show();});if(items.length)this.button('Take All',()=>{this.commit([{op:'take',id:c.id}]);this.show();});this.button('Continue exploring',()=>this.close());}
   this.focus();
  }
