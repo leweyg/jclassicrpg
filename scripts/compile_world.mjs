@@ -15,6 +15,7 @@ import {compileInteractions} from './compile_interactions.mjs';
 import {INTERACTION_VERSION} from '../jCRPG-engine/js/interactions/format.js';
 import {bakeAssets,terrainGLB} from './world_assets.mjs';
 import {roofPiece} from './roof_layout.mjs';
+import {extractWoodenHousePrefab} from './house_prefab.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const arg=process.argv.indexOf('--out'),destination=arg>=0?path.resolve(process.argv[arg+1]):path.join(root,'jCRPG-engine/worlds/seed0/v2');
 fs.mkdirSync(path.dirname(destination),{recursive:true});
@@ -84,6 +85,7 @@ function write(file,value){if(file.endsWith('.scene.json'))validateSchema(value,
 fs.mkdirSync(path.join(out,'interactions'),{recursive:true});
 console.log('Compiling interactions, characters and cultural arcs…');
 const interactions=compileInteractions({data,world,chunks,structures,portals,emit});
+write('assets/wooden-house.scene.json',extractWoodenHousePrefab(chunks,structures));
 validateSchema(interactions.content,JSON.parse(fs.readFileSync(path.join(root,'jCRPG-engine/js/interactions/content.schema.json'))));
 const catalogs={};
 for(const [key,records] of Object.entries(interactions.content))catalogs[key]=write('interactions/'+key+'.json',records);
@@ -107,7 +109,7 @@ for(const c of chunks){
  const doc=scene('seed0_'+file,[{name:'terrain',source:'./meshes/'+path.basename(terrainFile),userData:{jcrpg:{kind:'terrain'}}},...c.nodes],payload);
  // Validate gameplay coordinates, dimensions, known sources before publishing.
  for(const row of c.cells)if(row[0]<0||row[0]>=32||row[2]<0||row[2]>=32||!c.structures[row[4]])throw Error('Invalid semantic fragment '+file);
- for(const n of c.nodes)if(!assets[path.basename(n.source,'.obj')])throw Error('Unknown visual asset '+n.source);
+ for(const n of c.nodes)if(n.source!=='../assets/wooden-house.scene.json'&&!assets[path.basename(n.source,'.obj')])throw Error('Unknown visual asset '+n.source);
  validateScene(doc);chunkDescriptors[payload.key]=write('chunks/'+file,doc);
 }
 for(let rz=0;rz<10;rz++)for(let rx=0;rx<10;rx++){

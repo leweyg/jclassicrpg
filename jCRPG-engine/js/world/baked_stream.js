@@ -40,12 +40,12 @@ export class BakedWorldStream {
    const lookup=new Map();for(const row of d.collision.cells){if(row.length!==7||!row.every(Number.isFinite)||row[0]<0||row[0]>=32||row[2]<0||row[2]>=32||!d.collision.structures[row[4]])throw Error('Invalid semantic cell');const key=row[0]+32*row[2];if(!lookup.has(key))lookup.set(key,[]);lookup.get(key).push(row);}
    const instances=new Map();let nodeCount=0;
    const prefabs=new Map();
-   const add=async(nodes,url,parent=identity(),depth=0)=>{if(depth>12)throw Error('Prefab depth limit exceeded');for(const node of nodes){if(++nodeCount>100000)throw Error('Scene node limit exceeded');if(node.userData?.jcrpg?.kind==='terrain')continue;
-     const matrix=multiply(parent,compose(node));
+   const add=async(nodes,url,parent=identity(),depth=0,inherited={})=>{if(depth>12)throw Error('Prefab depth limit exceeded');for(const node of nodes){if(++nodeCount>100000)throw Error('Scene node limit exceeded');if(node.userData?.jcrpg?.kind==='terrain')continue;
+     const matrix=multiply(parent,compose(node)),meta={...inherited,...node.userData?.jcrpg};
      if(node.source){const source=new URL(node.source,url);const root=new URL('assets/',this.baseURL);if(source.origin!==root.origin||!source.pathname.startsWith(root.pathname))throw Error('Asset source outside world pack');
-       if(source.pathname.endsWith('.json')){if(!prefabs.has(source.href)){if(prefabs.size>=32)throw Error('Prefab cache limit exceeded');const r=await this.fetcher(source,{signal:job.abort.signal});if(!r.ok)throw Error('Missing prefab');const p=await r.json();validateScene(p);prefabs.set(source.href,p);}await add(prefabs.get(source.href).children,source,matrix,depth+1);}
-       else {const meta=node.userData?.jcrpg??{},key=source.href+'|'+(meta.realm??'surface')+'|'+(meta.roof?'roof':meta.ceiling?'ceiling':'body');if(!instances.has(key))instances.set(key,{source:source.href,realm:meta.realm??'surface',roof:!!meta.roof,ceiling:!!meta.ceiling,nodes:[]});instances.get(key).nodes.push({matrix,objectId:meta.objectId??null,stateTargetId:meta.stateTargetId??meta.structureId??null,actorId:meta.actorId??null,settlementId:meta.settlementId??null,componentId:meta.componentId??null});}
-     }if(node.children)await add(node.children,url,matrix,depth+1);
+       if(source.pathname.endsWith('.json')){if(!prefabs.has(source.href)){if(prefabs.size>=32)throw Error('Prefab cache limit exceeded');const r=await this.fetcher(source,{signal:job.abort.signal});if(!r.ok)throw Error('Missing prefab');const p=await r.json();validateScene(p);prefabs.set(source.href,p);}await add(prefabs.get(source.href).children,source,matrix,depth+1,meta);}
+       else {const key=source.href+'|'+(meta.realm??'surface')+'|'+(meta.roof?'roof':meta.ceiling?'ceiling':'body');if(!instances.has(key))instances.set(key,{source:source.href,realm:meta.realm??'surface',roof:!!meta.roof,ceiling:!!meta.ceiling,nodes:[]});instances.get(key).nodes.push({matrix,objectId:meta.objectId??null,stateTargetId:meta.stateTargetId??meta.structureId??null,actorId:meta.actorId??null,settlementId:meta.settlementId??null,componentId:meta.componentId??null});}
+     }if(node.children)await add(node.children,url,matrix,depth+1,meta);
    }};
    await add(doc.children,new URL(desc.url,this.baseURL));
    if(job.abort.signal.aborted||this.jobs.get(job.key)!==job){this.stats.stale++;return;}
