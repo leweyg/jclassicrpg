@@ -80,6 +80,11 @@
 		font-size: clamp(0.55rem, 1.8vw, 0.75rem);
 	}
 	#hud-log {
+		pointer-events: auto;
+		cursor: pointer;
+		touch-action: manipulation;
+		text-align: left;
+		min-height: 48px;
 		bottom: calc(0.5rem + env(safe-area-inset-bottom));
 		left: calc(0.4rem + env(safe-area-inset-left));
 		width: clamp(160px, 48vw, 320px);
@@ -238,6 +243,7 @@
 #interaction-panel small {color:#b5d2be;}
 #interaction-panel button {background:#294a3b;color:#fff5dc;border:1px solid #8ea78c;border-radius:6px;padding:10px 14px;cursor:pointer;font:inherit;}
 #interaction-body>button {display:block;width:100%;margin:8px 0;text-align:left;}
+#interaction-body>button.quest-row { min-height:48px; margin:3px 0; padding:6px 10px; font-size:14px; line-height:1.25; }
 #interaction-panel button:focus-visible {outline:3px solid #ffe29d;outline-offset:2px;}
 #interaction-panel article {border-top:1px solid #50705a;margin-top:16px;}
 #interaction-panel h4 {margin-bottom:4px;}
@@ -268,7 +274,7 @@
 	<span id="hud-name">—</span>
 	<span id="hud-profession">—</span>
 </button>
-<div id="hud-log" class="hud"></div>
+<button id="hud-log" class="hud" type="button" aria-label="Open journal" aria-haspopup="dialog" title="Open journal"></button>
 <button id="hud-minimap" class="hud" type="button" aria-label="Open world map" aria-haspopup="dialog" title="Nearby map: 116-unit radius, twice the visible area">
 	<canvas id="minimap-canvas" width="256" height="256" aria-hidden="true"></canvas>
 	<span>Map · 116-unit radius</span>

@@ -23,6 +23,7 @@ export function validateSave(input){
  for(const field of dictionaries)if(!data[field]||Array.isArray(data[field])||typeof data[field]!=='object')throw Error('Invalid save dictionary: '+field);
  for(const field of ['openedContainers','discoveredLocations','evidence'])if(Object.values(data[field]).some(v=>v!==true))throw Error('Invalid discovery state');
  if(!Number.isSafeInteger(data.lastTransaction)||data.lastTransaction<0)throw Error('Invalid transaction number');
+ if(data.navMissionId!=null&&typeof data.navMissionId!=='string')throw Error('Invalid navigation quest');
  if(!data.inventory?.items||!Array.isArray(data.inventory.order)||data.inventory.order.length>10000||new Set(data.inventory.order).size!==data.inventory.order.length||data.inventory.order.some(id=>data.inventory.items[id]?.id!==id)||Object.keys(data.inventory.items).length!==data.inventory.order.length)throw Error('Invalid inventory');
  for(const c of Object.values(data.containers))if(!Array.isArray(c.takenItemIds)||new Set(c.takenItemIds).size!==c.takenItemIds.length)throw Error('Invalid container state');
  for(const s of Object.values(data.shrines))if(s.activated!==true)throw Error('Invalid shrine state');

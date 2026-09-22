@@ -11,7 +11,7 @@ export class InteractionUI {
  }
  text(tag,value,parent=this.body){const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;}
  button(label,action,parent=this.body){const b=this.text('button',label,parent);b.type='button';b.onclick=()=>{try{action();}catch(error){this.log(error.message);}};return b;}
- open(title){this.title.textContent=title;this.body.replaceChildren();if(!this.dialog.open){this.returnFocus=document.activeElement;this.renderer.setInputEnabled(false);this.dialog.showModal();}}
+ open(title){this.title.textContent=title;this.body.replaceChildren();const button=this.dialog.querySelector('header button');button.textContent='Close';button.setAttribute('aria-label','Close interaction');button.onclick=()=>this.close();if(!this.dialog.open){this.returnFocus=document.activeElement;this.renderer.setInputEnabled(false);this.dialog.showModal();}}
  focus(){(this.body.querySelector('button')??this.dialog.querySelector('button')).focus();}
  close(){this.state.interactions.panel=null;this.dialog.close();this.renderer.setInputEnabled(true);this.returnFocus?.focus();this.renderer.requestRender();}
  commit(actions){const result=this.state.interactions.transact(actions);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.log(result.message);this.renderer.requestRender();return result;}
@@ -21,13 +21,26 @@ export class InteractionUI {
   this.focus();
  }
  openIntuition(anchor){const info=this.state.interactions.intuition(anchor);if(!info?.summary)return;this.open('Intuition · '+info.name);this.text('p',info.summary);this.button('Continue exploring',()=>this.close());this.focus();}
- openJournal(){this.open('Concordance journal');const engine=this.state.interactions,s=this.state.saveDeltas.data;
-  this.text('p','Movement and Interact are enough. Inspect a conductor once to read it, then cycle its quantity. After all quantities match, repeat the displayed resonance order. Reset stones let you begin again.');
-  for(const category of ['available','active','ready-to-turn-in','completed','failed','archived']){const entries=engine.journal().filter(m=>m.state===category&&(category!=='available'||s.actors[m.giverActorId]?.talked||m.id==='mission:wammigmig:fair-share'));if(!entries.length)continue;this.text('h3',category.replaceAll('-',' '));for(const m of entries){const article=document.createElement('article');this.body.append(article);this.text('h4',m.title,article);this.text('p',m.summary,article);const giver=engine.maps.actors[m.giverActorId];this.text('small',`${m.layer} · ${giver.name} · ${Math.floor(giver.position[0])}, ${Math.floor(giver.position[2])} · ${giver.realm}`,article);for(const o of m.progress)this.text('p',`${o.count}/${o.required} — ${o.text}`,article);}}
-  if(Object.keys(s.evidence).length){this.text('h3','Observed facts');for(const id of Object.keys(s.evidence))this.text('p',engine.content.goals.find(g=>g.targetId===id)?.fact??id.replaceAll(':',' · '));}
-  if(Object.keys(s.commitments).length){this.text('h3','Your commitments');for(const text of Object.values(s.commitments))this.text('p',text);}
-  for(const route of Object.values(s.shrineRoutes)){const town=engine.maps.settlements[route.destinationTownId];this.text('h3','Route to '+town.name);this.text('p',route.litFrontierShrineIds.length?'Next relay: '+route.litFrontierShrineIds.map(id=>engine.maps.shrines[id].position.filter((_,i)=>i!==1).join(', ')).join('; '):'The relay chain is awake. Continue to '+town.name+'.');}
-  this.button('Continue exploring',()=>this.close());this.dialog.querySelector('header button').focus();this.dialog.scrollTop=0;
+ openJournal(){this.open('Journal');const engine=this.state.interactions,s=this.state.saveDeltas.data;
+  let count=0;
+  for(const category of ['active','ready-to-turn-in','available','completed','failed','archived']){
+   const entries=engine.journal().filter(m=>(m.id===s.navMissionId?'active':m.state)===category&&(category!=='available'||s.actors[m.giverActorId]?.talked||m.id==='mission:wammigmig:fair-share')).sort((a,b)=>Number(b.id===s.navMissionId)-Number(a.id===s.navMissionId));
+   if(!entries.length)continue;
+   this.text('h3',category.replaceAll('-',' '));
+   for(const m of entries){const b=this.button((m.id===s.navMissionId?'◆ ':'')+m.title,()=>this.openQuest(m.id));b.className='quest-row';count++;}
+  }
+  if(!count)this.text('p','No quests yet. Speak to people nearby to learn more.');
+  this.focus();this.dialog.scrollTop=0;
+ }
+ openQuest(id){const engine=this.state.interactions,m=engine.journal().find(m=>m.id===id);if(!m)return this.openJournal();
+  this.open(m.title);const back=this.dialog.querySelector('header button');back.textContent='Back';back.setAttribute('aria-label','Back to journal');back.onclick=()=>this.openJournal();
+  this.text('small',m.state.replaceAll('-',' '));this.text('p',m.summary);
+  for(const o of m.progress)this.text('p',`${o.count}/${o.required??o.targetIds.length} — ${o.text}`);
+  const actor=engine.maps.actors[m.turnInActorId];this.text('p','Return to '+actor.name+'.');
+  const goal=engine.navigationGoal(),selected=this.state.saveDeltas.data.navMissionId===id;
+  if(selected&&goal)this.text('p','Navigation: '+goal.name);
+  if(['available','active','ready-to-turn-in'].includes(m.state))this.button('Set as nav goal',()=>{engine.setNavigationGoal(id);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.close();});
+  this.focus();this.dialog.scrollTop=0;
  }
  openInventory(){this.open('Party inventory');const engine=this.state.interactions,inv=this.state.saveDeltas.data.inventory;for(const id of inv.order){const item=inv.items[id],type=engine.maps.itemTypes[item.typeId];this.text('h4',type.name);this.text('p',type.note);}this.button('Continue exploring',()=>this.close());this.focus();}
 }

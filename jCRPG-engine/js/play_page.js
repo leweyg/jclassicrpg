@@ -34,7 +34,8 @@ function renderHud(gameState) {
 function appendLog(text) {
 	const logEl = document.getElementById("hud-log");
 	if (!logEl) return;
-	const line = document.createElement("div");
+	const line = document.createElement("span");
+	line.style.display = 'block';
 	line.textContent = text;
 	logEl.appendChild(line);
 	while (logEl.children.length > 12) logEl.firstElementChild.remove();
@@ -81,6 +82,7 @@ async function main() {
 		await renderer.buildWorld(sim.gameState);
 		const worldMap = new WorldMap(sim.gameState, renderer);
 		const interactionsUI = new InteractionUI(sim.gameState,renderer,appendLog);
+		document.getElementById('hud-log').addEventListener('click',()=>interactionsUI.openJournal());
 		renderer.onInteractionPanel=()=>interactionsUI.show();
 		window.__worldMap = worldMap;
 		window.__sceneRenderer = renderer;

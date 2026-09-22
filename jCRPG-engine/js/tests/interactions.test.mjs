@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {InteractionRuntime,predicate} from '../interactions/runtime.js';
 import {selectNearby} from '../interactions/nearby.js';
+import {mapGoalPosition} from '../interactions/navigation.js';
 import {initialPuzzle,puzzleStep,solvePuzzle} from '../interactions/puzzles.js';
 import {SaveDeltas,validateSave} from '../world/save_deltas.js';
 import {FrozenWorld} from '../frozen_world.js';
@@ -11,6 +12,22 @@ const base=new URL('../../worlds/seed0/v2/',import.meta.url),read=file=>JSON.par
 const manifest=read('interactions/manifest.json'),content=Object.fromEntries(Object.entries(manifest.catalogs).map(([key,desc])=>[key,read(desc.url)]));
 const create=()=>new InteractionRuntime(content,new SaveDeltas({getItem:()=>null,setItem:()=>{}}));
 const run=(e,actions)=>e.transact(actions);
+test('navigation follows quest objectives, return actor and unlocked follow-up; selection survives saves',()=>{
+ const e=create(),m=content.missions.find(m=>m.id==='mission:antipion:balance');
+ run(e,[{op:'accept',id:m.id}]);assert.equal(e.save.data.navMissionId,m.id);
+ assert.equal(e.navigationGoal().targetId,m.objectives[0].targetIds[0]);
+ solve(e,m.objectives[0].targetIds[0]);assert.equal(e.navigationGoal().id,m.turnInActorId);
+ const copy=create();copy.save.import(e.save.export());copy.initialize();assert.deepEqual(copy.navigationGoal(),e.navigationGoal());
+ run(e,[{op:'turnIn',id:m.id}]);assert.notEqual(e.save.data.navMissionId,m.id);
+ if(e.save.data.navMissionId)assert.ok(e.navigationGoal());
+ const another=e.journal().find(m=>m.state==='available');e.setNavigationGoal(another.id);assert.equal(e.navigationGoal().id,another.giverActorId);
+ assert.throws(()=>e.setNavigationGoal(m.id));
+});
+test('navigation icons stay inside map edges and retain their bearing',()=>{
+ assert.deepEqual(mapGoalPosition(128,128,256),{x:128,y:128,edge:false,angle:0});
+ const east=mapGoalPosition(2000,128,256);assert.equal(east.x,236);assert.equal(east.y,128);assert.ok(east.edge);
+ const corner=mapGoalPosition(-100,-100,256);assert.equal(corner.x,20);assert.equal(corner.y,20);
+});
 test('intuition describes nearby characters and objects without activating or revealing them',()=>{
  const e=create(),before=e.save.export(),actor=content.actors[0],puzzle=content.puzzles[0];
  const targets=[{kind:'actor',targetId:actor.id},{kind:'container',targetId:content.containers[0].id},{kind:'shrine',targetId:content.shrines[0].id},{kind:'puzzle',targetId:puzzle.id,componentId:puzzle.componentIds[0]},{kind:'puzzle',targetId:puzzle.id,componentId:puzzle.id+':reset'},{kind:'evidence',targetId:'reading',fact:'A measured reading.'}];

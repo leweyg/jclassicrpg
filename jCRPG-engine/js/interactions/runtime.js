@@ -1,6 +1,7 @@
 import {validateContent,INTERACTION_VERSION} from './format.js';
 import {initialPuzzle,puzzleStep,puzzleHint} from './puzzles.js';
 import {validateSave} from '../world/save_deltas.js';
+import {questGoal,advanceNavigation} from './navigation.js';
 
 export function predicate(p,s,engine,depth=0){
  if(depth>12)throw Error('Predicate depth limit');
@@ -24,6 +25,7 @@ export class InteractionRuntime {
  constructor(content,save){this.content=content;this.maps=validateContent(content);this.save=save;this.panel=null;this.initialize();}
  initialize(){const s=this.save.data;this.validateState(s);if(!s.flags.initialInventory){for(const item of this.content.initialInventory)this.grant(s,item);s.flags.initialInventory=true;}this.refresh(s);}
  validateState(s){
+ if(s.navMissionId!=null&&!Object.hasOwn(this.maps.missions,s.navMissionId))throw Error('Unknown navigation quest');
  const check=(field,group)=>{for(const id of Object.keys(s[field]))if(!Object.hasOwn(this.maps[group],id))throw Error('Unknown saved '+field+': '+id);};
  for(const [f,g]of [['puzzles','puzzles'],['shrines','shrines'],['containers','containers'],['missions','missions'],['shrineRoutes','routes']])check(f,g);
  for(const [id,p]of Object.entries(s.puzzles)){const def=this.maps.puzzles[id];if(p.values.length!==def.demands.length||p.values.some(n=>n>def.capacity)||p.cursor>def.sequence.length||p.observed.some(x=>!def.componentIds.includes(x)))throw Error('Invalid puzzle state for '+id);}
@@ -47,7 +49,7 @@ export class InteractionRuntime {
  if(!Array.isArray(actions)||actions.length>64)throw Error('Invalid action list');
  const draft=structuredClone(this.save.data),messages=[];
  for(const action of actions)this.apply(draft,action,messages);
- this.refresh(draft);draft.lastTransaction=token;draft.deltaRevision=(draft.deltaRevision??0)+1;
+ this.refresh(draft);advanceNavigation(this,this.save.data,draft);draft.lastTransaction=token;draft.deltaRevision=(draft.deltaRevision??0)+1;
  validateSave(draft);this.validateState(draft);this.save.data=draft;
  return {message:messages.join(' '),transactionId:token};
  }
@@ -118,6 +120,8 @@ export class InteractionRuntime {
  return {actor:a,text:reaction??node.text,knowledge:node.knowledge??'testimony',choices:(node.choices??[]).filter(c=>predicate(c.when,this.save.data,this))};
  }
  choose(i,token){const choice=this.dialogue().choices[i];if(!choice)throw Error('Choice no longer available');const result=this.transact(choice.actions??[],token);if(choice.next)this.panel.nodeId=choice.next;else this.panel=null;return result;}
+ navigationGoal(){return questGoal(this,this.save.data.navMissionId);}
+ setNavigationGoal(id){if(!questGoal(this,id))throw Error('This quest has no remaining destination.');this.save.data.navMissionId=id;this.save.data.deltaRevision++;}
  journal(){return this.content.missions.map(m=>({...m,state:this.missionState(m.id),progress:m.objectives.map(o=>({...o,count:this.objectiveSources(o,this.save.data).length}))})).filter(m=>m.state!=='locked');}
  markers(){
  const result=[],add=(id,name,kind,position,realm='surface')=>{if(position)result.push({id,name,kind,x:position[0],y:position[1],z:position[2],realm,implemented:true});};

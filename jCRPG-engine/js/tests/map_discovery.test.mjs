@@ -70,7 +70,7 @@ test('compiled mission and dialogue locations reveal through the real map and su
  const manifest=read('interactions/manifest.json'),content=Object.fromEntries(Object.entries(manifest.catalogs).map(([key,desc])=>[key,read(desc.url)]));
  const worldData=JSON.parse(fs.readFileSync(new URL('../../json/frozen_world.json',import.meta.url)));
  const oldDocument=globalThis.document,oldWindow=globalThis.window;
- const element=()=>({style:{},addEventListener(){},append(){},querySelector:()=>element(),width:256});
+ const element=()=>({style:{},setAttribute(name,value){this[name]=value;},addEventListener(){},append(){},querySelector:()=>element(),width:256});
  const elements=new Map();globalThis.document={createElement:element,getElementById:id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);}};globalThis.window={addEventListener(){}};
  class QuietMap extends WorldMap{_buildAtlas(){} _drawMini(){} _drawFull(){} _renderList(){}}
  try{
@@ -82,6 +82,8 @@ test('compiled mission and dialogue locations reveal through the real map and su
   assert.equal(map.baseMarkers.filter(m=>m.capital).length,30,'all other capitals remain in the catalogue');
   const mission=content.missions.find(m=>m.id==='mission:wammigmig:fair-share');
   engine.transact([{op:'accept',id:mission.id}]);map.update();
+  assert.match(elements.get('hud-minimap')['aria-label'],/Navigation goal:/);
+  assert.match(elements.get('map-mission-note').textContent,/Navigation:/);
   const targets=engine.markers();assert.ok(targets.length>1);for(const target of targets)assert.ok(map.markers.some(m=>m.id===target.id&&map._visible(m)),target.id);
   // The map does not need the active objective flag after the destination is learned.
   for(const target of targets)assert.equal(knownLocation({...target,objective:false},save.data),true);
