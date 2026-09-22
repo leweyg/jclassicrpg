@@ -16,6 +16,9 @@ import { WorldView } from "./world_view.js";
 import { VISIBLE_RADIUS } from "./map_model.js";
 import { createSky } from "./sky.js";
 
+// A little darker than the skybox mountains, so distant silhouettes blend into blue.
+const SURFACE_FOG_COLOR = 0x3f6099;
+
 const MOVE_SPEED = 4; // world units/sec at full stick deflection
 const STICK_RADIUS = 55; // px a "move" stick drag is clamped to
 const LOOK_SENSITIVITY = 0.006;
@@ -32,7 +35,7 @@ export class SceneRenderer {
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-		this.scene.fog = new THREE.Fog(0x9fb98a, 25, VISIBLE_RADIUS);
+		this.scene.fog = new THREE.Fog(SURFACE_FOG_COLOR, 25, VISIBLE_RADIUS);
 
 		this._yaw = Math.PI; // facing -Z into the scene
 		this._pitch = -0.08;
@@ -275,7 +278,7 @@ export class SceneRenderer {
 			const pos=this.gameState.party.position;
 			const inside=this.gameState.exploration.cellAt?.(pos.x,pos.y,pos.z,this.gameState.realm)?.flags & 2048;
 			if(this._lantern){this._lantern.visible=cave||!!inside;this._lantern.position.copy(this.camera.position);}
-			this.scene.fog.color.set(cave?0x171e21:0x9fb98a);
+			this.scene.fog.color.set(cave?0x171e21:SURFACE_FOG_COLOR);
 			if (!this.scene.background?.isColor) this.scene.background=new THREE.Color();
 			this.scene.background.set(cave?0x171e21:0x9fc2d1);
 		}
