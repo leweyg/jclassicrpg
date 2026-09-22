@@ -15,6 +15,7 @@
  */
 
 import * as THREE from "./threejs/three.module.js";
+import { vegetationTexture, maskVegetation } from './vegetation_materials.js';
 
 const objTextCache = new Map();
 const modelCache = new Map();
@@ -84,7 +85,9 @@ async function resolveTexture(mapKdFilename) {
 	if (textureCache.has(base)) return textureCache.get(base);
 
 	const promise = (async () => {
-		for (const dir of TEXTURE_DIR_CANDIDATES) {
+		// This shared leaf texture is only shipped in common; avoid a known 404.
+		const directories = base === 'bush_leave' ? ['media/textures/models/common'] : TEXTURE_DIR_CANDIDATES;
+		for (const dir of directories) {
 			const url = `${dir}/${base}.png`;
 			try {
 				const head = await fetch(url, { method: "HEAD" });
@@ -206,13 +209,13 @@ export function parseObj(text, yUp = false) {
  * Loads an OBJ (+ its MTL, if any) into a THREE.Group with one Mesh per
  * material group. dirUrl is the folder the .obj/.mtl live in.
  */
-export function loadObjModel(dirUrl, objFilename, { yUp = false } = {}) {
-	const key = `${dirUrl}/${objFilename}|${yUp}`;
-	if (!modelCache.has(key)) modelCache.set(key, buildObjModel(dirUrl, objFilename, yUp).catch(error => { modelCache.delete(key); throw error; }));
+export function loadObjModel(dirUrl, objFilename, { yUp = false, vegetation = false } = {}) {
+	const key = `${dirUrl}/${objFilename}|${yUp}|${vegetation}`;
+	if (!modelCache.has(key)) modelCache.set(key, buildObjModel(dirUrl, objFilename, yUp, vegetation).catch(error => { modelCache.delete(key); throw error; }));
 	return modelCache.get(key);
 }
 
-async function buildObjModel(dirUrl, objFilename, yUp) {
+async function buildObjModel(dirUrl, objFilename, yUp, vegetation) {
 	const objUrl = `${dirUrl}/${objFilename}`;
 	const text = await fetchText(objUrl);
 	const { groupsByMaterial, mtllib } = parseObj(text, yUp);
@@ -223,6 +226,8 @@ async function buildObjModel(dirUrl, objFilename, yUp) {
 
 	for (const [matName, buf] of groupsByMaterial.entries()) {
 		if (buf.positions.length === 0) continue;
+		const foliage = vegetation ? vegetationTexture(objFilename, matName) : null;
+		if (foliage) for (let i=0;i<buf.uvs.length;i+=2) buf.uvs[i]=(buf.uvs[i]+foliage.column)/foliage.columns;
 		const geometry = new THREE.BufferGeometry();
 		geometry.setAttribute("position", new THREE.Float32BufferAttribute(buf.positions, 3));
 		geometry.setAttribute("normal", new THREE.Float32BufferAttribute(buf.normals, 3));
@@ -233,17 +238,20 @@ async function buildObjModel(dirUrl, objFilename, yUp) {
 		const matDesc = materials[matName];
 		const color = matDesc ? new THREE.Color(matDesc.Kd[0], matDesc.Kd[1], matDesc.Kd[2]) : new THREE.Color(0.6, 0.6, 0.6);
 		const material = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide });
+		material.name = matName;
 		if (matDesc?.d != null && matDesc.d < 1) {
 			material.transparent = true;
 			material.opacity = matDesc.d;
 			material.alphaTest = 0.3;
 		}
+		if (vegetation) maskVegetation(material);
 
 		const mesh = new THREE.Mesh(geometry, material);
 		group.add(mesh);
 
-		if (matDesc?.map_Kd) {
-			const tex = await resolveTexture(matDesc.map_Kd);
+		const textureName = foliage?.texture ?? matDesc?.map_Kd;
+		if (textureName) {
+			const tex = await resolveTexture(textureName);
 			if (tex) {
 				material.map = tex;
 				material.needsUpdate = true;

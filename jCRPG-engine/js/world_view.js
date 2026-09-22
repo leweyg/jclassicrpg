@@ -27,7 +27,7 @@ export class WorldView {
 	async build() {
 		const assets = await Promise.all([
 			loadObjModel('media/models/ground', 'ground_1.obj'),
-			...SPECIES.map(([dir, file]) => loadObjModel(`media/models/${dir}`, file)),
+			...SPECIES.map(([dir, file]) => loadObjModel(`media/models/${dir}`, file, {vegetation:true})),
 		]);
 		this.models = assets.slice(1);
 		this.models.forEach((model, index) => model.traverse(child => {
