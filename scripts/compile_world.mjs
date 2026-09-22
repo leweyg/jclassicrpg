@@ -14,6 +14,7 @@ import {validateSchema} from './validate_schema.mjs';
 import {compileInteractions} from './compile_interactions.mjs';
 import {INTERACTION_VERSION} from '../jCRPG-engine/js/interactions/format.js';
 import {bakeAssets,terrainGLB} from './world_assets.mjs';
+import {roofPiece} from './roof_layout.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const arg=process.argv.indexOf('--out'),destination=arg>=0?path.resolve(process.argv[arg+1]):path.join(root,'jCRPG-engine/worlds/seed0/v2');
 fs.mkdirSync(path.dirname(destination),{recursive:true});
@@ -55,8 +56,8 @@ for(const d of data.districts){
   }
   if(v.roofHeight&&['Hut','Igloo','SandIgloo'].includes(s.kind)){emit(s.kind==='Hut'?'hutRoof':s.kind==='Igloo'?'iglooRoof':'sandRoof',ox+s.size[0]/2,oy+v.roofHeight,oz+s.size[2]/2,0,[s.size[0]/4,1,s.size[2]/4],{structureId:s.id,roof:true,realm:'surface'});}
   else if(v.roofHeight){for(let z=0;z<s.size[2];z++)for(let x=0;x<s.size[0];x++){
-    const edge=x===0||z===0||x===s.size[0]-1||z===s.size[2]-1,corner=(x===0||x===s.size[0]-1)&&(z===0||z===s.size[2]-1);
-    emit(edge?(corner?'roofCorner':'roofEdge'):'roof',ox+x+.5,oy+v.roofHeight,oz+z+.5,z===0?Math.PI:x===0?-Math.PI/2:x===s.size[0]-1?Math.PI/2:0,[1,1,1],{structureId:s.id,roof:true,realm:'surface'});
+    const roof=roofPiece(x,z,s.size[0],s.size[2]);
+    emit(roof.asset,ox+x+.5,oy+v.roofHeight+roof.heightOffset,oz+z+.5,roof.rotation,[1,1,1],{structureId:s.id,roof:true,realm:'surface'});
   }}
   for(const p of v.props){const position=p.position.map((n,i)=>n+s.origin[i]);emit(p.kind,...position,p.rotation,[1,1,1],{structureId:s.id,objectId:p.id??null,realm:'surface'});
     if(p.id)getChunk(position[0],position[2]).objects.push({id:p.id,kind:p.kind,position});}
