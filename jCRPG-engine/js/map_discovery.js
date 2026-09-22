@@ -1,8 +1,11 @@
 import {wrappedDelta} from './map_model.js';
+import {PLAY_DESTINATIONS} from './play_destinations.js';
+
+const startingSettlements=new Set(Object.values(PLAY_DESTINATIONS).map(d=>d.settlementId).filter(Boolean));
 
 export function knownLocation(marker,save,showAll=false){
  const d=save?.discoveredLocations??{};
- return showAll||marker.kind==='start'||marker.capital||marker.objective||!!d[marker.id]||!!d['visited:'+marker.id]||!!d['heard:'+marker.id];
+ return showAll||marker.kind==='start'||startingSettlements.has(marker.id)||marker.objective||!!d[marker.id]||!!d['visited:'+marker.id]||!!d['heard:'+marker.id];
 }
 export function rememberLocations(save,ids,prefix=''){
  let changed=false;

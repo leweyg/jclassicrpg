@@ -10,8 +10,8 @@ import {FrozenWorld} from '../frozen_world.js';
 const storage=()=>{const m=new Map();return {getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,v)};};
 const markers=[{id:'start',kind:'start',name:'Start',x:0,z:0},{id:'capital',kind:'settlement',capital:true,name:'Capital',x:500,z:500},{id:'town',kind:'settlement',name:'Wammigmig',aliases:['Migtrabu'],x:30,y:40,z:30},{id:'cave',kind:'cave',name:'Secret cave',x:32,y:42,z:30,realm:'cave'}];
 
-test('default map reveals only start and capitals, with explicit developer override',()=>{
- const save=new SaveDeltas();assert.deepEqual(markers.filter(m=>knownLocation(m,save.data)).map(m=>m.id),['start','capital']);
+test('capitals outside the vertical slice require discovery, with explicit developer override',()=>{
+ const save=new SaveDeltas();assert.deepEqual(markers.filter(m=>knownLocation(m,save.data)).map(m=>m.id),['start']);
  assert.ok(markers.every(m=>knownLocation(m,save.data,true)));
  assert.equal(knownLocation({...markers[2],objective:true},save.data),true);
 });
@@ -78,7 +78,8 @@ test('compiled mission and dialogue locations reveal through the real map and su
   // Avoid any incidental visits while inspecting defaults.
   const state={interactions:engine,saveDeltas:save,party:{position:{x:0,y:79,z:0}},realm:'surface',exploration:{world:new FrozenWorld(worldData)}};
   const map=new QuietMap(state,{_yaw:0});map.update();
-  const initial=map.markers.filter(m=>map._visible(m));assert.equal(initial.length,31);assert.equal(initial.filter(m=>m.capital).length,30);
+  const initial=map.markers.filter(m=>map._visible(m));assert.equal(initial.length,3);assert.deepEqual(initial.filter(m=>m.kind==='settlement').map(m=>m.name).sort(),['Awshowam','Wammigmig']);
+  assert.equal(map.baseMarkers.filter(m=>m.capital).length,30,'all other capitals remain in the catalogue');
   const mission=content.missions.find(m=>m.id==='mission:wammigmig:fair-share');
   engine.transact([{op:'accept',id:mission.id}]);map.update();
   const targets=engine.markers();assert.ok(targets.length>1);for(const target of targets)assert.ok(map.markers.some(m=>m.id===target.id&&map._visible(m)),target.id);
@@ -86,7 +87,9 @@ test('compiled mission and dialogue locations reveal through the real map and su
   for(const target of targets)assert.equal(knownLocation({...target,objective:false},save.data),true);
   const town=map.baseMarkers.find(m=>m.id==='town:populationBoarmanTribe#381');assert.ok(town.aliases.includes('Migtrabu'));
   assert.equal(revealReadDialogue(save,map.baseMarkers,{text:'Travel to Migtrabu.',choices:[]},content.actors),true);map.update();assert.equal(map._visible(town),true);
-  const exported=save.export();const clean=new SaveDeltas();save.import(clean.export());map.update();assert.equal(map._visible(town),false);
-  save.import(exported);map.update();assert.equal(map._visible(town),true);
+  const hiddenTown=map.baseMarkers.find(m=>m.capital&&m.name!=='Awshowam');assert.equal(map._visible(hiddenTown),false);
+  revealReadDialogue(save,map.baseMarkers,{text:`Travel to ${hiddenTown.name}.`,choices:[]});map.update();assert.equal(map._visible(hiddenTown),true);
+  const exported=save.export();const clean=new SaveDeltas();save.import(clean.export());map.update();assert.equal(map._visible(hiddenTown),false);assert.equal(map._visible(town),true);
+  save.import(exported);map.update();assert.equal(map._visible(hiddenTown),true);
  }finally{globalThis.document=oldDocument;globalThis.window=oldWindow;}
 });

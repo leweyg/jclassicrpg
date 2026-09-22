@@ -2,9 +2,9 @@
 export const PLAY_DESTINATIONS = {
 	start: { name: 'Saved starting point', position: [800, 41, 907] },
 	shrine: { name: 'Wammigmig relay shrine', position: [784, 40, 906] },
-	wammigmig: { name: 'Wammigmig · Marn Even-Tally', position: [831.5, 40, 906.5] },
+	wammigmig: { name: 'Wammigmig · Marn Even-Tally', position: [831.5, 40, 906.5], settlementId: 'town:populationBoarmanTribe#381' },
 	cave: { name: 'Nearby cave entrance', position: [786.5, 44.075, 928.5] },
-	awshowam: { name: 'Awshowam · Garrum Open-Ledger', position: [30.5, 39, 891.5] },
+	awshowam: { name: 'Awshowam · Garrum Open-Ledger', position: [30.5, 39, 891.5], settlementId: 'town:populationBoarmanTribe#23' },
 };
 
 export async function visitPlayDestination(state, id) {
