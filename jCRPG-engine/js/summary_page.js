@@ -9,11 +9,11 @@
 import { GameStaticCore, worldsRef, worldAssetsRef, charactersRef, gameAssetsRef, renderingAssetsRef, mediaAssetsRef } from "./game_static_core.js";
 
 function renderSystemCard(system) {
-	const card = document.createElement("section");
+	const card = document.createElement("details");
 	card.className = "system-card";
 	card.id = `system-${system.id}`;
 
-	const title = document.createElement("h3");
+	const title = document.createElement("summary");
 	title.textContent = system.name;
 	card.appendChild(title);
 
@@ -89,9 +89,9 @@ function renderSystemCard(system) {
 }
 
 function makeSection(title) {
-	const section = document.createElement("section");
+	const section = document.createElement("details");
 	section.className = "system-card";
-	const h = document.createElement("h3");
+	const h = document.createElement("summary");
 	h.textContent = title;
 	section.appendChild(h);
 	return section;

@@ -52,28 +52,45 @@
 		gap: 0.5rem 1.25rem;
 	}
 	.project-links a { color: var(--accent); }
-	#load-status {
+	main {
 		max-width: 960px;
 		margin: 0 auto;
-		padding: 0 1.5rem;
-		color: var(--muted);
-		font-size: 0.9rem;
+		padding: 0 1.5rem 3rem;
 	}
-	main, .content-catalog {
-		max-width: 960px;
-		margin: 0 auto;
-		padding: 1rem 1.5rem 3rem;
-		display: grid;
-		gap: 1rem;
-	}
-	.system-card {
+	.reference-tree, .tree-branch, .system-card {
+		min-width: 0;
+		overflow-wrap: anywhere;
 		background: var(--panel);
 		border: 1px solid var(--border);
-		border-radius: 10px;
-		padding: 1.1rem 1.3rem;
+		border-radius: 8px;
+		padding: 0 0.8rem;
 	}
-	.system-card h3 {
-		margin: 0 0 0.15rem;
+	.reference-tree summary {
+		box-sizing: border-box;
+		min-height: 48px;
+		padding: 0.8rem 0;
+		color: var(--accent);
+		cursor: pointer;
+		line-height: 1.5;
+		touch-action: manipulation;
+	}
+	.reference-tree summary:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+		border-radius: 4px;
+	}
+	.tree-children {
+		display: grid;
+		gap: 0.6rem;
+		margin: 0 0 0.8rem 0.3rem;
+		padding-left: 0.6rem;
+		border-left: 1px solid var(--border);
+	}
+	.system-card[open] { padding-bottom: 0.8rem; }
+	#load-status {
+		color: var(--muted);
+		font-size: 0.9rem;
+		margin: 0 0 0.8rem;
 	}
 	.java-package {
 		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -136,14 +153,6 @@
 		line-height: 1.6;
 		padding-left: 1.2rem;
 	}
-	h2.section-heading {
-		max-width: 960px;
-		margin: 2rem auto 0;
-		padding: 0 1.5rem;
-		font-size: 1.2rem;
-		color: var(--accent);
-	}
-
 	header, .system-card { min-width: 0; overflow-wrap: anywhere; }
 	.kv-list dd { min-width: 0; }
 	@media (max-width: 600px) {
@@ -153,7 +162,6 @@
 	.content-catalog a { color: var(--accent); overflow-wrap: anywhere; }
 	.content-catalog p, .content-catalog li { line-height: 1.6; }
 	.content-catalog h4 { margin-bottom: 0.3rem; }
-	.content-catalog summary { cursor: pointer; color: var(--accent); padding: 0.6rem 0; }
 	.content-status { color: #ffcf7a; font-size: 0.9rem; }
 	.character-list, .population-list { list-style: none; padding: 0; display: grid; gap: 1rem; }
 	.character-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
@@ -182,17 +190,22 @@
 		<a href="https://sourceforge.net/projects/javacrpg/">Classic source code</a>
 	</p>
 </header>
-<h2 id="content-catalog" class="section-heading">Characters, Conversations &amp; Quests</h2>
-<section class="content-catalog" aria-labelledby="content-catalog">
-	<section class="system-card" id="characters">
-		<h3>Starter characters</h3>
+<main>
+<details class="reference-tree">
+	<summary>World &amp; project reference</summary>
+	<div class="tree-children">
+<details class="tree-branch" id="content-catalog">
+	<summary>Characters, Conversations &amp; Quests</summary>
+	<div class="content-catalog tree-children">
+	<details class="system-card" id="characters">
+		<summary>Starter characters</summary>
 		<p>The web party contains <strong>ELMO</strong> (Human Warrior), <strong>ELMARA</strong> (Elf Warrior), and <strong>PALMANO</strong> (Elf Warrior). Their names, portraits, attributes and skills come from the bundled character saves.</p>
 		<p class="content-status">Port status: party data is loaded; ELMARA appears in the Play HUD. Individual character controls and conversations are not implemented.</p>
 		<ul id="character-list" class="character-list" aria-label="Starter character portraits"></ul>
 		<p>Listed in <a href="jCRPG-engine/json/starter_party.json">starter_party.json</a>. See <a href="jCRPG-engine/json/characters.json">characters.json</a> for races, professions and saved-character paths.</p>
-	</section>
-	<section class="system-card" id="populations">
-		<h3>World inhabitants</h3>
+	</details>
+	<details class="system-card" id="populations">
+		<summary>World inhabitants</summary>
 		<p>The scenario defines humanoid populations and wildlife, including human commoners, yeti hunters, boarmen, kobolds and wolves. These are population/creature types, not a roster of authored quest-givers.</p>
 		<p class="content-status">Port status: the frozen save contains ecology records, but roaming inhabitants and encounters are not rendered or simulated in Play yet.</p>
 		<details>
@@ -200,26 +213,34 @@
 			<ul id="population-list" class="population-list"></ul>
 		</details>
 		<p>Defined in <a href="scenario/jclassicrpg/ecology.xml">scenario ecology.xml</a>; live instances are serialized in the <a href="jCRPG-engine/save/game1_20100426-004720.124/savegame.zip">frozen save’s ecology</a>. Each entry below links to its Java implementation.</p>
-	</section>
-	<section class="system-card" id="conversations">
-		<h3>Conversations</h3>
+	</details>
+	<details class="system-card" id="conversations">
+		<summary>Conversations</summary>
 		<p>No authored dialogue trees or branching NPC conversations were found in the bundled scenario or Java source. The original engine does have encounter greetings and social skills such as Chatter and Diplomacy.</p>
 		<p class="content-status">Port status: conversation and social encounter gameplay are not implemented.</p>
 		<p>Sources: <a href="jCRPG-engine/src/main/java/org/jcrpg/ui/window/interaction/EncounterWindow.java">EncounterWindow.java</a>, <a href="jCRPG-engine/src/main/java/org/jcrpg/world/ai/abs/skill/social/Chatter.java">Chatter.java</a>, <a href="jCRPG-engine/src/main/java/org/jcrpg/world/ai/abs/skill/social/Diplomacy.java">Diplomacy.java</a>.</p>
-	</section>
-	<section class="system-card" id="quests">
-		<h3>Quests &amp; story</h3>
+	</details>
+	<details class="system-card" id="quests">
+		<summary>Quests &amp; story</summary>
 		<p>No authored quest list, objectives or quest journal were found in the bundled scenario. Its event list contains one introduction with two story blocks: a welcome to open-ended exploration and a keyboard/mouse tutorial for the original Java game.</p>
 		<p class="content-status">Port status: the story can be read here; it does not yet play as an event in Play.</p>
 		<div id="story-blocks"></div>
 		<p>Listed in <a href="scenario/jclassicrpg/events.xml">events.xml</a> and <a href="scenario/jclassicrpg/story/intro.xml">story/intro.xml</a>. Original playback: <a href="jCRPG-engine/src/main/java/org/jcrpg/game/scenario/Events.java">Events.java</a>; scenario flags: <a href="jCRPG-engine/src/main/java/org/jcrpg/game/scenario/ScenarioState.java">ScenarioState.java</a>.</p>
-	</section>
-</section>
-<h2 class="section-heading">Engine Subsystems</h2>
-<div id="load-status">Loading subsystem catalogue…</div>
-<main id="systems-summary"></main>
-<h2 class="section-heading">First World &amp; Starting Game State</h2>
-<main id="first-world-summary"></main>
+	</details>
+	</div>
+</details>
+<details class="tree-branch">
+	<summary>Engine Subsystems</summary>
+	<div id="load-status">Loading subsystem catalogue…</div>
+	<div id="systems-summary" class="tree-children"></div>
+</details>
+<details class="tree-branch">
+	<summary>First World &amp; Starting Game State</summary>
+	<div id="first-world-summary" class="tree-children"></div>
+</details>
+	</div>
+</details>
+</main>
 <script type="module" src="jCRPG-engine/js/content_catalog.js"></script>
 <script type="module" src="jCRPG-engine/js/summary_page.js"></script>
 </body>
