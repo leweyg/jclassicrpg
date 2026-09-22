@@ -13,6 +13,7 @@ import { SceneRenderer } from "./render_engine.js";
 import { TERRAIN_NAMES } from "./frozen_world.js";
 import { WorldMap } from "./world_map.js";
 import { resetStoredSave } from "./world/save_deltas.js";
+import { visitPlayDestination } from "./play_destinations.js";
 
 function pickActiveMember(party) {
 	return party.members.find((m) => m.foreName === "ELMARA") ?? party.members[0];
@@ -62,6 +63,18 @@ async function main() {
 	try {
 		if (status) status.textContent = "Loading saved world…";
 		await sim.gameState.startExploration();
+		const destinationURL = new URL(window.location.href);
+		if (destinationURL.searchParams.has('location')) {
+			try {
+				const name = await visitPlayDestination(sim.gameState, destinationURL.searchParams.get('location'));
+				appendLog(`Arrived at ${name}.`);
+			} catch (error) {
+				appendLog(`Could not travel: ${error.message}`);
+			}
+			// Reloads resume saved progress instead of repeating the jump.
+			destinationURL.searchParams.delete('location');
+			window.history.replaceState(null, '', destinationURL);
+		}
 		renderHud(sim.gameState);
 		if(sim.gameState.saveDeltas.error)appendLog(sim.gameState.saveDeltas.error);
 		const renderer = new SceneRenderer(canvas);
