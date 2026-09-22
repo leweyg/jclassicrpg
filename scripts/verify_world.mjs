@@ -3,7 +3,7 @@
  * Pass a second build directory to compare every artifact byte-for-byte. */
 import fs from 'node:fs';import path from 'node:path';import {createHash} from 'node:crypto';import {fileURLToPath} from 'node:url';
 import {validateScene} from '../jCRPG-engine/js/world/format.js';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),dir=path.resolve(process.argv[2]??path.join(root,'jCRPG-engine/worlds/seed0/v1')),other=process.argv[3]&&path.resolve(process.argv[3]);
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),dir=path.resolve(process.argv[2]??path.join(root,'jCRPG-engine/worlds/seed0/v2')),other=process.argv[3]&&path.resolve(process.argv[3]);
 const manifest=JSON.parse(fs.readFileSync(path.join(dir,'manifest.json')));let scenes=0,references=0,cells=0,files=0;
 function walk(folder){for(const name of fs.readdirSync(folder).sort()){const file=path.join(folder,name);if(fs.statSync(file).isDirectory()){walk(file);continue;}files++;const bytes=fs.readFileSync(file),relative=path.relative(dir,file);
  if(other&&!bytes.equals(fs.readFileSync(path.join(other,relative))))throw Error('Non-reproducible artifact: '+relative);

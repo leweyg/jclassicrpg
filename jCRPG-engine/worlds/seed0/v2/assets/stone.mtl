@@ -1,0 +1,4 @@
+newmtl stone
+Kd 0.48 0.47 0.42
+d 1
+map_Kd textures/maze_stone_2.png

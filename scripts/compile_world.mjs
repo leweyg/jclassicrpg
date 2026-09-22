@@ -11,9 +11,11 @@ import {buildStructure,indexOf} from '../jCRPG-engine/js/procedural/structures.j
 import {bakeCaveBlock} from '../jCRPG-engine/js/procedural/caves.js';
 import {CELL as C,FACE,wallBit,doorBit,FORMAT_VERSION,GENERATOR_VERSION,WORLD_ID,scene,chunkKey,chunkFile,canonicalJSON,validateScene} from '../jCRPG-engine/js/world/format.js';
 import {validateSchema} from './validate_schema.mjs';
+import {compileInteractions} from './compile_interactions.mjs';
+import {INTERACTION_VERSION} from '../jCRPG-engine/js/interactions/format.js';
 import {bakeAssets,terrainGLB} from './world_assets.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const arg=process.argv.indexOf('--out'),destination=arg>=0?path.resolve(process.argv[arg+1]):path.join(root,'jCRPG-engine/worlds/seed0/v1');
+const arg=process.argv.indexOf('--out'),destination=arg>=0?path.resolve(process.argv[arg+1]):path.join(root,'jCRPG-engine/worlds/seed0/v2');
 fs.mkdirSync(path.dirname(destination),{recursive:true});
 const out=fs.mkdtempSync(path.join(path.dirname(destination),'.jcrpg-compile-'));
 const data=JSON.parse(fs.readFileSync(path.join(root,'jCRPG-engine/json/frozen_world.json'))),world=new FrozenWorld(data);
@@ -78,6 +80,15 @@ for(const p of portals){const keys=new Set();for(const pos of [p.from,p.to]){con
 fs.mkdirSync(path.join(out,'chunks/meshes'),{recursive:true});fs.mkdirSync(path.join(out,'regions'),{recursive:true});
 const assets=bakeAssets(root,out),files={},totals={raw:0,gzip:0,brotli:0},compression={params:{[constants.BROTLI_PARAM_QUALITY]:4}};
 function write(file,value){if(file.endsWith('.scene.json'))validateSchema(value,schema);const bytes=Buffer.isBuffer(value)?value:Buffer.from(canonicalJSON(value));fs.writeFileSync(path.join(out,file),bytes);const desc={url:file,byteLength:bytes.length,sha256:hash(bytes),gzipBytes:gzipSync(bytes).length,brotliBytes:brotliCompressSync(bytes,compression).length};for(const [key,value]of Object.entries({raw:desc.byteLength,gzip:desc.gzipBytes,brotli:desc.brotliBytes}))totals[key]+=value;files[file]=desc;return desc;}
+fs.mkdirSync(path.join(out,'interactions'),{recursive:true});
+console.log('Compiling interactions, characters and cultural arcs…');
+const interactions=compileInteractions({data,world,chunks,structures,portals,emit});
+validateSchema(interactions.content,JSON.parse(fs.readFileSync(path.join(root,'jCRPG-engine/js/interactions/content.schema.json'))));
+const catalogs={};
+for(const [key,records] of Object.entries(interactions.content))catalogs[key]=write('interactions/'+key+'.json',records);
+interactions.report.catalogBytes=Object.values(catalogs).reduce((s,d)=>({raw:s.raw+d.byteLength,gzip:s.gzip+d.gzipBytes,brotli:s.brotli+d.brotliBytes}),{raw:0,gzip:0,brotli:0});
+const interactionManifest=write('interactions/manifest.json',{schemaVersion:1,contentVersion:INTERACTION_VERSION,catalogs});
+write('actors.json',data.actors);write('scenario.json',data.scenario);write('interactions/ownership.json',interactions.ownership);
 const stream=new WorldStream(world),sample=stream.chunks[0],allFloor=new Map();
 for(const s of structures)for(let z=s.origin[2]-1;z<=s.origin[2]+s.size[2];z++)for(let x=s.origin[0]-1;x<=s.origin[0]+s.size[0];x++)allFloor.set(`${(x+1600)%1600}:${(z+1600)%1600}`,s.origin[1]);
 console.log(`Writing 2,500 chunks (${structures.length} structures; ${caveCells} cave cells)…`);
@@ -91,7 +102,7 @@ for(const c of chunks){
  const payload={key:chunkKey(c.x,c.z),chunk:[c.x,c.z],bounds:[c.x*32,0,c.z*32,c.x*32+32,80,c.z*32+32],generatorVersion:GENERATOR_VERSION,
   terrain:{heights:sample.heights,types:sample.types,climates:sample.climates,vegetation},
   collision:{encoding:'x-y-z-flags-structure-height-windows',structures:c.structures,cells:c.cells},
-  navigation:{encoding:'symmetric-faces-v1'},portals:c.portals,objects:c.objects};
+  interactions:c.interactions,navigation:{encoding:'symmetric-faces-v1'},portals:c.portals,objects:c.objects};
  const doc=scene('seed0_'+file,[{name:'terrain',source:'./meshes/'+path.basename(terrainFile),userData:{jcrpg:{kind:'terrain'}}},...c.nodes],payload);
  // Validate gameplay coordinates, dimensions, known sources before publishing.
  for(const row of c.cells)if(row[0]<0||row[0]>=32||row[2]<0||row[2]>=32||!c.structures[row[4]])throw Error('Invalid semantic fragment '+file);
@@ -105,12 +116,12 @@ for(let rz=0;rz<10;rz++)for(let rx=0;rx<10;rx++){
 write('calibration.scene.json',scene('Architecture asset calibration',Object.keys(assets).map((asset,i)=>({name:asset,position:[(i%6)*5,40,Math.floor(i/6)*5],source:`./assets/${asset}.obj`,userData:{jcrpg:{assetId:asset}}})),{kind:'calibration'}));
 write('fixture.scene.json',scene('Format fixture',[{name:'floor',position:[.5,40,.5],source:'./assets/floor.obj'},{name:'door',position:[1,40,.5],rotation:[0,Math.PI/2,0],source:'./assets/door.obj'},{name:'stairs',position:[.5,40,1.5],source:'./assets/stairs.obj'}],{kind:'fixture',portals:[{id:'fixture:stairs',kind:'stairs',from:[.5,40,1.5],to:[1.5,41,1.5]}]}));
 const mapTypes=new Uint8Array(400*400);for(let z=0;z<400;z++)for(let x=0;x<400;x++)mapTypes[x+400*z]=world.typeAt(x*4,z*4);
-const indexes={map:write('map.json',{side:400,step:4,types:mapTypes}),districts:write('district-index.json',data.districts),towns:write('towns.json',data.towns),structures:write('structures.json',structures),portals:write('portals.json',portals)};
+const indexes={interactions:interactionManifest,map:write('map.json',{side:400,step:4,types:mapTypes}),districts:write('district-index.json',data.districts),towns:write('towns.json',data.towns),structures:write('structures.json',structures),portals:write('portals.json',portals)};
 const perLocation=(x,z)=>{let bytes=0;for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++){const d=chunkDescriptors[chunkKey(Math.floor(x/32)+dx,Math.floor(z/32)+dz)];bytes+=d.gzipBytes;}return bytes;};
-const report={formatVersion:1,generatorVersion:GENERATOR_VERSION,sourceSha256:data.xmlSha256,districts:data.districts.length,structures:structures.length,dungeons:structures.filter(s=>s.kind==='SimpleDungeonPart').length,caveCells,caveEntrances:portals.filter(p=>p.kind==='cave').length,chunks:2500,regions:100,bytes:totals,
+const report={formatVersion:FORMAT_VERSION,interactions:interactions.report,generatorVersion:GENERATOR_VERSION,sourceSha256:data.xmlSha256,districts:data.districts.length,structures:structures.length,dungeons:structures.filter(s=>s.kind==='SimpleDungeonPart').length,caveCells,caveEntrances:portals.filter(p=>p.kind==='cave').length,chunks:2500,regions:100,bytes:totals,
  locationGzipBytes:{spawn:perLocation(data.spawn.x,data.spawn.z),town:perLocation(...data.districts.find(d=>d.kind==='SimpleDistrict').center),dungeon:perLocation(...data.districts.find(d=>d.kind==='DungeonDistrict').center),cave:perLocation(portals.find(p=>p.kind==='cave').from[0],portals.find(p=>p.kind==='cave').from[2])},
  validation:{semanticBounds:true,uniqueStructureIds:true,mazeConnectivity:true,knownAssets:true,javaParity:'24 hash vectors and 80 complete maze grids match unmodified Java; district/house/cave cube parity not yet certified',mobileGPU:'requires device profiling'},
- deviations:['Existing web terrain/water adapter; not exact Java surface parity.','Normalized house perimeter corners and face conventions.','Cave entrance links use web surface slopes; occupancy is not carved.','Cave floors use bounded two-cell presentation with closed boundary walls.','Roof pieces are calibrated to closed semantic ceilings.', 'Hut/igloo/brick variants use assembled semantic walls and distinct textured roofs; whole-building legacy mesh parity remains unverified.', 'Shrines are visible scenery; shrine gameplay is not implemented.']};
+ deviations:['Existing web terrain/water adapter; not exact Java surface parity.','Normalized house perimeter corners and face conventions.','Cave entrance links use web surface slopes; occupancy is not carved.','Cave floors use bounded two-cell presentation with closed boundary walls.','Roof pieces are calibrated to closed semantic ceilings.', 'Hut/igloo/brick variants use assembled semantic walls and distinct textured roofs; whole-building legacy mesh parity remains unverified.', ...interactions.report.deviations]};
 write('validation-report.json',report);
 const assetHashes=[];
 function assetFiles(dir){for(const name of fs.readdirSync(dir).sort()){const file=path.join(dir,name);if(fs.statSync(file).isDirectory())assetFiles(file);else assetHashes.push([path.relative(out,file),hash(fs.readFileSync(file))]);}}

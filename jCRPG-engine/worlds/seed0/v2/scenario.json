@@ -1,0 +1,1 @@
+{"id":"jclassicrpg","name":"JClassicRPG","version":"0.1","state":{"intPlyd":true},"events":[{"id":"intro","type":"intro","source":"scenario/jclassicrpg/events.xml","elements":[{"type":"story","source":"scenario/jclassicrpg/story/intro.xml"}]}],"missionEvidence":"absent","puzzleEvidence":"absent"}

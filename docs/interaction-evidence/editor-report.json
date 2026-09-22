@@ -1,0 +1,41 @@
+{
+  "report": [
+    {
+      "file": "chunks/x025_z028.scene.json",
+      "meshes": 243,
+      "gameData": 244,
+      "sceneChildren": [
+        "DefaultLight",
+        "seed0_x025_z028.scene.json"
+      ]
+    },
+    {
+      "file": "chunks/x024_z028.scene.json",
+      "meshes": 54,
+      "gameData": 55,
+      "sceneChildren": [
+        "DefaultLight",
+        "seed0_x024_z028.scene.json"
+      ]
+    },
+    {
+      "file": "chunks/x006_z021.scene.json",
+      "meshes": 1734,
+      "gameData": 1735,
+      "sceneChildren": [
+        "DefaultLight",
+        "seed0_x006_z021.scene.json"
+      ]
+    },
+    {
+      "file": "regions/r005_005.scene.json",
+      "meshes": 11022,
+      "gameData": 12641,
+      "sceneChildren": [
+        "DefaultLight",
+        "region_5_5"
+      ]
+    }
+  ],
+  "errors": []
+}

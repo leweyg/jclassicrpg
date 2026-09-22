@@ -1,0 +1,481 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Compiled Concordance interaction catalogs v1",
+  "type": "object",
+  "required": [
+    "actors",
+    "dialogues",
+    "missions",
+    "puzzles",
+    "shrines",
+    "containers",
+    "itemTypes",
+    "initialInventory",
+    "settlements",
+    "cultures",
+    "routes",
+    "goals",
+    "generators"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "actors": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role",
+          "position",
+          "realm",
+          "dialogueId",
+          "missionIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number"
+            }
+          },
+          "realm": {
+            "type": "string",
+            "pattern": "^(surface|cave)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "dialogueId": {
+            "type": "string"
+          },
+          "missionIds": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "dialogues": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "start",
+          "nodes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string"
+          },
+          "nodes": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "missions": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "giverActorId",
+          "turnInActorId",
+          "objectives",
+          "requires"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "objectives": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "kind",
+                "targetIds",
+                "text"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "pattern": "^(shrine|puzzle|evidence|commitment|actor|mission)$"
+                },
+                "targetIds": {
+                  "type": "array",
+                  "maxItems": 10000,
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "text": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "requires": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "puzzles": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "family",
+          "demands",
+          "labels",
+          "capacity",
+          "componentIds",
+          "sequence",
+          "onComplete"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string",
+            "pattern": "^(rational|resonance|balanced)$"
+          },
+          "demands": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "number"
+            }
+          },
+          "componentIds": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "string"
+            }
+          },
+          "sequence": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "string"
+            }
+          },
+          "capacity": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "shrines": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "position",
+          "neighbors"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number"
+            }
+          },
+          "neighbors": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "cost"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "cost": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "containers": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "position",
+          "items",
+          "lock",
+          "trap"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number"
+            }
+          },
+          "items": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "typeId",
+                "quantity"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "typeId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "itemTypes": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "initialInventory": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "typeId",
+          "sourceKind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "typeId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "settlements": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "position",
+          "settlementTier",
+          "cultureIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number"
+            }
+          },
+          "realm": {
+            "type": "string",
+            "pattern": "^(surface|cave)$"
+          },
+          "settlementTier": {
+            "type": "string",
+            "pattern": "^(capital|secondary-capital|minor)$"
+          }
+        }
+      }
+    },
+    "cultures": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "capitalTownId",
+          "secondaryCapitalTownIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "secondaryCapitalTownIds": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "destinationTownId",
+          "shrineIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "shrineIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "goals": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "targetId",
+          "position",
+          "realm"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number"
+            }
+          },
+          "realm": {
+            "type": "string",
+            "pattern": "^(surface|cave)$"
+          }
+        }
+      }
+    },
+    "generators": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "puzzleId",
+          "linkedShrineIds",
+          "position"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  }
+}

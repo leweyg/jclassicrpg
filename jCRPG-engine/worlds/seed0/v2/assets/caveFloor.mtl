@@ -1,0 +1,4 @@
+newmtl caveFloor
+Kd 0.29 0.29 0.27
+d 1
+map_Kd textures/cave_ground.png

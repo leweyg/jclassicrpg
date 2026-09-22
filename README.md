@@ -9,11 +9,11 @@ Homepage: https://leweyg.github.io/jclassicrpg/
 
 - [x] Add explorable baked buildings, streets, and shrine scenery (web-v1)
 - [x] Add baked natural caves, procedural labyrinths, and exportable JSON scenes (web-v1)
-- [ ] Port over character interactions a
+- [x] Add persistent characters, dialogue, missions, shrine circuits and optional inventory (web-v2).
 - DONE: Basic systems, sim and playable world.
 - [x] Correct the cube-map sky’s X reflection while preserving Y.
 - [x] Click the nearby map to expand it; its 116-unit radius is twice the visible radius.
-- [x] Show saved shrines, settlements, dungeon/maze districts, cave regions and storage, including unimplemented locations. Mission/puzzle marker types are supported, but this save contains no such records.
+- [x] Show saved shrines, settlements, dungeon/maze districts, cave regions and storage, including unimplemented locations. New authored mission and puzzle markers appear as their objectives become active.
 
 
 ## Frozen-world exploration
@@ -38,16 +38,18 @@ are reused across visits.
 
 Walk with the left stick or WASD/arrow keys; look with the right stick. Use **E**
 or the contextual toolbar button for stairs, cave entrances/exits, and chests.
-Local save deltas persist the player position, discoveries, and searched chests;
+Save v2 deltas persist position, dialogue commitments, missions, puzzles, shrine routes and inventory;
 Export/Import save provides portable JSON. On subsequent visits the saved local
 position takes precedence over the original spawn.
 
 Rebuild and validate with `node scripts/build_world.mjs` (Node 22+, Python 3).
-The generated world and validation report are in `jCRPG-engine/worlds/seed0/v1`.
+The generated world and validation report are in `jCRPG-engine/worlds/seed0/v2`.
 See [the review guide](docs/procedural-review.md) for controls, reproducibility,
 editor scene entry points, Java golden fixtures, and explicit compatibility limits.
-This is `web-baked-v1`: hash and maze bytes match Java, while the existing surface
+This is `web-baked-v2`: hash and maze bytes match Java, while the existing surface
 adapter, cave entrance presentation, and some architectural geometry are adapted.
+
+See [the interaction review and walkthrough](docs/interaction-review.md) for the opening mission, six cultural arcs, validation evidence and implementation limits. From spawn, awaken the shrine to the west and meet Marn in Wammigmig to the east. Use **Journal** to track tasks and **Inventory** to inspect collected items.
 
 Click the minimap or top-bar Map button to open the full world map. Click a marker
 or a searchable location-list entry to teleport to its X/Z on the rendered surface.

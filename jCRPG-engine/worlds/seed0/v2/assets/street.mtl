@@ -1,0 +1,4 @@
+newmtl street
+Kd 0.52 0.49 0.41
+d 1
+map_Kd textures/stone.png

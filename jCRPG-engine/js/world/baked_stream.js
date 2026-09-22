@@ -1,3 +1,4 @@
+import {selectNearby} from '../interactions/nearby.js';
 /** Bounded static-host streamer: 25 reusable slots, four fetches, revision guards.
  * No procedural imports. Missing/invalid collision always blocks traversal.
  */
@@ -43,12 +44,12 @@ export class BakedWorldStream {
      const matrix=multiply(parent,compose(node));
      if(node.source){const source=new URL(node.source,url);const root=new URL('assets/',this.baseURL);if(source.origin!==root.origin||!source.pathname.startsWith(root.pathname))throw Error('Asset source outside world pack');
        if(source.pathname.endsWith('.json')){if(!prefabs.has(source.href)){if(prefabs.size>=32)throw Error('Prefab cache limit exceeded');const r=await this.fetcher(source,{signal:job.abort.signal});if(!r.ok)throw Error('Missing prefab');const p=await r.json();validateScene(p);prefabs.set(source.href,p);}await add(prefabs.get(source.href).children,source,matrix,depth+1);}
-       else {const meta=node.userData?.jcrpg??{},key=source.href+'|'+(meta.realm??'surface')+'|'+(meta.roof?'roof':meta.ceiling?'ceiling':'body');if(!instances.has(key))instances.set(key,{source:source.href,realm:meta.realm??'surface',roof:!!meta.roof,ceiling:!!meta.ceiling,nodes:[]});instances.get(key).nodes.push({matrix,objectId:meta.objectId??null});}
+       else {const meta=node.userData?.jcrpg??{},key=source.href+'|'+(meta.realm??'surface')+'|'+(meta.roof?'roof':meta.ceiling?'ceiling':'body');if(!instances.has(key))instances.set(key,{source:source.href,realm:meta.realm??'surface',roof:!!meta.roof,ceiling:!!meta.ceiling,nodes:[]});instances.get(key).nodes.push({matrix,objectId:meta.objectId??null,stateTargetId:meta.stateTargetId??meta.structureId??null,actorId:meta.actorId??null,settlementId:meta.settlementId??null,componentId:meta.componentId??null});}
      }if(node.children)await add(node.children,url,matrix,depth+1);
    }};
    await add(doc.children,new URL(desc.url,this.baseURL));
    if(job.abort.signal.aborted||this.jobs.get(job.key)!==job){this.stats.stale++;return;}
-   const content={key:job.key,terrain:{heights:Float32Array.from(d.terrain.heights),types:Uint8Array.from(d.terrain.types),climates:Uint8Array.from(d.terrain.climates),vegetation:Float32Array.from(d.terrain.vegetation)},collision:d.collision,lookup,instances,portals:d.portals??[],objects:d.objects??[],bytes:desc.byteLength};
+   const content={key:job.key,terrain:{heights:Float32Array.from(d.terrain.heights),types:Uint8Array.from(d.terrain.types),climates:Uint8Array.from(d.terrain.climates),vegetation:Float32Array.from(d.terrain.vegetation)},collision:d.collision,lookup,instances,portals:d.portals??[],objects:d.objects??[],interactions:d.interactions??[],bytes:desc.byteLength};
    this.cache.set(job.key,content);for(const slot of this.chunks)if(chunkKey(slot.x,slot.z)===job.key)this._commit(slot,content,slot.ticket);
    this._evict();
   }catch(error){if(!job.abort.signal.aborted){this.stats.failures++;for(const slot of this.chunks)if(chunkKey(slot.x,slot.z)===job.key)slot.error=`${WORLD_ID} chunk ${job.key}: ${error.message}`;this.onError?.(error);}}
@@ -75,11 +76,18 @@ export class BakedWorldStream {
   if(face>=0&&(((a?.flags??0)&wallBit(face))||((b?.flags??0)&wallBit((face+2)%4))))return false;
   return realm!=='cave'||!!b;
  }
- nearby(position,realm='surface',distance=1.8){let result=null,best=distance;for(const s of this.chunks)if(s.ready){for(const p of s.data.portals){if(p.kind==='door')continue;const sides=p.kind==='cave'?[realm==='cave'?'to':'from']:['from','to'];for(const side of sides){const v=p[side],d=Math.hypot(v[0]-position.x,v[2]-position.z)+Math.abs(v[1]-position.y);if(d<best){best=d;result={kind:'portal',portal:p,side,label:p.kind==='cave'?(realm==='cave'?'Leave cave':'Enter cave'):'Use stairs'};}}}
-  if(realm==='surface')for(const object of s.data.objects){if(object.kind!=='chest')continue;const d=Math.hypot(object.position[0]-position.x,object.position[2]-position.z);if(d<best){best=d;result={kind:'chest',object,label:'Open chest'};}}
- }return result;}
+ nearby(position,realm='surface',distance=1.8,options={}){
+  const anchors=[];
+  for(const slot of this.chunks)if(slot.ready){
+   anchors.push(...slot.data.interactions);
+   for(const p of slot.data.portals){if(p.kind==='door')continue;const sides=p.kind==='cave'?[realm==='cave'?'to':'from']:['from','to'];for(const side of sides)anchors.push({id:'portal:'+p.id+':'+side,kind:'portal',targetId:p.id,position:p[side],realm,range:distance,priority:40,portal:p,side,prompt:p.kind==='cave'?(realm==='cave'?'Leave cave':'Enter cave'):'Use stairs'});}
+  }
+  const lineOfSight=a=>{let x=position.x,z=position.z;let dx=a.position[0]-x,dz=a.position[2]-z;if(dx>800)dx-=1600;if(dx< -800)dx+=1600;if(dz>800)dz-=1600;if(dz< -800)dz+=1600;const steps=Math.ceil(Math.hypot(dx,dz)*5);for(let i=0;i<steps;i++){const nx=x+dx/steps,nz=z+dz/steps;if(!this.canMove(x,position.y,z,nx,z,realm)||!this.canMove(nx,position.y,z,nx,nz,realm))return false;x=nx;z=nz;}return true;};
+  return selectNearby(anchors,position,realm,{...options,lineOfSight});
+ }
+
  dispose(){this.disposed=true;for(const j of this.jobs.values())j.abort.abort();this.jobs.clear();this.cache.clear();}
 }
 export async function loadBakedStream(world,options={}){
- const base=new URL('../../worlds/seed0/v1/',import.meta.url),fetcher=options.fetcher??fetch,r=await fetcher(new URL('manifest.json',base));if(!r.ok)throw Error(`World manifest: HTTP ${r.status}. Run node scripts/compile_world.mjs.`);const manifest=await r.json();return new BakedWorldStream(world,manifest,base,{...options,fetcher});
+ const base=new URL('../../worlds/seed0/v2/',import.meta.url),fetcher=options.fetcher??fetch,r=await fetcher(new URL('manifest.json',base));if(!r.ok)throw Error(`World manifest: HTTP ${r.status}. Run node scripts/compile_world.mjs.`);const manifest=await r.json();return new BakedWorldStream(world,manifest,base,{...options,fetcher});
 }

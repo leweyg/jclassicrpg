@@ -1,24 +1,161 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://jclassicrpg.local/schema/world-scene-v1",
-  "title": "jCRPG lewcid_object scene v1",
+  "$id": "https://jclassicrpg.local/schema/world-scene-v2",
+  "title": "jCRPG lewcid_object scene v2",
   "type": "object",
-  "required": ["name", "metadata", "userData", "children"],
+  "required": [
+    "name",
+    "metadata",
+    "userData",
+    "children"
+  ],
   "properties": {
-    "name": {"type": "string"},
-    "metadata": {"type": "object", "required": ["version", "type"], "properties": {"version": {"const": 0.2}, "type": {"const": "lewcid_object"}, "camera": {"type": "object"}}},
-    "userData": {"type": "object", "required": ["jcrpg"], "properties": {"jcrpg": {"type": "object", "required": ["schemaVersion", "worldId"], "properties": {"schemaVersion": {"const": 1}, "worldId": {"const": "seed0-web-v1"}}}}},
-    "children": {"type": "array", "maxItems": 100000, "items": {"$ref": "#/$defs/node"}}
+    "name": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "version",
+        "type"
+      ],
+      "properties": {
+        "version": {
+          "const": 0.2
+        },
+        "type": {
+          "const": "lewcid_object"
+        },
+        "camera": {
+          "type": "object"
+        }
+      }
+    },
+    "userData": {
+      "type": "object",
+      "required": [
+        "jcrpg"
+      ],
+      "properties": {
+        "jcrpg": {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "worldId"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": 2
+            },
+            "worldId": {
+              "const": "seed0-web-v2"
+            },
+            "interactions": {
+              "type": "array",
+              "maxItems": 10000,
+              "items": {
+                "$ref": "#/$defs/interaction"
+              }
+            }
+          }
+        }
+      }
+    },
+    "children": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    }
   },
   "$defs": {
-    "vector": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number"}},
+    "vector": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number"
+      }
+    },
     "node": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "properties": {
-        "name": {"type": "string"}, "source": {"type": "string", "pattern": "\\.(json|obj|glb)$"},
-        "position": {"$ref": "#/$defs/vector"}, "rotation": {"$ref": "#/$defs/vector"},
-        "rotation_degrees": {"$ref": "#/$defs/vector"}, "scale": {"$ref": "#/$defs/vector"},
-        "userData": {"type": "object"}, "children": {"type": "array", "items": {"$ref": "#/$defs/node"}}
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "pattern": "\\.(json|obj|glb)$"
+        },
+        "position": {
+          "$ref": "#/$defs/vector"
+        },
+        "rotation": {
+          "$ref": "#/$defs/vector"
+        },
+        "rotation_degrees": {
+          "$ref": "#/$defs/vector"
+        },
+        "scale": {
+          "$ref": "#/$defs/vector"
+        },
+        "userData": {
+          "type": "object"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      }
+    },
+    "interaction": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "targetId",
+        "position",
+        "realm",
+        "range",
+        "priority",
+        "prompt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "position": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number"
+          }
+        },
+        "realm": {
+          "type": "string",
+          "pattern": "^(surface|cave)$"
+        },
+        "kind": {
+          "type": "string",
+          "pattern": "^(actor|container|shrine|puzzle|portal|evidence)$"
+        },
+        "targetId": {
+          "type": "string"
+        },
+        "range": {
+          "type": "number"
+        },
+        "priority": {
+          "type": "number"
+        },
+        "prompt": {
+          "type": "string"
+        }
       }
     }
   }

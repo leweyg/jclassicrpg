@@ -20,7 +20,7 @@ async function sample(name,setup){
  const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(shot.data,'base64'));
 }
 await sample('spawn', '(async()=>{await __sceneRenderer.teleportTo(800,907);__sceneRenderer._yaw=Math.PI;})()');
-await evaluate('(async()=>{window.testStructures=await (await fetch("jCRPG-engine/worlds/seed0/v1/structures.json")).json();})()');
+await evaluate('(async()=>{window.testStructures=await (await fetch("jCRPG-engine/worlds/seed0/v2/structures.json")).json();})()');
 await sample('town',`(async()=>{const h=testStructures.find(s=>s.kind==='House');window.testHouse=h;await __sceneRenderer.teleportTo(h.origin[0]+7,h.origin[2]+5);__sceneRenderer._yaw=-2;__sceneRenderer._pitch=-.08;})()`);
 await sample('house-interior',`(async()=>{const h=testHouse;await __gameState.teleport(h.origin[0]+2,h.origin[2]+1.5,h.origin[1]);__sceneRenderer._syncCamera();__sceneRenderer._yaw=-Math.PI/2;__sceneRenderer.requestRender();})()`);
 await sample('dungeon',`(async()=>{const h=testStructures.find(s=>s.kind==='SimpleDungeonPart');await __gameState.teleport(h.origin[0]+10.5,h.origin[2]+5.5,h.origin[1]);__sceneRenderer.worldView.sync();__sceneRenderer._syncCamera();__sceneRenderer._yaw=Math.PI/2;__sceneRenderer._pitch=-.1;__sceneRenderer.requestRender();})()`);

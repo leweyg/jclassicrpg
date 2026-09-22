@@ -1,3 +1,5 @@
+> Historical geometry review for web-v1. The current runtime uses web-v2; see [the interaction review](interaction-review.md) for current build paths, gameplay and evidence.
+
 # Local review guide
 
 Serve the repository root with `python3 -m http.server 8000` and open

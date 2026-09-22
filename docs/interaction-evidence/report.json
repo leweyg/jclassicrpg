@@ -1,0 +1,69 @@
+{
+  "mission": {
+    "state": "completed",
+    "objectiveSources": {
+      "awaken": [
+        "shrine:shrine 19 22:782:903"
+      ],
+      "observe": [
+        "evidence:wammigmig:storage",
+        "evidence:wammigmig:hut",
+        "evidence:wammigmig:homes"
+      ],
+      "balance": [
+        "puzzle:wammigmig:distribution"
+      ],
+      "promise": [
+        "commitment:wammigmig"
+      ]
+    }
+  },
+  "maze": {
+    "state": "completed",
+    "objectiveSources": {
+      "generator": [
+        "puzzle:generator:populationGreekMazeHorde#125:structure:0"
+      ]
+    }
+  },
+  "generators": {
+    "generator:populationGreekMazeHorde#125:structure:0": {
+      "state": "active",
+      "rationalState": "valid",
+      "resonanceState": "valid"
+    }
+  },
+  "shrines": {
+    "shrine:shrine 19 22:782:903": {
+      "activated": true,
+      "turn": 1
+    },
+    "shrine:shrine 5 16:223:662": {
+      "activated": true,
+      "turn": 36
+    }
+  },
+  "slots": 25,
+  "cache": 25,
+  "assetFailures": [],
+  "performance": {
+    "environment": "Headless Chrome software WebGL; mobile viewport, not a physical mobile GPU",
+    "transactionMedianMs": 0.09999999962747097,
+    "transactionP95Ms": 0.19999999925494194,
+    "nearbyAverageMs": 0.02669999999925494,
+    "instances": 10392,
+    "render": {
+      "frame": 4,
+      "calls": 168,
+      "triangles": 114910,
+      "points": 0,
+      "lines": 0
+    },
+    "memory": {
+      "geometries": 39,
+      "textures": 18
+    }
+  },
+  "errors": [],
+  "validation": "Opening mission walked from spawn; real maze walked from keeper; dialogue/UI turn-in; reload and portable import."
+}

@@ -1,0 +1,4 @@
+newmtl pillar
+Kd 0.8 0.8 0.8
+d 1
+map_Kd textures/maze_stone_2.png

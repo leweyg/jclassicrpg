@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {createHash} from 'node:crypto';
 import {FrozenWorld} from '../frozen_world.js';import {BakedWorldStream} from '../world/baked_stream.js';import {GameState} from '../game_state.js';
 import {FORMAT_VERSION,GENERATOR_VERSION,WORLD_ID,scene,chunkKey,CELL as C} from '../world/format.js';
-const data=JSON.parse(fs.readFileSync(new URL('../../json/frozen_world.json',import.meta.url))),world=new FrozenWorld(data),base=new URL('../../worlds/seed0/v1/',import.meta.url);
+const data=JSON.parse(fs.readFileSync(new URL('../../json/frozen_world.json',import.meta.url))),world=new FrozenWorld(data),base=new URL('../../worlds/seed0/v2/',import.meta.url);
 const manifest=JSON.parse(fs.readFileSync(new URL('manifest.json',base)));
 const read=async url=>{try{return new Response(fs.readFileSync(url));}catch{return new Response('',{status:404});}};
 function fixture(){const m={formatVersion:FORMAT_VERSION,generatorVersion:GENERATOR_VERSION,worldId:WORLD_ID,sourceSha256:world.sourceSha256,chunks:{}},texts=new Map();for(let z=0;z<50;z++)for(let x=0;x<50;x++){const key=chunkKey(x,z),s=scene(key,[],{key,generatorVersion:GENERATOR_VERSION,terrain:{heights:Array(289).fill(40),types:Array(289).fill(0),climates:Array(289).fill(0),vegetation:[]},collision:{structures:[],cells:[]},portals:[],objects:[]}),text=JSON.stringify(s);m.chunks[key]={url:key+'.json',byteLength:text.length,sha256:createHash('sha256').update(text).digest('hex')};texts.set(key,text);}return {m,texts};}

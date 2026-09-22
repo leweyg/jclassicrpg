@@ -167,6 +167,54 @@ def export():
     for entry in world.findall('climate/belts/entry'):
         e = resolve(entry[1])
         climates.append({'kind': e.tag.rsplit('.', 1)[-1], 'cells': boundary(e, 40)})
+    # Preserve the resolved save evidence separately from authored presentation.
+    actors, objects = [], []
+    for member in records('PersistentMemberInstance'):
+        entity = resolve(member.find('instance'))
+        description = resolve(member.find('description'))
+        entity_description = resolve(entity.find('description'))
+        entity_id = entity.findtext('id') or 'party'
+        numeric_id = member.findtext('numericId')
+        name = description.findtext('foreName')
+        actor_id = f'legacy-actor:{entity_id}:{numeric_id}'
+        owned = resolve(member.find('ownedInfrastructures'))
+        infrastructure = []
+        for prop in owned if owned is not None else []:
+            prop = resolve(prop)
+            infrastructure.append({'type': prop.findtext('type').rsplit('.', 1)[-1],
+                'districtIds': [d['id'] for d in districts if any(f['ownerMemberId'] == numeric_id for f in d['fixedInfrastructure'])]})
+        roaming = resolve(member.find('roamingBoundary'))
+        actors.append({'id': actor_id, 'numericId': numeric_id, 'entityId': entity_id,
+            'entityType': entity_description.get('class', entity_description.tag).rsplit('.', 1)[-1],
+            'memberDescriptionType': description.get('class', description.tag).rsplit('.', 1)[-1],
+            'legacyName': name, 'isPlayer': name == 'ELMARA',
+            'position': [number(roaming, 'pos' + a) for a in 'XYZ'],
+            'ownedInfrastructure': infrastructure, 'sourceKind': 'legacy-save'})
+        inventory = resolve(member.find('inventory'))
+        entries = resolve(inventory.find('inventory')) if inventory is not None else None
+        for slot, obj in enumerate(entries if entries is not None else []):
+            obj = resolve(obj)
+            desc = resolve(obj.find('description'))
+            type_id = desc.get('class', desc.tag).rsplit('.', 1)[-1]
+            objects.append({'id': f'{actor_id}:inventory:{slot:03}:{type_id}', 'typeId': type_id,
+                'legacyNumericId': int(number(obj, 'numericId')), 'uses': int(number(obj, 'numberOfTotalUses')),
+                'attached': obj.findtext('attached') == 'true', 'ownerActorId': actor_id, 'equipped': False,
+                'icon': desc.findtext('icon'), 'sourceKind': 'legacy-save', 'quantity': 1})
+    actors.sort(key=lambda a: a['id'])
+    objects.sort(key=lambda a: a['id'])
+    assert len(actors) == 319 and sum(a['isPlayer'] for a in actors) == 1
+    assert all(a['ownedInfrastructure'] for a in actors if not a['isPlayer'])
+    assert len({a['id'] for a in actors}) == len(actors)
+    assert len(objects) == 4 and len({o['id'] for o in objects}) == 4
+    scenario_state = {e[0].text: e[1].text == 'true' for e in root.findall('scenarioState/map/entry')}
+    scenario = {'id': 'jclassicrpg', 'name': root.findtext('scenarioDesc/name'),
+        'version': root.findtext('scenarioDesc/version'), 'state': scenario_state,
+        'events': [{'id': e.findtext('name'), 'type': e.findtext('type'),
+            'source': 'scenario/jclassicrpg/events.xml', 'elements': [
+                {'type': element.findtext('type'), 'source': 'scenario/jclassicrpg/' + element.findtext('file')}
+                for element in e.findall('element')]}
+            for e in ET.parse(ROOT / 'scenario/jclassicrpg/events.xml').getroot().findall('event')],
+        'missionEvidence': 'absent', 'puzzleEvidence': 'absent'}
     pos = root.find('normalPosition')
     data = {
         'version': 1, 'source': str(SOURCE.relative_to(ROOT)),
@@ -178,6 +226,7 @@ def export():
         'layers': layers, 'climates': climates, 'landmarks': landmarks,
         'additionalMapMarkers': additional_markers,
         'districts': districts, 'towns': town_list,
+        'actors': actors, 'objectInstances': objects, 'scenario': scenario,
     }
     OUTPUT.write_text(json.dumps(data, separators=(',', ':')) + '\n')
     print(f'Exported {len(layers)} layers, {len(climates)} climate belts, {len(landmarks)} landmarks; {OUTPUT.stat().st_size:,} bytes')

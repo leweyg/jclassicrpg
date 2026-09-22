@@ -1,0 +1,47 @@
+✔ baked data is usable from a plain static file host and matches manifest hashes (74.438958ms)
+✔ 1000 chunk moves retain 25 slots, reuse buffers, wrap content and bound cache (6202.8735ms)
+✔ late completion after a teleport cannot commit stale data (19.557916ms)
+✔ missing collision fails closed and retry recovers (12.465666ms)
+✔ a baked house doorway admits traversal and its adjacent wall rejects it (47.414042ms)
+✔ cave portal destination has floor and absent cave cells are impassable (27.208708ms)
+✔ overlapping teleports only commit the latest destination (6.978125ms)
+✔ one-chunk movement fetches exactly five new chunks and repeat visits hit bounded cache (10.888417ms)
+✔ multi-floor stairs have distinct up/down landings and retain the correct floor (51.193958ms)
+✔ legacy evidence and fixed capital identities survive compilation (1.635375ms)
+✔ all puzzles solve; reset recovers wrong configurations without losing completed effects (162.514584ms)
+✔ a failed multi-action transaction leaves no partial state; tokens deduplicate (1.089167ms)
+✔ inventory transfer, take-all rollback, migration and portable saves (1.818667ms)
+✔ all missions can progress in dependency order; early world work backfills (341.338459ms)
+✔ nearby selection is deterministic, respects floor/realm/LOS and wrap (0.227834ms)
+✔ opening mission controls are reachable from spawn using production collision and nearby selection (90.537458ms)
+✔ every compiled actor, shrine and control can be selected on its streamed floor (11467.050459ms)
+✔ map includes unimplemented saved locations and retains unknown/future marker types (1.11175ms)
+✔ nearby map doubles sight radius and projects markers across the globe seam (0.060791ms)
+✔ sky is a closed cube with aligned geometry and calibrated face UVs (1.184167ms)
+✔ render scheduler sleeps when idle, wakes for input, and stops on cancellation (0.224ms)
+✔ normalizer resolves all saved districts, templates, NPC ownership and exact longs (0.914708ms)
+✔ maze recursion preserves walls/doors, symmetric edges and connected interiors (23.998917ms)
+✔ grown layouts use saved tier, exact seed, fixed overrides and rejected water blocks (5.178291ms)
+✔ all 25 saved dungeons have stable output and reachable storage (16.646042ms)
+✔ house doors pass, windows block, corners close, stairs have landings (0.252583ms)
+✔ cave occupancy follows density polarity and baked portals use real open components (3.103208ms)
+✔ save deltas are version checked, portable and independent of generated chunks (0.430666ms)
+✔ scene contract is canonical and rejects invalid transforms/world identity (0.237625ms)
+✔ Java golden vectors: exact signed hash values and every byte of 80 maze grids (3.7695ms)
+✔ nested scene transforms match Three.js XYZ composition and degree precedence (27.943959ms)
+✔ every dungeon shell entrance reaches every generated chest (23.257625ms)
+✔ frozen export covers the saved world and captured spawn, including landmarks beyond the sample (0.889166ms)
+✔ Java hash preserves known signed-overflow values (0.059666ms)
+✔ chunk crossings recycle only the departing row and retain every buffer (1158.040792ms)
+✔ revisited areas and wrapped coordinates reproduce identical terrain and vegetation (3.653459ms)
+✔ neighboring chunk edges agree, including world seam (3.442834ms)
+✔ party movement preserves position identity, follows terrain and wraps at world edges (1.515208ms)
+✔ left swipe moves camera-left at every heading and stick/look scratch objects are reused (2.531209ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12128.461458

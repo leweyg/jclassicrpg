@@ -1,10 +1,11 @@
+import {validateAnchor} from '../interactions/format.js';
 /** Single shared contract for the offline compiler and static runtime.
  * Coordinates are legacy world cells (one render unit); models use half the
  * original two-unit cube size. Bounds are half-open. Face order is N,E,S,W.
  */
-export const FORMAT_VERSION = 1;
-export const GENERATOR_VERSION = 'web-baked-v1';
-export const WORLD_ID = 'seed0-web-v1';
+export const FORMAT_VERSION = 2;
+export const GENERATOR_VERSION = 'web-baked-v2';
+export const WORLD_ID = 'seed0-web-v2';
 export const CHUNK_SIZE = 32;
 export const WORLD_SIZE = 1600;
 export const FACE = Object.freeze([[0,-1],[1,0],[0,1],[-1,0]]);
@@ -34,6 +35,8 @@ export function validateScene(s, expectedKey) {
     if (n.source && (typeof n.source!=='string' || !/\.(obj|json|glb)$/.test(n.source))) throw Error('Unsupported scene source');
     if(n.children){if(!Array.isArray(n.children))throw Error('Invalid children');visit(n.children,depth+1);}
   }}
+  const seen=new Set();
+  for(const a of d.interactions??[]){validateAnchor(a);if(seen.has(a.id))throw Error('Duplicate interaction anchor');seen.add(a.id);if(d.bounds&&(a.position[0]<d.bounds[0]||a.position[0]>=d.bounds[3]||a.position[2]<d.bounds[2]||a.position[2]>=d.bounds[5]))throw Error('Interaction outside chunk');}
   visit(s.children);
   return d;
 }

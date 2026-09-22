@@ -196,6 +196,17 @@
 		#hud-portrait-card { width: 52px; }
 		#hud-log { max-height: 96px; }
 	}
+
+#interaction-panel { width:min(540px,calc(100vw - 32px)); max-height:78vh; box-sizing:border-box; overflow:auto; background:#172823; color:#f3eddb; border:1px solid #92b99a; border-radius:12px; padding:20px; box-shadow:0 16px 80px #000b; font:16px/1.5 system-ui; }
+#interaction-panel::backdrop {background:#06120d88;}
+#interaction-panel header {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+#interaction-panel h2 {font-size:22px;margin:0;}
+#interaction-panel small {color:#b5d2be;}
+#interaction-panel button {background:#294a3b;color:#fff5dc;border:1px solid #8ea78c;border-radius:6px;padding:10px 14px;cursor:pointer;font:inherit;}
+#interaction-body>button {display:block;width:100%;margin:8px 0;text-align:left;}
+#interaction-panel button:focus-visible {outline:3px solid #ffe29d;outline-offset:2px;}
+#interaction-panel article {border-top:1px solid #50705a;margin-top:16px;}
+#interaction-panel h4 {margin-bottom:4px;}
 </style>
 </head>
 <body>
@@ -203,7 +214,7 @@
 <div id="load-status">Loading scene…</div>
 
 <div id="hud-topbar" class="hud">
-	<span>Menu</span><button id="map-open" type="button" aria-haspopup="dialog">Map</button><button id="world-interact" type="button">Explore · WASD / drag</button><button id="world-save" type="button">Export save</button><label style="cursor:pointer">Import save<input id="world-import" type="file" accept="application/json" hidden></label><button id="world-retry" type="button">Retry loading</button>
+	<span>Menu</span><button id="map-open" type="button" aria-haspopup="dialog">Map</button><button id="world-interact" type="button">Explore · WASD / drag</button><button id="world-journal" type="button">Journal</button><button id="world-inventory" type="button">Inventory</button><button id="world-save" type="button">Export save</button><label style="cursor:pointer">Import save<input id="world-import" type="file" accept="application/json" hidden></label><button id="world-retry" type="button">Retry loading</button>
 </div>
 <div id="hud-portrait-card" class="hud">
 	<img id="hud-portrait" alt="Active character portrait">

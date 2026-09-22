@@ -13,6 +13,7 @@
 
 import { loadFrozenWorld, wrap } from "./frozen_world.js";
 import { loadBakedStream } from "./world/baked_stream.js";
+import { loadInteractions } from './interactions/runtime.js';
 import { SaveDeltas } from "./world/save_deltas.js";
 
 import { starterPartyRef, worldsRef, ChangeEvents } from "./game_static_core.js";
@@ -159,6 +160,8 @@ export class GameState {
 		let storage = null;
 		try { storage = globalThis.localStorage; } catch {}
 		this.saveDeltas = new SaveDeltas(storage);
+		this.interactions = await loadInteractions(this.exploration.baseURL,this.saveDeltas);
+        this.exploration.interactionCatalog=this.interactions.maps;
 		this.realm = this.saveDeltas.data.player?.realm ?? 'surface';
 		if (this.saveDeltas.data.player) {
 			const {x,y,z} = this.saveDeltas.data.player;
@@ -225,15 +228,18 @@ export class GameState {
 		} finally { if(this._teleportRevision===revision)this._teleporting=false; }
 	}
 
-	async interact() {
-		const action=this.exploration.nearby?.(this.party.position,this.realm);
+    nearbyInteraction(facing=null) {
+        const action=this.exploration.nearby?.(this.party.position,this.realm,1.8,{facing,priority:a=>this.interactions?.priority(a)??a.priority});
+        return this.interactions?.describe(action)??action;
+    }
+	async interact(action=this.nearbyInteraction()) {
 		if (!action) return 'Nothing nearby to use.';
-		if (action.kind==='chest') {
-			const id=action.object.id;
-			if (this.saveDeltas.data.openedContainers[id]) return 'This chest has already been searched.';
-			this.saveDeltas.open(id);this.saveDeltas.persist(this.party.position,this.realm);
-			return this.saveDeltas.error ? 'Chest searched. '+this.saveDeltas.error : 'Chest searched. Your discovery has been saved.';
-		}
+		if (action.kind!=='portal') {
+            const result=this.interactions.interact(action);
+            this.saveDeltas.persist(this.party.position,this.realm);
+            return result.message??result.text??'Recorded.';
+        }
+
 		const portal=action.portal, dest=portal[action.side==='from'?'to':'from'];
 		const realm=portal.kind==='cave'?(this.realm==='cave'?'surface':'cave'):this.realm;
 		await this.teleport(dest[0],dest[2],dest[1],realm);

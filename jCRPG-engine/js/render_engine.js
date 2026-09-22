@@ -316,10 +316,35 @@ export class SceneRenderer {
 		finally { this.setInputEnabled(true); }
 	}
 
+    highlightInteraction(action) {
+        const changed=this.highlightedAction?.id!==action?.id;
+        this.highlightedAction=action;
+        if(!this._attentionRing){
+            const mesh=new THREE.Mesh(new THREE.TorusGeometry(.48,.035,6,32),new THREE.MeshBasicMaterial({color:0xffdf83,transparent:true,opacity:.85,depthTest:false}));
+            mesh.rotation.x=Math.PI/2;mesh.renderOrder=5;this.scene.add(mesh);this._attentionRing=mesh;
+        }
+        this._attentionRing.visible=!!action;
+        if(action)this._attentionRing.position.set(action.position[0],action.position[1]+.08,action.position[2]);
+        if(changed)this.requestRender();
+    }
+    async attentionPulse(action) {
+        if(!action)return;
+        this.highlightInteraction(action);
+        try { const Audio=window.AudioContext??window.webkitAudioContext;if(Audio){this._interactionAudio??=new Audio();const ctx=this._interactionAudio;ctx.resume().catch(()=>{});const oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.setValueAtTime(520,ctx.currentTime);oscillator.frequency.exponentialRampToValueAtTime(780,ctx.currentTime+.1);gain.gain.setValueAtTime(.025,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.13);oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};} } catch {}
+        const end=new THREE.Vector3(...action.position);end.y+=.5;
+        const geometry=new THREE.BufferGeometry().setFromPoints([this.camera.position.clone(),end]);
+        const material=new THREE.LineBasicMaterial({color:0x9effe0,transparent:true,opacity:.85});
+        const line=new THREE.Line(geometry,material);this.scene.add(line);this.renderer.render(this.scene,this.camera);
+        // A bounded cue only; the normal world renderer remains idle at rest.
+        await new Promise(resolve=>setTimeout(resolve,140));
+        this.scene.remove(line);geometry.dispose();material.dispose();
+    }
 	async interact() {
-		if (this._interacting) return;
-		this._interacting=true;this.cancelInput();
-		try { const message=await this.gameState.interact();this.onStatus?.(message);this.worldView.sync();this._syncCamera();this.requestRender(); }
+		if (this._interacting || !this._inputEnabled) return;
+		this._interacting=true;
+        const action=this.highlightedAction??this.gameState.nearbyInteraction();
+        this.cancelInput();
+		try { await this.attentionPulse(action);const message=await this.gameState.interact(action);this.onStatus?.(message);this.onInteractionPanel?.();this.worldView.sync();this._syncCamera();this.requestRender(); }
 		catch(error) { this.onStatus?.(error.message); }
 		finally { this._interacting=false; }
 	}

@@ -9,7 +9,8 @@ export class WorldMap {
 		this.state = gameState;
 		this.renderer = renderer;
 		this.world = gameState.exploration.world;
-		this.markers = buildMapMarkers(this.world, this.world.additionalMapMarkers);
+		this.baseMarkers = buildMapMarkers(this.world, this.world.additionalMapMarkers);
+		this.markers = [...this.baseMarkers,...(gameState.interactions?.markers()??[])];
 		this.enabled = new Set(Object.keys(MARKER_STYLES));
 		this.query = '';
 		this.mini = document.getElementById('minimap-canvas');
@@ -93,7 +94,7 @@ export class WorldMap {
 			label.append(input, text); filters.append(label);
 		}
 		if (!this.markers.some(m => m.kind === 'mission' || m.kind === 'puzzle')) {
-			document.getElementById('map-mission-note').textContent = 'No mission or puzzle markers are recorded in this save. Towns and labyrinths are explorable. Confirmed cave entrances support Enter cave; dashed cave-region markers show approximate saved areas.';
+			document.getElementById('map-mission-note').textContent = 'Accept a mission to reveal its objectives. Shrine routes reveal the next relay as you awaken the network.';
 		}
 	}
 
@@ -114,7 +115,7 @@ export class WorldMap {
 
 	_teleport(marker) {
 		this.close();
-		this.renderer.teleportTo(marker.x, marker.z);
+		if(marker.realm==='cave')this.state.teleport(marker.x,marker.z,marker.y,'cave').then(()=>{this.renderer._syncCamera();this.renderer.requestRender();}).catch(error=>this.renderer.onStatus?.(error.message));else this.renderer.teleportTo(marker.x, marker.z);
 		this.update(true);
 	}
 
@@ -199,6 +200,11 @@ export class WorldMap {
 	}
 
 	update(force = false) {
+        const revision=this.state.saveDeltas?.data.deltaRevision??0;
+        if(this._interactionRevision!==revision){this._interactionRevision=revision;force=true;const save=this.state.saveDeltas?.data;
+            this.markers=[...this.baseMarkers.map(m=>m.kind==='shrine'?{...m,implemented:true,note:save?.shrines?.[m.id.replace('RoadShrine:','shrine:')]?.activated?'Awake relay':'Dormant relay'}:m),...(this.state.interactions?.markers()??[])];
+            if(this.dialog.open)this._renderList();
+        }
 		const p = this.state.party.position, yaw = this.renderer._yaw;
 		if (!force && p.x === this._lastX && p.z === this._lastZ && yaw === this._lastYaw) return;
 		this._lastX = p.x; this._lastZ = p.z; this._lastYaw = yaw;

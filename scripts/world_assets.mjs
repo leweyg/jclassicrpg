@@ -54,6 +54,20 @@ export function bakeAssets(root,out){
  function boxes(name,boxes,texture){const vs=[],faces=[];for(const [x,y,z,sx,sy,sz]of boxes){const start=vs.length;for(const [dx,dy,dz]of [[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]])vs.push([x+dx*sx,y+dy*sy,z+dz*sz]);for(const f of [[1,4,3,2],[5,6,7,8],[1,2,6,5],[4,8,7,3],[1,5,8,4],[2,3,7,6]])faces.push(f.map((i,n)=>(i+start)+'/'+(n+1)));}write(name,vs,faces,[[0,0],[1,0],[1,1],[0,1]],texture,colors[name]);}
  boxes('door',[[-.5,0,-.07,.12,1,.14],[.38,0,-.07,.12,1,.14],[-.38,.85,-.07,.76,.15,.14]],'Wood_Tex_General.png');
  boxes('stairs',Array.from({length:6},(_,i)=>[-.5,0,-.5+i/6,1,(i+1)/6,1/6]),'Wood_Tex_General.png');
+ // Clearly authored static silhouettes, shared and instanced by culture.
+ const palettes={human:[.72,.63,.40],boarman:[.67,.37,.24],antipion:[.34,.65,.70],yeti:[.83,.9,.92],kobold:[.4,.68,.39],greek:[.69,.42,.76]};
+ for(const [culture,color]of Object.entries(palettes)){
+  const name='actor_'+culture;colors[name]=color;
+  const wide=culture==='yeti'?.7:culture==='boarman'?.6:.45;
+  const body=[[-wide/2,.35,-.16,wide,.7,.32],[-.18,1.05,-.18,.36,.32,.36],[-.2,0,-.12,.16,.4,.24],[.04,0,-.12,.16,.4,.24],[-wide/2-.14,.4,-.12,.14,.6,.24],[wide/2,.4,-.12,.14,.6,.24]];
+  if(culture==='boarman')body.push([-.14,1.08,-.28,.28,.13,.14]);
+  if(culture==='antipion')body.push([-.3,1.32,-.24,.6,.08,.48]);
+  if(culture==='greek')body.push([-.8,.7,-.08,.5,.3,.12],[.3,.7,-.08,.5,.3,.12]);
+  boxes(name,body,null);
+ }
+ colors.conductor=[.35,.68,.76];colors.resetStone=[.75,.58,.3];
+ boxes('conductor',[[-.2,0,-.2,.4,.4,.4],[-.13,.4,-.13,.26,.35,.26]],null);
+ boxes('resetStone',[[-.35,0,-.35,.7,.2,.7],[-.16,.2,-.16,.32,.2,.32]],null);
  fs.writeFileSync(path.join(dir,'catalog.json'),JSON.stringify(report,null,2)+'\n');return report;
 }
 export function terrainGLB(heights,types,holes=[]){

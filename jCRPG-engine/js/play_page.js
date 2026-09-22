@@ -1,3 +1,4 @@
+import { InteractionUI } from './interactions/ui.js';
 /*
  * play_page.js
  *
@@ -59,11 +60,13 @@ async function main() {
 		const renderer = new SceneRenderer(canvas);
 		await renderer.buildWorld(sim.gameState);
 		const worldMap = new WorldMap(sim.gameState, renderer);
+		const interactionsUI = new InteractionUI(sim.gameState,renderer,appendLog);
+		renderer.onInteractionPanel=()=>interactionsUI.show();
 		window.__worldMap = worldMap;
 		window.__sceneRenderer = renderer;
 		window.__gameState = sim.gameState;
 		if (status) status.textContent = "";
-		appendLog("Saved world loaded. Drag on the left to walk; drag on the right to look.");
+		appendLog("The Drift of Measure: a dim shrine waits west of spawn. Wammigmig lies east. Move with WASD or drag; direct attention with Interact [E].");
 		const location = document.getElementById('hud-location');
 		let lastArea = '', lastLocation = '', lastUpdate = -Infinity;
 		const updateLocation = (now = performance.now(), force = false) => {
@@ -91,6 +94,7 @@ async function main() {
 			const file=event.target.files[0];if(!file)return;
 			try { const state=sim.gameState, previous=state.saveDeltas.data, save=JSON.parse(await file.text());
 				state.saveDeltas.import(JSON.stringify(save));
+                try { state.interactions.initialize(); } catch(error) {state.saveDeltas.data=previous;throw error;}
 				try { if(save.player) await state.teleport(save.player.x,save.player.z,save.player.y,save.player.realm); }
 				catch(error) { state.saveDeltas.data=previous;throw error; }
 				renderer.worldView.sync();renderer._syncCamera();renderer.requestRender();appendLog('Save imported.');
@@ -98,8 +102,9 @@ async function main() {
 		});
 		renderer.onViewChange = (now,force) => {
 			updateLocation(now,force);
-			const state=sim.gameState, action=state.exploration.nearby(state.party.position,state.realm);
+			const state=sim.gameState, action=state.nearbyInteraction([-Math.sin(renderer._yaw),-Math.cos(renderer._yaw)]);
 			const button=document.getElementById('world-interact');
+			renderer.highlightInteraction(action);
 			button.textContent=action ? `${action.label} [E]` : 'Explore · WASD / drag';button.disabled=!action;
 		};
 		updateLocation();
