@@ -163,7 +163,7 @@
       0.8,
       0.09
     ],
-    "texture": "Wood_Tex_General.png",
+    "texture": "wooden1.png",
     "axis": "Y",
     "anchor": "floor-center"
   },
@@ -261,7 +261,7 @@
       0,
       0.5
     ],
-    "texture": "Wood_Tex_General.png",
+    "texture": "wood1_d.png",
     "axis": "Y",
     "anchor": "floor-center"
   },
@@ -373,7 +373,7 @@
       1,
       0.07
     ],
-    "texture": "Wood_Tex_General.png",
+    "texture": "wood1_d.png",
     "axis": "Y",
     "anchor": "floor-center"
   },
@@ -387,7 +387,7 @@
       1,
       0.5
     ],
-    "texture": "Wood_Tex_General.png",
+    "texture": "wood1_d.png",
     "axis": "Y",
     "anchor": "floor-center"
   },

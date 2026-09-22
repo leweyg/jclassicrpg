@@ -1,4 +1,4 @@
 newmtl floor
 Kd 0.57 0.46 0.32
 d 1
-map_Kd textures/Wood_Tex_General.png
+map_Kd textures/wood1_d.png

@@ -13,7 +13,7 @@ const catalog={
  barrel:['media/models/item/storage/barrel.obj',[.35,.5,.35],null],
  crate:['media/models/item/storage/crate.obj',[.4,.4,.4],null],
  basket:['media/models/item/storage/basket.obj',[.35,.3,.35],null],
- bookcase:['media/models/inside/furniture/bookcase.obj',[.65,.8,.18],'Wood_Tex_General.png'],
+ bookcase:['media/models/inside/furniture/bookcase.obj',[.65,.8,.18],null],
  caveEntrance:['media/models/ground/cave_entrance.obj',[2,1.8,1],'cave_ent.png'],
  shrine:['media/models/external/shrine/shrine1.obj',[3,2,3],null],
  brickWall:['media/models/external/House_01_wall.obj',[1,1,.1],'desertbrick1.png'],
@@ -40,9 +40,20 @@ export function bakeAssets(root,out){
   // Asset-specific raw pivots vary; retain Y-up faces, normalize a documented
   // bounding box once offline, never independently at runtime/editor import.
   const transformed=vs.map(v=>v.map((n,i)=>(n-mins[i])/(maxs[i]-mins[i]||1)*size[i]-(i===1?0:size[i]/2)));
+  // Some legacy book faces have no UVs. Project those faces onto their two
+  // widest axes instead of sampling a single texel; retain every authored UV.
+  if(name==='bookcase')for(const face of faces){
+   const points=face.map(token=>transformed[Number(token.split('/')[0])-1]);
+   const lo=[0,1,2].map(i=>Math.min(...points.map(p=>p[i]))),span=[0,1,2].map(i=>Math.max(...points.map(p=>p[i]))-lo[i]);
+   const axes=[0,1,2].sort((a,b)=>span[b]-span[a]).slice(0,2);
+   for(let i=0;i<face.length;i++)if(!face[i].split('/')[1]){
+    uv.push(axes.map(axis=>(points[i][axis]-lo[axis])/(span[axis]||1)));
+    face[i]=face[i].split('/')[0]+'/'+uv.length;
+   }
+  }
   write(name,transformed,faces,uv,texture);
  }
- for(const name of ['floor','stone','street','caveFloor','roof'])write(name,[[-.5,0,-.5],[.5,0,-.5],[.5,0,.5],[-.5,0,.5]],[['1/1','4/4','3/3','2/2']],[[0,0],[1,0],[1,1],[0,1]],name==='floor'?'Wood_Tex_General.png':name==='roof'?'Roof_Tex_Bake_01.png':name==='caveFloor'?'cave_ground.png':name==='street'?'stone.png':'maze_stone_2.png',colors[name]);
+ for(const name of ['floor','stone','street','caveFloor','roof'])write(name,[[-.5,0,-.5],[.5,0,-.5],[.5,0,.5],[-.5,0,.5]],[['1/1','4/4','3/3','2/2']],[[0,0],[1,0],[1,1],[0,1]],name==='floor'?'wood1_d.png':name==='roof'?'Roof_Tex_Bake_01.png':name==='caveFloor'?'cave_ground.png':name==='street'?'stone.png':'maze_stone_2.png',colors[name]);
  for(const [name,texture] of [['iglooRoof','igloo.png'],['sandRoof','sandigloo1.png'],['hutRoof','hut.png']]){
   const vs=[],uv=[],faces=[],rings=6,segments=16;
   for(let j=0;j<=rings;j++)for(let i=0;i<=segments;i++){
@@ -52,8 +63,8 @@ export function bakeAssets(root,out){
   for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){const a=1+i+(segments+1)*j,b=a+segments+1;faces.push([a,b,b+1,a+1].map(n=>n+'/'+n));}write(name,vs,faces,uv,texture);
  }
  function boxes(name,boxes,texture){const vs=[],faces=[];for(const [x,y,z,sx,sy,sz]of boxes){const start=vs.length;for(const [dx,dy,dz]of [[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]])vs.push([x+dx*sx,y+dy*sy,z+dz*sz]);for(const f of [[1,4,3,2],[5,6,7,8],[1,2,6,5],[4,8,7,3],[1,5,8,4],[2,3,7,6]])faces.push(f.map((i,n)=>(i+start)+'/'+(n+1)));}write(name,vs,faces,[[0,0],[1,0],[1,1],[0,1]],texture,colors[name]);}
- boxes('door',[[-.5,0,-.07,.12,1,.14],[.38,0,-.07,.12,1,.14],[-.38,.85,-.07,.76,.15,.14]],'Wood_Tex_General.png');
- boxes('stairs',Array.from({length:6},(_,i)=>[-.5,0,-.5+i/6,1,(i+1)/6,1/6]),'Wood_Tex_General.png');
+ boxes('door',[[-.5,0,-.07,.12,1,.14],[.38,0,-.07,.12,1,.14],[-.38,.85,-.07,.76,.15,.14]],'wood1_d.png');
+ boxes('stairs',Array.from({length:6},(_,i)=>[-.5,0,-.5+i/6,1,(i+1)/6,1/6]),'wood1_d.png');
  // Clearly authored static silhouettes, shared and instanced by culture.
  const palettes={human:[.72,.63,.40],boarman:[.67,.37,.24],antipion:[.34,.65,.70],yeti:[.83,.9,.92],kobold:[.4,.68,.39],greek:[.69,.42,.76]};
  for(const [culture,color]of Object.entries(palettes)){
