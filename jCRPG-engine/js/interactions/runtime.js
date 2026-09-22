@@ -120,8 +120,9 @@ export class InteractionRuntime {
  return {actor:a,text:reaction??node.text,knowledge:node.knowledge??'testimony',choices:(node.choices??[]).filter(c=>predicate(c.when,this.save.data,this))};
  }
  choose(i,token){const choice=this.dialogue().choices[i];if(!choice)throw Error('Choice no longer available');const result=this.transact(choice.actions??[],token);if(choice.next)this.panel.nodeId=choice.next;else this.panel=null;return result;}
- navigationGoal(){return questGoal(this,this.save.data.navMissionId);}
- setNavigationGoal(id){if(!questGoal(this,id))throw Error('This quest has no remaining destination.');this.save.data.navMissionId=id;this.save.data.deltaRevision++;}
+ navigationGoal(){return this.save.data.navLocation??questGoal(this,this.save.data.navMissionId);}
+ setNavigationGoal(id){if(!questGoal(this,id))throw Error('This quest has no remaining destination.');this.save.data.navMissionId=id;this.save.data.navLocation=null;this.save.data.deltaRevision++;}
+ setNavigationLocation(marker){const goal={id:marker.id,name:marker.name,position:[marker.x,marker.y??0,marker.z],realm:marker.realm??'surface'};validateSave({...this.save.data,navLocation:goal});this.save.data.navLocation=goal;this.save.data.navMissionId=null;this.save.data.deltaRevision++;}
  journal(){return this.content.missions.map(m=>({...m,state:this.missionState(m.id),progress:m.objectives.map(o=>({...o,count:this.objectiveSources(o,this.save.data).length}))})).filter(m=>m.state!=='locked');}
  markers(){
  const result=[],add=(id,name,kind,position,realm='surface')=>{if(position)result.push({id,name,kind,x:position[0],y:position[1],z:position[2],realm,implemented:true});};

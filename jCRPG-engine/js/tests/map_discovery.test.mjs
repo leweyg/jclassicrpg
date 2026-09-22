@@ -70,14 +70,14 @@ test('compiled mission and dialogue locations reveal through the real map and su
  const manifest=read('interactions/manifest.json'),content=Object.fromEntries(Object.entries(manifest.catalogs).map(([key,desc])=>[key,read(desc.url)]));
  const worldData=JSON.parse(fs.readFileSync(new URL('../../json/frozen_world.json',import.meta.url)));
  const oldDocument=globalThis.document,oldWindow=globalThis.window;
- const element=()=>({style:{},setAttribute(name,value){this[name]=value;},addEventListener(){},append(){},querySelector:()=>element(),width:256});
+ const element=()=>({style:{},listeners:{},setAttribute(name,value){this[name]=value;},addEventListener(name,fn){this.listeners[name]=fn;},showModal(){this.open=true;},close(){this.open=false;},focus(){},append(){},querySelector:()=>element(),width:256});
  const elements=new Map();globalThis.document={createElement:element,getElementById:id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);}};globalThis.window={addEventListener(){}};
  class QuietMap extends WorldMap{_buildAtlas(){} _drawMini(){} _drawFull(){} _renderList(){}}
  try{
   const save=new SaveDeltas(storage()),engine=new InteractionRuntime(content,save);
   // Avoid any incidental visits while inspecting defaults.
   const state={interactions:engine,saveDeltas:save,party:{position:{x:0,y:79,z:0}},realm:'surface',exploration:{world:new FrozenWorld(worldData)}};
-  const map=new QuietMap(state,{_yaw:0});map.update();
+  const map=new QuietMap(state,{_yaw:0,setInputEnabled(){},requestRender(){}});map.update();
   const initial=map.markers.filter(m=>map._visible(m));assert.equal(initial.length,3);assert.deepEqual(initial.filter(m=>m.kind==='settlement').map(m=>m.name).sort(),['Awshowam','Wammigmig']);
   assert.equal(map.baseMarkers.filter(m=>m.capital).length,30,'all other capitals remain in the catalogue');
   const mission=content.missions.find(m=>m.id==='mission:wammigmig:fair-share');
@@ -93,5 +93,17 @@ test('compiled mission and dialogue locations reveal through the real map and su
   revealReadDialogue(save,map.baseMarkers,{text:`Travel to ${hiddenTown.name}.`,choices:[]});map.update();assert.equal(map._visible(hiddenTown),true);
   const exported=save.export();const clean=new SaveDeltas();save.import(clean.export());map.update();assert.equal(map._visible(hiddenTown),false);assert.equal(map._visible(town),true);
   save.import(exported);map.update();assert.equal(map._visible(hiddenTown),true);
+  let traveled=null;map._teleport=marker=>{traveled=marker;map.close();};
+  map.showQuestGoal(engine.navigationGoal(),mission);
+  assert.equal(map.popup.open,true);assert.equal(map.dialog.open,true);assert.equal(traveled,null);
+  assert.match(elements.get('map-place-detail').textContent,/Fair Share/i);
+  elements.get('map-place-close').listeners.click();assert.equal(map.popup.open,false);assert.equal(map.dialog.open,true);
+  map.showPlace(town);assert.equal(traveled,null);
+  elements.get('map-place-nav').listeners.click();
+  assert.equal(engine.navigationGoal().id,town.id);assert.equal(save.data.navMissionId,null);
+  assert.equal(map.popup.open,false);assert.equal(map.dialog.open,true);assert.equal(traveled,null);
+  const savedGoal=engine.navigationGoal();save.import(save.export());assert.deepEqual(engine.navigationGoal(),savedGoal);
+  map.showPlace(town);
+  elements.get('map-place-travel').listeners.click();assert.equal(traveled.id,town.id);assert.equal(map.dialog.open,false);
  }finally{globalThis.document=oldDocument;globalThis.window=oldWindow;}
 });

@@ -41,6 +41,11 @@ export class WorldMap {
 		this.dialog = document.getElementById('world-map-dialog');
 		this.list = document.getElementById('map-locations');
 		this.detail = document.getElementById('map-detail');
+		this.popup = document.getElementById('map-place-dialog');
+		document.getElementById('map-place-close').addEventListener('click',()=>this.popup.close());
+		this.popup.addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation();this.popup.close();});
+		document.getElementById('map-place-travel').addEventListener('click',()=>{if(this.selectedMarker)this._teleport(this.selectedMarker);});
+		document.getElementById('map-place-nav').addEventListener('click',()=>this.setSelectedNavigation());
 		this._lastX = NaN; this._lastZ = NaN; this._lastYaw = NaN;
 		this.atlas = document.createElement('canvas');
 		this.atlas.width = 400; this.atlas.height = 400;
@@ -63,16 +68,16 @@ export class WorldMap {
 		this.full.addEventListener('click', event => {
 			if(this.mapGestures.suppressClick())return;
 			const marker = this._hit(event);
-			if (marker) this._teleport(marker);
+			if (marker) this.showPlace(marker);
 			else this.close();
 		});
 		this.full.addEventListener('pointermove', event => {
 			const marker = this._hit(event);
-			this.detail.textContent = marker ? this._label(marker) : 'Tap a marker to teleport, or tap the map background to close.';
+			this.detail.textContent = marker ? this._label(marker) : 'Select a marker for details and travel, or tap the map background to close.';
 		});
 		this.list.addEventListener('click', event => {
 			const button = event.target.closest('button[data-marker]');
-			if (button) this._teleport(this.markers[Number(button.dataset.marker)]);
+			if (button) this.showPlace(this.markers[Number(button.dataset.marker)]);
 		});
 		document.getElementById('map-search').addEventListener('input', event => {
 			this.query = event.target.value.toLowerCase().trim();
@@ -127,16 +132,44 @@ export class WorldMap {
 		if (this.dialog.open) return;
 		this.renderer.setInputEnabled(false);
 		this.viewport.reset();this.mapGestures.reset();
-		this.detail.textContent = 'Tap a marker to teleport, or tap the map background to close.';
+		this.detail.textContent = 'Select a marker for details and travel, or tap the map background to close.';
 		this.dialog.showModal();
 		this.update(true); this._renderList();
 	}
 
 	close() {
 		if (!this.dialog.open) return;
+		if(this.popup.open)this.popup.close();
 		this.dialog.close();
 		this.renderer.setInputEnabled(true);
 		this.renderer.requestRender();
+	}
+
+	showPlace(marker) {
+		this.selectedMarker=marker;
+		document.getElementById('map-place-title').textContent=marker.name;
+		document.getElementById('map-place-detail').textContent=[this._label(marker),marker.description,marker.realm==='cave'?'Underground destination.':null].filter(Boolean).join('\n\n');
+		if(!this.popup.open)this.popup.showModal();
+		document.getElementById('map-place-close').focus();
+	}
+
+	setSelectedNavigation(){
+		const marker=this.selectedMarker;if(!marker)return;
+		const engine=this.state.interactions;
+		const missionId=marker.missionId??(engine.maps.missions[marker.id]?marker.id:null)??(engine.navigationGoal()?.id===marker.id?this.state.saveDeltas.data.navMissionId:null);
+		if(missionId&&['available','active','ready-to-turn-in'].includes(engine.missionState(missionId)))engine.setNavigationGoal(missionId);
+		else engine.setNavigationLocation(marker);
+		this.state.saveDeltas.persist(this.state.party.position,this.state.realm);
+		this.popup.close();this.update(true);this.renderer.requestRender();
+	}
+
+	showQuestGoal(goal,mission) {
+		if(!goal)return;
+		this.open();
+		this.viewport.zoom=Math.min(4,this.viewport.maxZoom);
+		this.viewport.x=goal.position[0];this.viewport.z=goal.position[2];this.viewport.constrain();
+		this._drawFull();
+		this.showPlace({id:goal.id,missionId:mission.id,name:goal.name,kind:'mission',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true,description:mission.title+'\n'+mission.summary});
 	}
 
 	_teleport(marker) {
@@ -157,7 +190,7 @@ export class WorldMap {
 			fragment.append(button); count++;
 		}
 		this.list.replaceChildren(fragment);
-		document.getElementById('map-location-count').textContent = `${count} locations — select one to teleport`;
+		document.getElementById('map-location-count').textContent = `${count} locations — select one for details`;
 		if (!count) this.list.textContent = 'No matching locations. Try another search or enable more marker types.';
 	}
 
@@ -241,6 +274,8 @@ export class WorldMap {
 		const rect = this.full.getBoundingClientRect(), size = this.full.width;
 		const x = (event.clientX - rect.left) / rect.width * size, y = (event.clientY - rect.top) / rect.height * size;
 		let best = null, distance = (14 * size / rect.width) ** 2;
+		const goal=this.state.interactions?.navigationGoal();
+		if(goal){const projected=this.viewport.project(goal.position[0],goal.position[2]),at=mapGoalPosition(projected.x*size,projected.y*size,size);if((at.x-x)**2+(at.y-y)**2<distance)return {id:goal.id,name:goal.name,kind:'mission',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true};}
 		for (const marker of this.markers) {
 			if (!this._visible(marker)) continue;
 			const at=this.viewport.project(marker.x,marker.z);

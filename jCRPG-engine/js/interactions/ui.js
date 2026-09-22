@@ -39,7 +39,7 @@ export class InteractionUI {
   const actor=engine.maps.actors[m.turnInActorId];this.text('p','Return to '+actor.name+'.');
   const goal=engine.navigationGoal(),selected=this.state.saveDeltas.data.navMissionId===id;
   if(selected&&goal)this.text('p','Navigation: '+goal.name);
-  if(['available','active','ready-to-turn-in'].includes(m.state))this.button('Set as nav goal',()=>{engine.setNavigationGoal(id);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.close();});
+  if(['available','active','ready-to-turn-in'].includes(m.state))this.button('Show on map',()=>{engine.setNavigationGoal(id);const goal=engine.navigationGoal();this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.close();this.onShowQuestMap?.(goal,m);});
   this.focus();this.dialog.scrollTop=0;
  }
  openInventory(){this.open('Party inventory');const engine=this.state.interactions,inv=this.state.saveDeltas.data.inventory;for(const id of inv.order){const item=inv.items[id],type=engine.maps.itemTypes[item.typeId];this.text('h4',type.name);this.text('p',type.note);}this.button('Continue exploring',()=>this.close());this.focus();}

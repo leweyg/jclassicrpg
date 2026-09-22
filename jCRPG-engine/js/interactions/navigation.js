@@ -26,6 +26,7 @@ export function advanceNavigation(engine,before,after){
  const changedTo=state=>missions.find(m=>before.missions[m.id]?.state!==state&&after.missions[m.id]?.state===state);
  const accepted=missions.find(m=>!before.missions[m.id]&&['active','ready-to-turn-in'].includes(after.missions[m.id]?.state));
  const ready=changedTo('ready-to-turn-in'),completed=changedTo('completed');
+ if(accepted||ready||completed)after.navLocation=null;
  if(accepted||ready)after.navMissionId=(accepted??ready).id;
  else if(completed){
   const next=missions.find(m=>(m.requires??[]).includes(completed.id)&&!(after.missions[m.id])&&(m.requires??[]).every(id=>after.missions[id]?.state==='completed'))

@@ -14,7 +14,10 @@ const create=()=>new InteractionRuntime(content,new SaveDeltas({getItem:()=>null
 const run=(e,actions)=>e.transact(actions);
 test('navigation follows quest objectives, return actor and unlocked follow-up; selection survives saves',()=>{
  const e=create(),m=content.missions.find(m=>m.id==='mission:antipion:balance');
+ e.setNavigationLocation({id:'test-place',name:'Test place',x:10,z:20});assert.equal(e.navigationGoal().id,'test-place');
+ assert.throws(()=>e.setNavigationLocation({id:'bad',name:'Invalid',x:NaN,z:20}));assert.equal(e.navigationGoal().id,'test-place');
  run(e,[{op:'accept',id:m.id}]);assert.equal(e.save.data.navMissionId,m.id);
+ assert.equal(e.save.data.navLocation,null);
  assert.equal(e.navigationGoal().targetId,m.objectives[0].targetIds[0]);
  solve(e,m.objectives[0].targetIds[0]);assert.equal(e.navigationGoal().id,m.turnInActorId);
  const copy=create();copy.save.import(e.save.export());copy.initialize();assert.deepEqual(copy.navigationGoal(),e.navigationGoal());

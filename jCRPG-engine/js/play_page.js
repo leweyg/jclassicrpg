@@ -82,6 +82,7 @@ async function main() {
 		await renderer.buildWorld(sim.gameState);
 		const worldMap = new WorldMap(sim.gameState, renderer);
 		const interactionsUI = new InteractionUI(sim.gameState,renderer,appendLog);
+		interactionsUI.onShowQuestMap=(goal,mission)=>worldMap.showQuestGoal(goal,mission);
 		document.getElementById('hud-log').addEventListener('click',()=>interactionsUI.openJournal());
 		renderer.onInteractionPanel=()=>interactionsUI.show();
 		window.__worldMap = worldMap;

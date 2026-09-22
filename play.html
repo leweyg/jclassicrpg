@@ -127,6 +127,13 @@
 	}
 	#world-map-dialog[open] { display: flex; flex-direction: column; gap: 0.7rem; }
 	#world-map-dialog::backdrop { background: #000b; }
+	#map-place-dialog { box-sizing: border-box; width: min(430px, calc(100vw - 48px)); max-height: 75dvh; overflow: auto; padding: 1rem; background: #17201f; color: #eee5cd; border: 1px solid #b39050; border-radius: 9px; }
+	#map-place-dialog::backdrop { background: #0005; }
+	#map-place-dialog header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+	#map-place-title { margin: 0; font-size: 1.1rem; }
+	#map-place-detail { white-space: pre-line; line-height: 1.5; }
+	.map-place-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+	#map-place-dialog button { min-height: 48px; padding: 0.6rem 1rem; font: inherit; color: inherit; background: #29372b; border: 1px solid #b39050; border-radius: 6px; cursor: pointer; touch-action: manipulation; }
 	.map-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 	.map-heading h2 { margin: 0; font-size: 1.25rem; }
 	#map-close { padding: 0.6rem 1rem; color: inherit; background: #343c35; border: 1px solid #967545; border-radius: 5px; cursor: pointer; }
@@ -297,9 +304,17 @@
 	<p class="map-notes">Start, Wammigmig and Awshowam are always known. Explore, accept missions, and read dialogue to reveal more places. The minimap follows your camera; N points north. Pinch or scroll to zoom this map; drag to pan.</p>
 	<p id="map-mission-note" class="map-notes"></p>
 	<div class="map-layout">
-		<div class="map-visual"><div class="map-frame"><canvas id="world-map-canvas" width="800" height="800" role="img" aria-label="Saved world terrain and locations. Use the location list to teleport with a keyboard."></canvas></div><p id="map-detail">Tap a marker to teleport, or tap the map background to close.</p></div>
-		<div class="map-sidebar"><label for="map-search">Find a location</label><input id="map-search" type="search" placeholder="Name, type or coordinates" autocomplete="off"><div id="map-location-count"></div><div id="map-locations" aria-label="Teleport destinations"></div></div>
+		<div class="map-visual"><div class="map-frame"><canvas id="world-map-canvas" width="800" height="800" role="img" aria-label="Saved world terrain and locations. Use the location list to view details with a keyboard."></canvas></div><p id="map-detail">Select a marker for details and travel, or tap the map background to close.</p></div>
+		<div class="map-sidebar"><label for="map-search">Find a location</label><input id="map-search" type="search" placeholder="Name, type or coordinates" autocomplete="off"><div id="map-location-count"></div><div id="map-locations" aria-label="Map locations"></div></div>
 	</div>
+	<dialog id="map-place-dialog" aria-labelledby="map-place-title" aria-describedby="map-place-detail">
+		<header><h2 id="map-place-title"></h2><button id="map-place-close" type="button" autofocus>Close</button></header>
+		<p id="map-place-detail"></p>
+		<div class="map-place-actions">
+			<button id="map-place-travel" type="button">Travel here</button>
+			<button id="map-place-nav" type="button">Set as nav goal</button>
+		</div>
+	</dialog>
 </dialog>
 
 <!-- Frozen saved-world exploration; terrain and shared model assets stream through a fixed pool. -->
