@@ -77,8 +77,9 @@
 		width: clamp(160px, 48vw, 320px);
 		max-height: clamp(80px, 20vh, 130px);
 		overflow: hidden;
-		background: rgba(230, 210, 160, 0.9);
-		color: #2a2010;
+		background: rgba(20, 16, 8, 0.08);
+		color: #eee4c9;
+		text-shadow: 0 1px 3px #000;
 		font-family: Georgia, "Times New Roman", serif;
 		font-size: clamp(0.62rem, 2.2vw, 0.78rem);
 		line-height: 1.25;
@@ -141,7 +142,8 @@
 	}
 	#hud-location {
 		padding: 0.3rem 0.5rem;
-		background: rgba(20, 16, 8, 0.65);
+		background: rgba(20, 16, 8, 0.08);
+		text-shadow: 0 1px 3px #000;
 		color: #eee4c9;
 		font-size: 0.75rem;
 	}
@@ -171,6 +173,10 @@
 		font-size: 1rem;
 		cursor: pointer;
 		touch-action: manipulation;
+	}
+	#world-interact, #world-intuition {
+		background: rgba(41, 55, 43, 0.08);
+		text-shadow: 0 1px 3px #000;
 	}
 	#menu-open {
 		top: calc(0.5rem + env(safe-area-inset-top));
@@ -265,8 +271,8 @@
 </button>
 <div id="hud-nav" class="hud">
 	<div id="hud-location" aria-live="off"></div>
-	<button id="world-interact" type="button" title="Interact [E]" hidden disabled>Interact</button>
 	<button id="world-intuition" type="button" aria-haspopup="dialog" hidden disabled>Intuition</button>
+	<button id="world-interact" type="button" title="Interact [E]" hidden disabled>Interact</button>
 </div>
 <div id="hud-hint" class="hud"><span>◐ move</span><span>look ◑</span></div>
 
