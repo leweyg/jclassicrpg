@@ -2,6 +2,8 @@ import { buildMapMarkers, MARKER_STYLES, MINIMAP_RADIUS, VISIBLE_RADIUS, wrapped
 
 import {knownLocation,rememberLocations,discoverVisited,cameraMapOffset} from './map_discovery.js';
 
+import {MapViewport,bindMapGestures} from './map_viewport.js';
+
 const TERRAIN_COLORS = [[126, 143, 88], [59, 94, 59], [128, 123, 113], [49, 102, 134], [161, 128, 82], [204, 179, 104]];
 const DASHED = [3, 3], SOLID = [];
 
@@ -33,6 +35,8 @@ export class WorldMap {
 		this.query = '';
 		this.mini = document.getElementById('minimap-canvas');
 		this.full = document.getElementById('world-map-canvas');
+		this.viewport=new MapViewport(this.world.sizeX,this.world.sizeZ);
+		this.mapGestures=bindMapGestures(this.full,this.viewport,()=>this._drawFull());
 		this.dialog = document.getElementById('world-map-dialog');
 		this.list = document.getElementById('map-locations');
 		this.detail = document.getElementById('map-detail');
@@ -56,6 +60,7 @@ export class WorldMap {
 			}
 		});
 		this.full.addEventListener('click', event => {
+			if(this.mapGestures.suppressClick())return;
 			const marker = this._hit(event);
 			if (marker) this._teleport(marker);
 			else this.close();
@@ -120,6 +125,7 @@ export class WorldMap {
 	open() {
 		if (this.dialog.open) return;
 		this.renderer.setInputEnabled(false);
+		this.viewport.reset();this.mapGestures.reset();
 		this.detail.textContent = 'Tap a marker to teleport, or tap the map background to close.';
 		this.dialog.showModal();
 		this.update(true); this._renderList();
@@ -182,7 +188,7 @@ export class WorldMap {
 	_drawMini() {
 		const ctx = this.mini.getContext('2d'), size = this.mini.width, p = this.state.party.position;
 		const yaw=this.renderer._yaw;
-		ctx.clearRect(0,0,size,size);ctx.save();ctx.translate(size/2,size/2);ctx.rotate(-yaw);ctx.translate(-size/2,-size/2);
+		ctx.clearRect(0,0,size,size);ctx.save();ctx.translate(size/2,size/2);ctx.rotate(yaw);ctx.scale(-1,1);ctx.translate(-size/2,-size/2);
 		this._background(ctx, size, p.x - MINIMAP_RADIUS, p.z + MINIMAP_RADIUS, MINIMAP_RADIUS * 2);
 		ctx.restore();
 		const scale = size / (MINIMAP_RADIUS * 2);
@@ -204,11 +210,16 @@ export class WorldMap {
 	_drawFull() {
 		if (!this.dialog.open) return;
 		const ctx = this.full.getContext('2d'), size = this.full.width, p = this.state.party.position;
-		this._background(ctx, size, 0, this.world.sizeZ, this.world.sizeX);
+		const view=this.viewport,span=view.span;
+		ctx.clearRect(0,0,size,size);ctx.fillStyle='#101917';ctx.fillRect(0,0,size,size);ctx.imageSmoothingEnabled=false;
+		const corner=view.project(0,this.world.sizeZ);
+		ctx.drawImage(this.atlas,corner.x*size,corner.y*size,this.world.sizeX/span*size,this.world.sizeZ/span*size);
 		for (const marker of this.markers) if (this._visible(marker)) {
-			this._marker(ctx, marker, marker.x / this.world.sizeX * size, (1 - marker.z / this.world.sizeZ) * size, 7);
+			const at=view.project(marker.x,marker.z);
+			if(at.x>=0&&at.x<=1&&at.y>=0&&at.y<=1)this._marker(ctx,marker,at.x*size,at.y*size,7);
 		}
-		this._player(ctx, p.x / this.world.sizeX * size, (1 - p.z / this.world.sizeZ) * size, 10);
+		const at=view.project(p.x,p.z);
+		if(at.x>=0&&at.x<=1&&at.y>=0&&at.y<=1)this._player(ctx,at.x*size,at.y*size,10);
 	}
 
 	_hit(event) {
@@ -217,7 +228,9 @@ export class WorldMap {
 		let best = null, distance = (14 * size / rect.width) ** 2;
 		for (const marker of this.markers) {
 			if (!this._visible(marker)) continue;
-			const dx = marker.x / this.world.sizeX * size - x, dy = (1 - marker.z / this.world.sizeZ) * size - y;
+			const at=this.viewport.project(marker.x,marker.z);
+			if(at.x<0||at.x>1||at.y<0||at.y>1)continue;
+			const dx=at.x*size-x,dy=at.y*size-y;
 			const d = dx * dx + dy * dy;
 			if (d < distance) { best = marker; distance = d; }
 		}

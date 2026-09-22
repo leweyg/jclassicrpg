@@ -125,7 +125,7 @@
 	.map-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 1rem; min-height: 0; flex: 1; }
 	.map-visual { min-width: 0; overflow: auto; }
 	.map-frame { max-width: min(100%, calc(100dvh - 245px)); margin: auto; }
-	#world-map-canvas { display: block; width: 100%; aspect-ratio: 1; cursor: pointer; border: 1px solid #71816b; box-sizing: border-box; }
+	#world-map-canvas { display: block; width: 100%; aspect-ratio: 1; cursor: grab; touch-action: none; border: 1px solid #71816b; box-sizing: border-box; }
 	#map-detail { margin: 0.5rem 0; font-size: 0.8rem; line-height: 1.4; min-height: 2.8em; }
 	.map-sidebar { display: flex; flex-direction: column; min-height: 0; gap: 0.5rem; }
 	#map-search { box-sizing: border-box; width: 100%; padding: 0.65rem; background: #0f1717; color: #eee5cd; border: 1px solid #71816b; font: inherit; border-radius: 4px; }
@@ -273,7 +273,7 @@
 		<div id="map-filters" role="group" aria-label="Visible marker types"></div>
 		<p class="map-notes">Dashed markers are unimplemented locations with surface teleport destinations.</p>
 	</details>
-	<p class="map-notes">Start and capitals are always known. Explore, accept missions, and read dialogue to reveal more places. The minimap follows your camera; N points north.</p>
+	<p class="map-notes">Start and capitals are always known. Explore, accept missions, and read dialogue to reveal more places. The minimap follows your camera; N points north. Pinch or scroll to zoom this map; drag to pan.</p>
 	<p id="map-mission-note" class="map-notes"></p>
 	<div class="map-layout">
 		<div class="map-visual"><div class="map-frame"><canvas id="world-map-canvas" width="800" height="800" role="img" aria-label="Saved world terrain and locations. Use the location list to teleport with a keyboard."></canvas></div><p id="map-detail">Tap a marker to teleport, or tap the map background to close.</p></div>

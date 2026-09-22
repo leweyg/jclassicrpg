@@ -50,14 +50,14 @@ test('camera-relative minimap places forward at top and rotates north around the
  for(const yaw of [0,Math.PI/2,Math.PI,Math.PI*1.5]){
   const forward=cameraMapOffset(Math.sin(yaw)*20,Math.cos(yaw)*20,yaw);assert.ok(Math.abs(forward.x)<1e-10);assert.ok(Math.abs(forward.y+20)<1e-10);
  }
- const north=cameraMapOffset(0,1,Math.PI/2);assert.ok(Math.abs(north.x+1)<1e-10);assert.ok(Math.abs(north.y)<1e-10);
+ const north=cameraMapOffset(0,1,Math.PI/2);assert.ok(Math.abs(north.x-1)<1e-10);assert.ok(Math.abs(north.y)<1e-10);
  const wrapped=cameraMapOffset(2,0,Math.PI/2);assert.ok(Math.abs(wrapped.y+2)<1e-10);
 });
 test('minimap rotates terrain, keeps player upright and hides undiscovered markers',()=>{
  const calls=[],ctx=new Proxy({}, {get:(o,k)=>o[k]??((...a)=>calls.push([k,...a])),set:(o,k,v)=>(o[k]=v,true)});
  const map=Object.create(WorldMap.prototype);Object.assign(map,{mini:{width:256,getContext:()=>ctx},renderer:{_yaw:Math.PI/2},state:{party:{position:{x:0,y:40,z:0}},saveDeltas:new SaveDeltas()},world:{sizeX:1600,sizeZ:1600},markers:[{id:'hidden',kind:'settlement',x:10,z:10}],enabled:new Set(['settlement']),_background(){calls.push(['terrain']);},_marker(){calls.push(['marker']);},_player(...args){calls.push(['player',args[4]]);}});
- map._drawMini();assert.ok(calls.some(c=>c[0]==='rotate'&&c[1]===-Math.PI/2));assert.ok(calls.some(c=>c[0]==='player'&&c[1]===0));assert.ok(!calls.some(c=>c[0]==='marker'));
- const north=calls.find(c=>c[0]==='fillText'&&c[1]==='N');assert.equal(north[2],16);assert.ok(Math.abs(north[3]-128)<1e-10);
+ map._drawMini();assert.ok(calls.some(c=>c[0]==='rotate'&&c[1]===Math.PI/2));assert.ok(calls.some(c=>c[0]==='player'&&c[1]===0));assert.ok(!calls.some(c=>c[0]==='marker'));
+ const north=calls.find(c=>c[0]==='fillText'&&c[1]==='N');assert.equal(north[2],240);assert.ok(Math.abs(north[3]-128)<1e-10);
 });
 test('developer controls are in a closed-by-default disclosure near the map heading',()=>{
  const html=fs.readFileSync(new URL('../../../play.html',import.meta.url),'utf8');

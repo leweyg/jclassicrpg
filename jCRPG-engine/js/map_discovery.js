@@ -26,6 +26,6 @@ export function revealReadDialogue(save,markers,dialogue,actors=[]){
  return rememberLocations(save,markers.filter(m=>[m.name,...(m.aliases??[])].some(mentioned)||towns.has(m.id)).map(m=>m.id),'heard:');
 }
 export function cameraMapOffset(dx,dz,yaw){
- // North is +Z in the saved-world map; camera forward is (sin(yaw), cos(yaw)).
- return {x:dx*Math.cos(yaw)-dz*Math.sin(yaw),y:-dx*Math.sin(yaw)-dz*Math.cos(yaw)};
+ // Use the actual camera basis: right = (-cos(yaw), sin(yaw)), forward = (sin(yaw), cos(yaw)).
+ return {x:-dx*Math.cos(yaw)+dz*Math.sin(yaw),y:-dx*Math.sin(yaw)-dz*Math.cos(yaw)};
 }
