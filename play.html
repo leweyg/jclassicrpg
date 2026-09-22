@@ -140,8 +140,6 @@
 		#world-map-dialog { padding: 0.7rem; }
 	}
 	#hud-location {
-		top: calc(4rem + env(safe-area-inset-top));
-		right: calc(0.4rem + env(safe-area-inset-right));
 		padding: 0.3rem 0.5rem;
 		background: rgba(20, 16, 8, 0.65);
 		color: #eee4c9;
@@ -150,10 +148,16 @@
 	#hud-nav {
 		top: calc(0.5rem + env(safe-area-inset-top));
 		right: calc(0.4rem + env(safe-area-inset-right));
-		pointer-events: auto;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0.5rem;
+		max-width: calc(100vw - 7rem - env(safe-area-inset-right));
+		text-align: right;
 		font-size: clamp(0.6rem, 2vw, 0.75rem);
 	}
-	#menu-open, #world-interact, #game-menu button, #game-menu a {
+	#hud-nav button { pointer-events: auto; max-width: 100%; overflow-wrap: anywhere; }
+	#menu-open, #world-interact, #world-intuition, #game-menu button, #game-menu a {
 		box-sizing: border-box;
 		min-height: 48px;
 		min-width: 48px;
@@ -255,13 +259,14 @@
 	<div id="hud-profession">—</div>
 </div>
 <div id="hud-log" class="hud"></div>
-<div id="hud-location" class="hud" aria-live="off"></div>
 <button id="hud-minimap" class="hud" type="button" aria-label="Open world map" aria-haspopup="dialog" title="Nearby map: 116-unit radius, twice the visible area">
 	<canvas id="minimap-canvas" width="256" height="256" aria-hidden="true"></canvas>
 	<span>Map · 116-unit radius</span>
 </button>
 <div id="hud-nav" class="hud">
+	<div id="hud-location" aria-live="off"></div>
 	<button id="world-interact" type="button" title="Interact [E]" hidden disabled>Interact</button>
+	<button id="world-intuition" type="button" aria-haspopup="dialog" hidden disabled>Intuition</button>
 </div>
 <div id="hud-hint" class="hud"><span>◐ move</span><span>look ◑</span></div>
 

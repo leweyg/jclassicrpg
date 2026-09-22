@@ -104,6 +104,7 @@ async function main() {
 		renderer.onStatus = appendLog;
 		renderer.onInteract = () => renderer.interact();
 		document.getElementById('world-interact').addEventListener('click', () => renderer.interact());
+		document.getElementById('world-intuition').addEventListener('click', () => interactionsUI.openIntuition(renderer.nearbyInteraction()));
 		const menu = document.getElementById('game-menu');
 		const menuButton = document.getElementById('menu-open');
 		const closeMenu = () => {
@@ -156,7 +157,13 @@ async function main() {
 			const button=document.getElementById('world-interact');
 			renderer.highlightInteraction(action);
 			button.hidden=!action;button.disabled=!action;
+			const actor=action?.kind==='actor'?sim.gameState.interactions.maps.actors[action.targetId]:null;
+			button.textContent=actor?`Interact with ${actor.name}`:'Interact';
 			button.title=action ? `${action.label} [E]` : 'Interact [E]';
+			const intuition=document.getElementById('world-intuition');
+			const info=sim.gameState.interactions.intuition(action);
+			intuition.hidden=!info?.summary;intuition.disabled=!info?.summary;
+			intuition.setAttribute('aria-label',info?`Intuition about ${info.name}`:'Intuition');
 		};
 		updateLocation();
 		renderer.start();

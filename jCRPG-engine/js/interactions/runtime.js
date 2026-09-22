@@ -73,6 +73,30 @@ export class InteractionRuntime {
  }
  }
  priority(anchor){if(anchor.kind!=='actor')return anchor.priority;const actor=this.maps.actors[anchor.targetId];if(actor.missionIds.some(id=>this.missionState(id)==='ready-to-turn-in'))return 100;return actor.missionIds.some(id=>this.missionState(id)==='available')?80:70;}
+ intuition(anchor){
+  if(!anchor)return null;
+  if(anchor.kind==='actor'){
+   const actor=this.maps.actors[anchor.targetId];if(!actor)return null;
+   const culture=this.maps.cultures[actor.cultureId],town=this.maps.settlements[actor.townId];
+   return {name:actor.name,summary:actor.description??`${actor.name} is a ${actor.role}${town?' in '+town.name:''}.${culture?' Culture: '+culture.displayName+'.':''}`,character:true};
+  }
+  if(anchor.kind==='container'){
+   const c=this.maps.containers[anchor.targetId];if(!c)return null;
+   const saved=this.save.data.containers[c.id];
+   return {name:c.name,summary:c.description??(saved?.looted?'An empty container. Its contents have been collected.':'A container that can be opened to inspect its contents.')};
+  }
+  if(anchor.kind==='shrine'){
+   const s=this.maps.shrines[anchor.targetId];if(!s)return null;
+   return {name:s.name??'Relay shrine',summary:s.description??s.cue??(this.save.data.shrines[s.id]?.activated?'This relay is awake. Its pulse repeats the observable pattern.':'A dormant relay shrine. Attuning it awakens its signal.')};
+  }
+  if(anchor.kind==='puzzle'){
+   const p=this.maps.puzzles[anchor.targetId];if(!p)return null;
+   const index=p.componentIds.indexOf(anchor.componentId);
+   return {name:index<0?'Circuit reset stone':p.labels[index],summary:index<0?'A reset stone for this circuit. Interact to reset its conductors.':p.description??p.fact};
+  }
+  const summary=anchor.description??anchor.fact;
+  return summary?{name:anchor.name??anchor.prompt??'Observation',summary}:null;
+ }
  describe(anchor){
   if(!anchor)return null;
   if(anchor.kind==='puzzle'){const p=this.maps.puzzles[anchor.targetId],s=this.save.data.puzzles[p.id]??initialPuzzle(p),i=p.componentIds.indexOf(anchor.componentId);if(i>=0){const verb=s.completed?'Stable':!s.observed.includes(anchor.componentId)?'Inspect':p.family==='resonance'||s.values.every((n,j)=>n===p.demands[j])?'Pulse':'Set';return {...anchor,label:`${verb} ${p.labels[i]} · ${s.values[i]}/${p.demands[i]}`};}}

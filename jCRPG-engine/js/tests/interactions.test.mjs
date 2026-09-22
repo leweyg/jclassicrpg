@@ -11,6 +11,15 @@ const base=new URL('../../worlds/seed0/v2/',import.meta.url),read=file=>JSON.par
 const manifest=read('interactions/manifest.json'),content=Object.fromEntries(Object.entries(manifest.catalogs).map(([key,desc])=>[key,read(desc.url)]));
 const create=()=>new InteractionRuntime(content,new SaveDeltas({getItem:()=>null,setItem:()=>{}}));
 const run=(e,actions)=>e.transact(actions);
+test('intuition describes nearby characters and objects without activating or revealing them',()=>{
+ const e=create(),before=e.save.export(),actor=content.actors[0],puzzle=content.puzzles[0];
+ const targets=[{kind:'actor',targetId:actor.id},{kind:'container',targetId:content.containers[0].id},{kind:'shrine',targetId:content.shrines[0].id},{kind:'puzzle',targetId:puzzle.id,componentId:puzzle.componentIds[0]},{kind:'puzzle',targetId:puzzle.id,componentId:puzzle.id+':reset'},{kind:'evidence',targetId:'reading',fact:'A measured reading.'}];
+ for(const target of targets){const info=e.intuition(target);assert.ok(info.name);assert.ok(info.summary);}
+ assert.equal(e.intuition(targets[0]).name,actor.name);
+ assert.equal(e.intuition(targets.at(-1)).summary,'A measured reading.');
+ assert.equal(e.intuition(null),null);assert.equal(e.intuition({kind:'unknown'}),null);
+ assert.equal(e.save.export(),before);assert.equal(e.panel,null);
+});
 function solve(e,id){const p=e.maps.puzzles[id];for(const input of solvePuzzle(p).inputs)run(e,[{op:'puzzle',id,input}]);}
 const worldData=JSON.parse(fs.readFileSync(new URL('../../json/frozen_world.json',import.meta.url)));
 test('legacy evidence and fixed capital identities survive compilation',()=>{
