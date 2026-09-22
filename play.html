@@ -182,6 +182,10 @@
 		cursor: pointer;
 		touch-action: manipulation;
 	}
+	#game-menu .dev_button {
+		background: transparent;
+		border-color: rgba(179, 144, 80, 0.25);
+	}
 	#world-interact, #world-intuition {
 		background: rgba(41, 55, 43, 0.08);
 		text-shadow: 0 1px 3px #000;
@@ -251,11 +255,11 @@
 		<a href="index.html">Homepage</a>
 		
 		<div>Older dev stuff:</div>
-		<button id="world-inventory" type="button">Inventory</button>
-		<button id="world-save" type="button">Export save</button>
-		<button id="world-import-open" type="button">Import save</button>
+		<button id="world-inventory" type="button" class="dev_button" >Inventory</button>
+		<button id="world-save" type="button" class="dev_button" >Export save</button>
+		<button id="world-import-open" type="button" class="dev_button" >Import save</button>
 		<input id="world-import" type="file" accept="application/json" hidden>
-		<button id="world-retry" type="button">Retry loading</button>
+		<button id="world-retry" type="button" class="dev_button" >Retry loading</button>
 		
 	</div>
 </dialog>
