@@ -263,6 +263,12 @@
 #interaction-panel h4 {margin-bottom:4px;}
 #interaction-panel .inventory-table { width:100%; border-collapse:collapse; margin:12px 0; }
 #interaction-panel .inventory-table th, #interaction-panel .inventory-table td { padding:8px; text-align:left; border-bottom:1px solid #50705a; }
+#interaction-panel .inventory-table th:first-child, #interaction-panel .inventory-table td:first-child { width:36px; padding-right:0; }
+#interaction-panel .inventory-icon { display:block; object-fit:contain; }
+#interaction-panel .inventory-icon[hidden] { display:none; }
+#interaction-panel .inventory-icon-detail { margin:16px 0; }
+#interaction-panel .inventory-tags { display:flex; flex-wrap:wrap; gap:6px; list-style:none; padding:0; }
+#interaction-panel .inventory-tags li { padding:3px 9px; background:#294a3b; border-radius:12px; font-size:14px; }
 #interaction-panel .inventory-table th:last-child, #interaction-panel .inventory-table td:last-child { text-align:right; width:4em; font-variant-numeric:tabular-nums; }
 #interaction-panel .inventory-table tbody tr { cursor:pointer; }
 #interaction-panel .inventory-table tbody tr:hover { background:#294a3b; }

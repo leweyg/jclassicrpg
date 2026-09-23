@@ -343,6 +343,34 @@ export class InteractionUI {
         this.dialog.scrollTop = 0;
     }
 
+    inventoryIcon(item, type, parent, large = false) {
+        const icon = item.icon ?? type.icon;
+        if (!icon) return;
+        const image = this.text('img', '', parent);
+        image.className = large ? 'inventory-icon inventory-icon-detail' : 'inventory-icon';
+        image.src = 'media/textures/icons/objects/' + icon;
+        image.alt = '';
+        image.width = image.height = large ? 80 : 36;
+        image.addEventListener('error', () => { image.hidden = true; });
+    }
+
+    inventoryTags(item, type) {
+        const tags = [...(type.tags ?? []), ...(item.tags ?? [])];
+        const category = (item.icon ?? type.icon)?.split('/')[0];
+        const categories = {
+            weapon: 'Weapon', armor: 'Armor', potion: 'Potion',
+            ammo: 'Ammo', music: 'Instrument',
+        };
+        if (categories[category]) tags.push(categories[category]);
+        if (item.equipped) tags.push('Equipped');
+        if (item.attached) tags.push('Attached');
+        if (type.usable) tags.push('Usable');
+        const labels = tags
+            .filter(tag => typeof tag === 'string' && tag.trim())
+            .map(tag => tag.trim());
+        return [...new Set(labels)];
+    }
+
     openInventory() {
         this.open('Inventory', 'inventory');
         const engine = this.state.interactions;
@@ -354,6 +382,9 @@ export class InteractionUI {
             table.className = 'inventory-table';
             table.setAttribute('aria-label', 'Inventory');
             const header = this.text('tr', '', this.text('thead', '', table));
+            const iconHeading = this.text('th', '', header);
+            iconHeading.scope = 'col';
+            iconHeading.setAttribute('aria-label', 'Icon');
             this.text('th', 'Item', header).scope = 'col';
             this.text('th', 'Count', header).scope = 'col';
             const rows = this.text('tbody', '', table);
@@ -361,6 +392,7 @@ export class InteractionUI {
                 const item = inventory.items[id];
                 const type = engine.maps.itemTypes[item.typeId];
                 const row = this.text('tr', '', rows);
+                this.inventoryIcon(item, type, this.text('td', '', row));
                 const name = this.text('td', '', row);
                 const button = this.button(type.name, () => this.openInventoryItem(id), { parent: name });
                 this.text('td', String(item.quantity), row);
@@ -384,10 +416,18 @@ export class InteractionUI {
         this.closeButton.textContent = 'Back';
         this.closeButton.setAttribute('aria-label', 'Back to inventory');
         this.closeButton.onclick = () => this.openInventory();
+        this.inventoryIcon(item, type, this.body, true);
         this.text('p', 'Count: ' + item.quantity);
         if (type.note) this.text('p', type.note);
-        if (item.equipped) this.text('p', 'Equipped');
-        if (item.attached) this.text('p', 'Attached');
+        const tags = this.inventoryTags(item, type);
+        this.text('h3', 'Tags');
+        if (tags.length) {
+            const list = this.text('ul', '');
+            list.className = 'inventory-tags';
+            for (const tag of tags) this.text('li', tag, list);
+        } else {
+            this.text('p', 'No tags.');
+        }
         if (item.uses) this.text('p', 'Uses: ' + item.uses);
         this.focus();
         this.dialog.scrollTop = 0;
