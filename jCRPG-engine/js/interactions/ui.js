@@ -25,7 +25,7 @@ export class InteractionUI {
  }
  text(tag,value,parent=this.body){const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;}
  button(label,action,parent=this.body){const b=this.text('button',label,parent);b.type='button';b.onclick=()=>{try{action();}catch(error){this.log(error.message);}};return b;}
- open(title,kind=''){this.title.textContent=title;this.body.replaceChildren();const conversation=kind==='dialogue';this.dialog.classList.toggle('conversation',conversation);this.dialog.classList.toggle('intuition',kind==='intuition');this.closeButton.hidden=conversation||kind==='intuition';const button=this.closeButton;button.textContent='Close';button.setAttribute('aria-label','Close interaction');button.onclick=()=>this.close();if(!this.dialog.open){this.returnFocus=document.activeElement;this.renderer.setInputEnabled(false);this.dialog.showModal();}}
+ open(title,kind=''){this.title.textContent=title;this.body.replaceChildren();const conversation=kind==='dialogue';this.dialog.classList.toggle('conversation',conversation);this.dialog.classList.toggle('intuition',kind==='intuition');this.dialog.classList.toggle('journal',kind==='journal');this.dialog.classList.toggle('inventory',kind==='inventory');this.closeButton.hidden=conversation||kind==='intuition';const button=this.closeButton;button.textContent='Close';button.setAttribute('aria-label','Close interaction');button.onclick=()=>this.close();if(!this.dialog.open){this.returnFocus=document.activeElement;this.renderer.setInputEnabled(false);this.dialog.showModal();}}
  focus(){(this.body.querySelector('button')??(this.closeButton.hidden?this.dialog:this.closeButton)).focus();}
  close(){this.state.interactions.panel=null;this.dialog.close();this.renderer.setInputEnabled(true);this.returnFocus?.focus();this.renderer.requestRender();}
  commit(actions){const result=this.state.interactions.transact(actions);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.log(result.message);this.renderer.requestRender();return result;}
@@ -35,7 +35,7 @@ export class InteractionUI {
   this.focus();
  }
  openIntuition(anchor){const info=this.state.interactions.intuition(anchor);if(!info?.summary)return;this.open('Intuition · '+info.name,'intuition');this.text('p',info.summary);this.button('Continue',()=>this.close());this.focus();}
- openJournal(){this.open('Journal');const engine=this.state.interactions,s=this.state.saveDeltas.data;
+ openJournal(){this.open('Journal','journal');const engine=this.state.interactions,s=this.state.saveDeltas.data;
   let count=0;
   for(const category of ['active','ready-to-turn-in','available','completed','failed','archived']){
    const entries=engine.journal().filter(m=>(m.id===s.navMissionId?'active':m.state)===category&&(category!=='available'||s.actors[m.giverActorId]?.talked||m.id==='mission:wammigmig:fair-share')).sort((a,b)=>Number(b.id===s.navMissionId)-Number(a.id===s.navMissionId));
@@ -47,7 +47,7 @@ export class InteractionUI {
   this.focus();this.dialog.scrollTop=0;
  }
  openQuest(id){const engine=this.state.interactions,m=engine.journal().find(m=>m.id===id);if(!m)return this.openJournal();
-  this.open(m.title);const back=this.closeButton;back.textContent='Back';back.setAttribute('aria-label','Back to journal');back.onclick=()=>this.openJournal();
+  this.open(m.title,'journal');const back=this.closeButton;back.textContent='Back';back.setAttribute('aria-label','Back to journal');back.onclick=()=>this.openJournal();
   this.text('small',m.state.replaceAll('-',' '));this.text('p',m.summary);
   for(const o of m.progress)this.text('p',`${o.count}/${o.required??o.targetIds.length} — ${o.text}`);
   const actor=engine.maps.actors[m.turnInActorId];this.text('p','Return to '+actor.name+'.');
@@ -56,5 +56,5 @@ export class InteractionUI {
   if(['available','active','ready-to-turn-in'].includes(m.state))this.button('Show on map',()=>{engine.setNavigationGoal(id);const goal=engine.navigationGoal();this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.close();this.onShowQuestMap?.(goal,m);});
   this.focus();this.dialog.scrollTop=0;
  }
- openInventory(){this.open('Party inventory');const engine=this.state.interactions,inv=this.state.saveDeltas.data.inventory;for(const id of inv.order){const item=inv.items[id],type=engine.maps.itemTypes[item.typeId];this.text('h4',type.name);this.text('p',type.note);}this.button('Continue exploring',()=>this.close());this.focus();}
+ openInventory(){this.open('Party inventory','inventory');const engine=this.state.interactions,inv=this.state.saveDeltas.data.inventory;for(const id of inv.order){const item=inv.items[id],type=engine.maps.itemTypes[item.typeId];this.text('h4',type.name);this.text('p',type.note);}this.button('Continue exploring',()=>this.close());this.focus();}
 }
