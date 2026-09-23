@@ -27,6 +27,13 @@ const STICK_RADIUS = 55; // px a "move" stick drag is clamped to
 const LOOK_SENSITIVITY = 0.006;
 const GESTURE_SLOP = 8;
 const HOLD_MS = 600;
+const STEER_SENSITIVITY = 0.25;
+const STEER_TURN_SPEED = Math.PI * 1.5; // 270 degrees/sec at full right-drag deflection
+
+function steeringAxis(delta) {
+	const magnitude = Math.max(0, Math.abs(delta) - GESTURE_SLOP);
+	return Math.sign(delta) * Math.min(1, magnitude * STEER_SENSITIVITY / (STICK_RADIUS - GESTURE_SLOP));
+}
 
 export class SceneRenderer {
 	constructor(canvas) {
@@ -48,7 +55,7 @@ export class SceneRenderer {
 		this._interactionFacing = [0, 0, 0];
 		this._lastFrameTime = null;
 
-		// Dual-stick touch/mouse input: pointerId -> { side: 'move'|'look', startX, startY, curX, curY }.
+		// Dual-stick touch/mouse input: pointerId -> { side: 'move'|'look'|'steer', startX, startY, curX, curY }.
 		this._pointers = new Map();
 		this._movePointer = null;
 		this._stick = { x: 0, y: 0 };
@@ -115,16 +122,42 @@ export class SceneRenderer {
 			this._yaw -= dx * LOOK_SENSITIVITY;
 			this._pitch = Math.max(-1.2, Math.min(1.2, this._pitch - dy * LOOK_SENSITIVITY));
 		};
+		const startStick = p => {
+			this._movePointer = p;
+			this._joystickEl.style.left = `${p.startX}px`;
+			this._joystickEl.style.top = `${p.startY}px`;
+			this._joystickEl.style.display = 'block';
+			this._joystickEl.knob.style.left = '50%';
+			this._joystickEl.knob.style.top = '50%';
+		};
 		c.addEventListener("pointerdown", (e) => {
-			if (!this._inputEnabled || e.button !== 0) return;
-			c.setPointerCapture?.(e.pointerId);
-			const side = this._keys.size ? "look" : sideForClientX(e.clientX);
+			if (!this._inputEnabled) return;
+			// A click exits latched steering and is consumed instead of interacting.
+			if (this._movePointer?.side === 'steer') {
+				for (const [pointerId, pointer] of this._pointers) {
+					if (pointer === this._movePointer) {
+						endPointer({ type: 'pointercancel', pointerId });
+						break;
+					}
+				}
+				return;
+			}
+			const steering = e.button === 2 && e.pointerType === 'mouse';
+			if (e.button !== 0 && !steering) return;
+			// Steering follows hover motion after release, without pointer capture.
+			if (!steering) c.setPointerCapture?.(e.pointerId);
+			const side = steering ? 'steer' : this._keys.size ? "look" : sideForClientX(e.clientX);
 			const p = { side, startX: e.clientX, startY: e.clientY, curX: e.clientX, curY: e.clientY, moved: false };
 			this._pointers.set(e.pointerId, p);
+			if (steering) {
+				p.noAction = true;
+				clearAction();
+				startStick(p);
+			}
 			if (this._pointers.size > 1) {
 				for (const pointer of this._pointers.values()) pointer.noAction = true;
 				clearAction();
-			} else {
+			} else if (!steering) {
 				this._gestureAction = 'interact';
 				this.onGestureHighlight?.('interact');
 				this._holdTimer = setTimeout(() => {
@@ -149,15 +182,12 @@ export class SceneRenderer {
 			if (!p.moved && Math.hypot(e.clientX - p.startX, e.clientY - p.startY) >= GESTURE_SLOP) {
 				p.moved = true;
 				clearAction();
-				if (this._keys.size) p.side = 'look';
+				if (this._keys.size && p.side !== 'steer') p.side = 'look';
 				if (p.side === 'move' && !this._movePointer) {
-					this._movePointer = p;
-					this._joystickEl.style.left = `${p.startX}px`;
-					this._joystickEl.style.top = `${p.startY}px`;
-					this._joystickEl.style.display = 'block';
+					startStick(p);
 				}
 			}
-			if (p.moved && (p.side === 'look' || this._keys.size)) {
+			if (p.moved && p.side !== 'steer' && (p.side === 'look' || this._keys.size)) {
 				if (p === this._movePointer) { this._movePointer = null; this._joystickEl.style.display = 'none'; }
 				p.side = 'look';
 				look(e.clientX - p.curX, e.clientY - p.curY);
@@ -175,6 +205,7 @@ export class SceneRenderer {
 		const endPointer = (e) => {
 			const p = this._pointers.get(e.pointerId);
 			if (!p) return;
+			if (p.side === 'steer' && ['pointerup', 'lostpointercapture'].includes(e.type)) return;
 			const action = e.type === 'pointerup' && !p.moved && !p.noAction &&
 				Math.hypot(e.clientX - p.startX, e.clientY - p.startY) < GESTURE_SLOP ? this._gestureAction : null;
 			clearAction();
@@ -207,13 +238,22 @@ export class SceneRenderer {
 		stick.y = (this._keys?.has('s') || this._keys?.has('ArrowDown') ? 1 : 0) - (this._keys?.has('w') || this._keys?.has('ArrowUp') ? 1 : 0);
 		if (p) {
 			const dx = p.curX - p.startX, dy = p.curY - p.startY;
-			const divisor = Math.max(STICK_RADIUS, Math.hypot(dx, dy));
-			stick.x = dx / divisor; stick.y = dy / divisor;
+			if (p.side === 'steer') {
+				stick.x = 0;
+				stick.y = steeringAxis(dy);
+			} else {
+				const divisor = Math.max(STICK_RADIUS, Math.hypot(dx, dy));
+				stick.x = dx / divisor; stick.y = dy / divisor;
+			}
 		}
 		return stick;
 	}
 
 	_updateMovement(dt) {
+		const p = this._movePointer;
+		if (p?.side === 'steer') {
+			this._yaw -= steeringAxis(p.curX - p.startX) * STEER_TURN_SPEED * dt;
+		}
 		const stick = this._moveVector();
 		if (!this.gameState || (stick.x === 0 && stick.y === 0)) return;
 		const speed = MOVE_SPEED * dt, sin = Math.sin(this._yaw), cos = Math.cos(this._yaw);
@@ -304,7 +344,10 @@ export class SceneRenderer {
 
 	_hasMovement() {
 		const p = this._movePointer;
-		return this._inputEnabled && ((this._keys?.size ?? 0) > 0 || (p && (p.curX !== p.startX || p.curY !== p.startY)));
+		const dragging = p && (p.side === 'steer'
+			? steeringAxis(p.curX - p.startX) !== 0 || steeringAxis(p.curY - p.startY) !== 0
+			: p.curX !== p.startX || p.curY !== p.startY);
+		return this._inputEnabled && ((this._keys?.size ?? 0) > 0 || !!dragging);
 	}
 
 	/** One frame for changes; repeat only while a movement stick is held off-center. */

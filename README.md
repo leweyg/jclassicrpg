@@ -36,7 +36,10 @@ chunk slots. Collision gates movement until each chunk is ready; stale downloads
 cannot replace a reassigned slot. Shared meshes and bounded normalized caches
 are reused across visits.
 
-Walk with the left stick or WASD/arrow keys; look with the right stick. Use **E**
+Walk with the left stick or WASD/arrow keys; look with the right stick. Right-click
+to toggle steering, then move the pointer relative to the click position: up/down
+moves forward/backward, left/right turns continuously. Recenter to stop moving;
+click again with any button to exit steering. Use **E**
 or the contextual toolbar button for stairs, cave entrances/exits, and chests.
 Save v2 deltas persist position, dialogue commitments, missions, puzzles, shrine routes and inventory;
 Export/Import save provides portable JSON. On subsequent visits the saved local

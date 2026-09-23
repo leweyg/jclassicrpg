@@ -65,3 +65,81 @@ test('dialog backdrop advances the selected response without triggering journal 
  ui.backdropButtons.clear(); ui.advanceFromBackdrop(); assert.equal(actions.length, 2);
  buttons = [{textContent: 'A completely different label', click() {actions.push('close');}}]; ui.primaryButton = buttons[0]; ui.backdropButtons.add(buttons[0]); ui.advanceFromBackdrop(); assert.equal(actions.at(-1), 'close');
 });
+
+test('toggled steering continuously combines forward/back movement and turning from a fixed origin', t => {
+ const c=controls(t), moves=[];
+ Object.assign(c.r,{gameState:{moveParty(x,z){moves.push([x,z]);return false;}},_syncCamera(){}});
+ c.canvas.emit('pointerdown',{button:2,clientX:20});
+ assert.equal(c.r._movePointer.side,'steer');assert.equal(c.highlight(),null);assert.equal(c.win.hold,null);
+ c.canvas.emit('pointerup',{button:2,clientX:20});
+ c.canvas.emit('lostpointercapture');
+ c.canvas.emit('pointermove',{buttons:0,clientX:75,clientY:45});
+ assert.equal(c.r._movePointer.startX,20);assert.equal(c.r._movePointer.startY,100);
+ assert.equal(c.r._yaw,0,'pointer motion changes the stick, not the camera directly');
+ assert.deepEqual(c.r._moveVector(),{x:0,y:-.25});
+ assert.equal(c.r._hasMovement(),true);
+ c.r._updateMovement(.1);const firstYaw=c.r._yaw;
+ c.r._updateMovement(.1);assert.ok(Math.abs(c.r._yaw-firstYaw*2)<1e-10);
+ assert.ok(firstYaw<0,'dragging right turns toward camera-right');
+ assert.equal(c.r._pitch,0);assert.equal(moves.length,2);
+ assert.ok(Math.abs(Math.hypot(...moves[0])-.1)<1e-10);
+ c.canvas.emit('pointermove',{buttons:2,clientX:20,clientY:155});
+ assert.deepEqual(c.r._moveVector(),{x:0,y:.25});
+ c.canvas.emit('pointerdown',{button:0,clientX:20,clientY:155});
+ c.canvas.emit('pointerup',{button:0,clientX:20,clientY:155});
+ assert.equal(c.r._hasMovement(),false);assert.equal(c.r._movePointer,null);
+ assert.deepEqual(c.actions,[]);
+});
+
+test('right drag can turn in place, ignores small jitter, recenters, and has frame-independent speed', t => {
+ const c=controls(t);
+ c.canvas.emit('pointerdown',{button:2});
+ c.canvas.emit('pointermove',{buttons:2,clientX:154,clientY:104});
+ assert.equal(c.r._hasMovement(),false);assert.deepEqual(c.r._moveVector(),{x:0,y:0});
+ c.canvas.emit('pointermove',{buttons:2,clientX:95});
+ assert.deepEqual(c.r._moveVector(),{x:0,y:0});assert.equal(c.r._hasMovement(),true);
+ c.r._updateMovement(.1);const yaw=c.r._yaw;assert.ok(yaw>0);
+ c.r._yaw=0;c.r._updateMovement(.05);c.r._updateMovement(.05);
+ assert.ok(Math.abs(c.r._yaw-yaw)<1e-10);
+ c.canvas.emit('pointermove',{buttons:2});assert.equal(c.r._hasMovement(),false);
+ c.canvas.emit('pointerup',{button:2});assert.deepEqual(c.actions,[]);
+});
+
+test('toggled steering survives keyboard input and release, but stops on clicks, cancellation or blur', t => {
+ const c=controls(t);c.r._frameId=null;
+ c.win.emit('keydown',{key:'w'});
+ c.canvas.emit('pointerdown',{button:2});c.canvas.emit('pointermove',{buttons:2,clientX:205});
+ assert.equal(c.r._movePointer.side,'steer');assert.equal(c.r._yaw,0);
+ c.win.emit('keyup',{key:'w'});
+ c.canvas.emit('pointerup',{button:2});
+ c.canvas.emit('pointermove',{buttons:0,clientX:205});
+ assert.equal(c.r._movePointer.side,'steer','release keeps steering active');
+ c.canvas.emit('pointerdown',{button:2});
+ assert.equal(c.r._movePointer,null,'a second right click toggles steering off');
+ for(const type of ['pointercancel','pointerleave']){
+  c.canvas.emit('pointerdown',{button:2});c.canvas.emit('pointermove',{buttons:2,clientX:205});
+  c.canvas.emit(type);assert.equal(c.r._hasMovement(),false);
+ }
+ c.canvas.emit('pointerdown',{button:2});c.win.emit('blur');
+ assert.equal(c.r._movePointer,null);assert.equal(c.r._joystickEl.style.display,'none');
+ c.r.setInputEnabled(false);c.canvas.emit('pointerdown',{button:2});
+ assert.equal(c.r._pointers.size,0);assert.deepEqual(c.actions,[]);
+});
+
+test('steering reaches normal walking speed and never exceeds it, even far from the origin', t => {
+ const c=controls(t), distances=[];
+ Object.assign(c.r,{
+  gameState:{moveParty(x,z){distances.push(Math.hypot(x,z));return false;}},
+  _syncCamera(){},
+ });
+ c.win.emit('keydown',{key:'w'});c.r._updateMovement(.1);c.win.emit('keyup',{key:'w'});
+ const walkingDistance=distances.pop();
+ assert.ok(Math.abs(walkingDistance-.4)<1e-10);
+ c.canvas.emit('pointerdown',{button:2});c.canvas.emit('pointerup',{button:2});
+ for(const offset of [-10000,-196,196,10000]){
+  c.canvas.emit('pointermove',{buttons:0,clientX:1000,clientY:100+offset});
+  assert.equal(Math.abs(c.r._moveVector().y),1);
+  c.r._updateMovement(.1);
+  assert.ok(Math.abs(distances.pop()-walkingDistance)<1e-10);
+ }
+});
