@@ -25,6 +25,7 @@ const SURFACE_FOG_CAVE_DISTANCE = SURFACE_FOG_DISTANCE*0.3;
 const MOVE_SPEED = 4; // world units/sec at full stick deflection
 const STICK_RADIUS = 55; // px a "move" stick drag is clamped to
 const LOOK_SENSITIVITY = 0.006;
+const SCROLL_MOVE_SENSITIVITY = 0.01; // world units per scroll pixel
 const GESTURE_SLOP = 8;
 const HOLD_MS = 600;
 const STEER_SENSITIVITY = 0.25;
@@ -106,6 +107,19 @@ export class SceneRenderer {
 		c.addEventListener('contextmenu', event => event.preventDefault());
 		c.addEventListener('touchstart', event => {
 			if (this._inputEnabled && event.cancelable) event.preventDefault();
+		}, { passive: false });
+		c.addEventListener('wheel', event => {
+			if (event.defaultPrevented || !this._inputEnabled || event.ctrlKey) return;
+			event.preventDefault();
+			const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? c.clientHeight : 1;
+			const dx = Math.max(-240, Math.min(240, event.deltaX * unit));
+			const dy = Math.max(-240, Math.min(240, event.deltaY * unit));
+			this._yaw += dx * LOOK_SENSITIVITY;
+			// Small steps use the same collision checks as walking, even for a large wheel notch.
+			const distance = -dy * SCROLL_MOVE_SENSITIVITY;
+			const steps = Math.ceil(Math.abs(distance) / 0.25);
+			for (let i = 0; i < steps; i++) this._moveRelative(0, distance / steps);
+			this.requestRender();
 		}, { passive: false });
 
 		const sideForClientX = (clientX) => {
@@ -256,9 +270,15 @@ export class SceneRenderer {
 		}
 		const stick = this._moveVector();
 		if (!this.gameState || (stick.x === 0 && stick.y === 0)) return;
-		const speed = MOVE_SPEED * dt, sin = Math.sin(this._yaw), cos = Math.cos(this._yaw);
-		const changed = this.gameState.moveParty((-sin * stick.y - cos * stick.x) * speed,
-			(-cos * stick.y + sin * stick.x) * speed);
+		const speed = MOVE_SPEED * dt;
+		this._moveRelative(stick.x * speed, stick.y * speed);
+	}
+
+	_moveRelative(strafe, backward) {
+		if (!this.gameState) return;
+		const sin = Math.sin(this._yaw), cos = Math.cos(this._yaw);
+		const changed = this.gameState.moveParty(-sin * backward - cos * strafe,
+			-cos * backward + sin * strafe);
 		this._syncCamera();
 		if (changed) this.worldView.sync();
 	}

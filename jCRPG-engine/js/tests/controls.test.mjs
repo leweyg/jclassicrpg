@@ -44,6 +44,45 @@ test('left drag moves; keyboard movement enables unpressed look and normalizes u
  c.win.emit('keyup', {key: 'w'}); c.canvas.emit('pointermove', {movementX: 10}); assert.equal(c.r._yaw, -.06);
  c.r._inputEnabled = false; c.win.emit('keydown', {key: 'w'}); assert.equal(c.r._keys.size, 0);
 });
+test('scroll moves forward/back and turns horizontally without leaving movement active', t => {
+ const c = controls(t), moves = [];
+ let renders = 0, syncs = 0, prevented = 0;
+ Object.assign(c.r, {
+  gameState: {moveParty(x,z) {moves.push([x,z]); return true;}},
+  _syncCamera() {}, worldView: {sync() {syncs++;}}, requestRender() {renders++;},
+ });
+ const scroll = values => c.canvas.emit('wheel', {deltaX:0, deltaY:0, deltaMode:0, preventDefault() {prevented++;}, ...values});
+ scroll({deltaY:-100});
+ assert.ok(Math.abs(moves.reduce((sum, [,z]) => sum+z, 0)+1)<1e-10);
+ assert.ok(moves.every(([x,z]) => x===0 && Math.abs(z)<=.25));
+ moves.length=0;
+ scroll({deltaY:100});
+ assert.ok(Math.abs(moves.reduce((sum, [,z]) => sum+z, 0)-1)<1e-10);
+ moves.length=0;
+ scroll({deltaX:50}); assert.equal(c.r._yaw,.3); assert.equal(moves.length,0);
+ scroll({deltaX:-100}); assert.equal(c.r._yaw,-.3);
+ scroll({deltaX:50,deltaY:-20}); assert.equal(c.r._yaw,0);
+ assert.equal(moves.length,1); assert.ok(Math.abs(moves[0][0])<1e-10); assert.equal(moves[0][1],-.2);
+ assert.equal(c.r._pitch,0); assert.equal(c.r._hasMovement(),false);
+ assert.equal(renders,5); assert.equal(prevented,5); assert.equal(syncs,9);
+ assert.deepEqual(c.actions,[]);
+});
+
+test('scroll normalizes wheel units, caps large deltas, and respects dialogs and pinch zoom', t => {
+ const c = controls(t), moves=[];
+ let prevented=0;
+ c.canvas.clientHeight=800;
+ Object.assign(c.r,{gameState:{moveParty(x,z){moves.push([x,z]);return false;}},_syncCamera(){}});
+ const scroll = values => c.canvas.emit('wheel',{deltaX:0,deltaY:1,deltaMode:0,preventDefault(){prevented++;},...values});
+ scroll({deltaMode:1}); assert.ok(Math.abs(moves.pop()[1]-.16)<1e-10);
+ scroll({deltaMode:2}); assert.ok(Math.abs(moves.reduce((sum,[,z])=>sum+z,0)-2.4)<1e-10);
+ moves.length=0;
+ scroll({ctrlKey:true,deltaX:10});
+ scroll({defaultPrevented:true,deltaX:10});
+ c.r._inputEnabled=false;scroll({deltaX:10});
+ assert.deepEqual(moves,[]);assert.equal(c.r._yaw,0);assert.equal(prevented,2);
+});
+
 test('farewell E closes the dialog without reopening it through world controls', async t => {
  const {InteractionUI} = await import('../interactions/ui.js');
  const c = controls(t);
