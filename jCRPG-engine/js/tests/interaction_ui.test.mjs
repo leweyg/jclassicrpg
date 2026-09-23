@@ -101,7 +101,8 @@ test('panel transitions reset primary actions, styles and Close/Back behavior', 
     ui.openInventory();
     assert.equal(ui.dialog.dataset.kind, 'inventory');
     assert.equal(ui.closeButton.textContent, 'Close');
-    ui.primaryButton.textContent = 'Done'; ui.advanceFromBackdrop();
+    assert.equal(ui.body.querySelector('button'), null);
+    ui.closeButton.click();
     assert.equal(ui.dialog.open, false);
 });
 
@@ -144,4 +145,22 @@ test('dragged and cancelled backdrop presses do not activate; Escape still dismi
     ui.dialog.emit('pointerdown', down); ui.dialog.emit('pointercancel');
     ui.dialog.emit('pointerup', down); assert.equal(ui.dialog.open, true);
     ui.dialog.emit('cancel'); assert.equal(ui.dialog.open, false);
+});
+
+test('inventory table shows stack counts and item details return through Back', t => {
+    const {ui,save,engine} = fixture(t);
+    engine.maps.itemTypes.coin.note = 'An old silver coin.';
+    save.data.inventory = {version:2,order:['coins'],items:{coins:{id:'coins',typeId:'coin',quantity:3,sourceIds:['a','b','c']}}};
+    ui.openInventory();
+    const table=ui.body.querySelector('table');
+    assert.ok(table);assert.deepEqual(table.querySelectorAll('th').map(e=>e.textContent),['Item','Count']);
+    assert.equal(table.querySelector('tbody').querySelectorAll('tr').length,1);
+    assert.equal(table.querySelectorAll('td')[1].textContent,'3');
+    table.querySelector('button').click();
+    assert.equal(ui.title.textContent,'Coin');assert.equal(ui.closeButton.textContent,'Back');
+    assert.deepEqual(ui.body.querySelectorAll('p').map(e=>e.textContent),['Count: 3','An old silver coin.']);
+    ui.closeButton.click();assert.equal(ui.title.textContent,'Inventory');
+    const row=ui.body.querySelector('tbody').querySelector('tr');
+    row.emit('click',{target:row.querySelectorAll('td')[1]});assert.equal(ui.title.textContent,'Coin');
+    assert.equal(ui.backdropButtons.size,0,'item details do not activate unrelated actions');
 });

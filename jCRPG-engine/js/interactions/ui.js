@@ -344,16 +344,52 @@ export class InteractionUI {
     }
 
     openInventory() {
-        this.open('Party inventory', 'inventory');
+        this.open('Inventory', 'inventory');
         const engine = this.state.interactions;
         const inventory = this.state.saveDeltas.data.inventory;
-        for (const id of inventory.order) {
-            const item = inventory.items[id];
-            const type = engine.maps.itemTypes[item.typeId];
-            this.text('h4', type.name);
-            this.text('p', type.note);
+        if (!inventory.order.length) {
+            this.text('p', 'Your party inventory is empty.');
+        } else {
+            const table = this.text('table', '');
+            table.className = 'inventory-table';
+            table.setAttribute('aria-label', 'Inventory');
+            const header = this.text('tr', '', this.text('thead', '', table));
+            this.text('th', 'Item', header).scope = 'col';
+            this.text('th', 'Count', header).scope = 'col';
+            const rows = this.text('tbody', '', table);
+            for (const id of inventory.order) {
+                const item = inventory.items[id];
+                const type = engine.maps.itemTypes[item.typeId];
+                const row = this.text('tr', '', rows);
+                const name = this.text('td', '', row);
+                const button = this.button(type.name, () => this.openInventoryItem(id), { parent: name });
+                this.text('td', String(item.quantity), row);
+                // The button provides keyboard access; the rest of the row is tappable too.
+                row.addEventListener('click', event => {
+                    if (!button.contains(event.target)) {
+                        this.openInventoryItem(id);
+                    }
+                });
+            }
         }
-        this.button('Continue exploring', () => this.close(), { primary: true, backdrop: true });
         this.focus();
+        this.dialog.scrollTop = 0;
+    }
+
+    openInventoryItem(id) {
+        const item = this.state.saveDeltas.data.inventory.items[id];
+        if (!item) return this.openInventory();
+        const type = this.state.interactions.maps.itemTypes[item.typeId];
+        this.open(type.name, 'inventory');
+        this.closeButton.textContent = 'Back';
+        this.closeButton.setAttribute('aria-label', 'Back to inventory');
+        this.closeButton.onclick = () => this.openInventory();
+        this.text('p', 'Count: ' + item.quantity);
+        if (type.note) this.text('p', type.note);
+        if (item.equipped) this.text('p', 'Equipped');
+        if (item.attached) this.text('p', 'Attached');
+        if (item.uses) this.text('p', 'Uses: ' + item.uses);
+        this.focus();
+        this.dialog.scrollTop = 0;
     }
 }

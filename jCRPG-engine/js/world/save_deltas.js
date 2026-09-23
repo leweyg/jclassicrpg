@@ -1,10 +1,11 @@
+import {emptyInventory,normalizeInventory} from '../interactions/inventory.js';
 import {WORLD_ID,GENERATOR_VERSION} from './format.js';
 import {INTERACTION_VERSION,STATES} from '../interactions/format.js';
 const KEY='jcrpg:'+WORLD_ID+':save', OLD_KEY='jcrpg:seed0-web-v1:save';
 // Clear the legacy fallback too, so a new game cannot restore an older save.
 export function resetStoredSave(storage){storage.removeItem(OLD_KEY);storage.removeItem(KEY);}
 const dictionaries=['openedContainers','discoveredLocations','containers','shrines','puzzles','missions','actors','flags','evidence','commitments','settlements','mazeGenerators','shrineRoutes'];
-export function emptySave(){return {saveVersion:2,worldId:WORLD_ID,generatorVersion:GENERATOR_VERSION,interactionContentVersion:INTERACTION_VERSION,player:null,inventory:{items:{},order:[]},...Object.fromEntries(dictionaries.map(k=>[k,{}])),lastTransaction:0,deltaRevision:0};}
+export function emptySave(){return {saveVersion:2,worldId:WORLD_ID,generatorVersion:GENERATOR_VERSION,interactionContentVersion:INTERACTION_VERSION,player:null,inventory:emptyInventory(),...Object.fromEntries(dictionaries.map(k=>[k,{}])),lastTransaction:0,deltaRevision:0};}
 function cleanJSON(value,depth=0){
  if(depth>24)throw Error('Save nesting limit exceeded');
  if(typeof value==='number'&&!Number.isFinite(value))throw Error('Invalid save number');
@@ -25,7 +26,7 @@ export function validateSave(input){
  if(!Number.isSafeInteger(data.lastTransaction)||data.lastTransaction<0)throw Error('Invalid transaction number');
  if(data.navMissionId!=null&&typeof data.navMissionId!=='string')throw Error('Invalid navigation quest');
  if(data.navLocation!=null){const g=data.navLocation;if(typeof g.id!=='string'||typeof g.name!=='string'||!['surface','cave'].includes(g.realm)||!Array.isArray(g.position)||g.position.length!==3||!g.position.every(Number.isFinite)||g.position[0]<0||g.position[0]>=1600||g.position[2]<0||g.position[2]>=1600)throw Error('Invalid navigation location');}
- if(!data.inventory?.items||!Array.isArray(data.inventory.order)||data.inventory.order.length>10000||new Set(data.inventory.order).size!==data.inventory.order.length||data.inventory.order.some(id=>data.inventory.items[id]?.id!==id)||Object.keys(data.inventory.items).length!==data.inventory.order.length)throw Error('Invalid inventory');
+ data.inventory=normalizeInventory(data.inventory);
  for(const c of Object.values(data.containers))if(!Array.isArray(c.takenItemIds)||new Set(c.takenItemIds).size!==c.takenItemIds.length)throw Error('Invalid container state');
  for(const s of Object.values(data.shrines))if(s.activated!==true)throw Error('Invalid shrine state');
  for(const m of Object.values(data.missions))if(!STATES.includes(m.state))throw Error('Invalid mission state');

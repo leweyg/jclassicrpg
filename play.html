@@ -261,6 +261,12 @@
 #interaction-panel button:focus-visible {outline:3px solid #ffe29d;outline-offset:2px;}
 #interaction-panel article {border-top:1px solid #50705a;margin-top:16px;}
 #interaction-panel h4 {margin-bottom:4px;}
+#interaction-panel .inventory-table { width:100%; border-collapse:collapse; margin:12px 0; }
+#interaction-panel .inventory-table th, #interaction-panel .inventory-table td { padding:8px; text-align:left; border-bottom:1px solid #50705a; }
+#interaction-panel .inventory-table th:last-child, #interaction-panel .inventory-table td:last-child { text-align:right; width:4em; font-variant-numeric:tabular-nums; }
+#interaction-panel .inventory-table tbody tr { cursor:pointer; }
+#interaction-panel .inventory-table tbody tr:hover { background:#294a3b; }
+#interaction-panel .inventory-table button { border:0; background:transparent; text-align:left; padding:4px 0; width:100%; }
 #interaction-panel[data-kind="journal"], #interaction-panel[data-kind="inventory"] { border:0; }
 #interaction-panel[data-kind="intuition"] { border:0; outline:none; }
 #interaction-panel[data-kind="intuition"] h2 { font-size:16px; }

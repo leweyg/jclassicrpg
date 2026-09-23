@@ -86,3 +86,35 @@ test('every compiled actor, shrine and control can be selected on its streamed f
  for(const key of chunkKeys){const [cx,cz]=key.split(':').map(Number);stream.update(cx*32+16,cz*32+16);await stream.settled();for(const slot of stream.chunks)if(slot.ready)for(const a of slot.data.interactions){if(a.kind==='container'||checked.has(a.id))continue;checked.add(a.id);let found=false;for(const [dx,dz]of [[0,0],[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1],[2,0],[-2,0],[0,2],[0,-2]]){const x=a.position[0]+dx,z=a.position[2]+dz,y=stream.floorAt(x,a.position[1],z,a.realm);if(!Number.isFinite(y))continue;const d=Math.hypot(dx,dz)||1;const target=stream.nearby({x,y,z},a.realm,1.8,{facing:[-dx/d,-dz/d]});if(target?.id===a.id){found=true;break;}}if(!found)failures.push({id:a.id,position:a.position});}}
  stream.dispose();assert.deepEqual(failures,[]);
 });
+
+test('loot from different containers stacks, counts toward predicates and survives export/import',()=>{
+ const e=create(),containers=content.containers.filter(c=>c.items[0]?.typeId==='CopperCoil').slice(0,2);
+ assert.equal(containers.length,2);
+ for(const c of containers)run(e,[{op:'open',id:c.id},{op:'take',id:c.id}]);
+ const coils=Object.values(e.save.data.inventory.items).filter(i=>i.typeId==='CopperCoil');
+ assert.equal(coils.length,1);assert.equal(coils[0].quantity,2);assert.equal(coils[0].sourceIds.length,2);
+ assert.equal(predicate({hasItem:['CopperCoil',2]},e.save.data,e),true);
+ assert.equal(predicate({hasItem:['CopperCoil',3]},e.save.data,e),false);
+ const before=e.save.export();
+ const third=content.containers.find(c=>!containers.includes(c));
+ assert.throws(()=>run(e,[{op:'open',id:third.id},{op:'take',id:third.id,itemIds:[third.items[0].id,'bad']} ]));
+ assert.equal(e.save.export(),before);
+ const copy=create();copy.save.import(before);copy.initialize();
+ for(const c of containers)run(copy,[{op:'take',id:c.id}]);
+ assert.equal(Object.values(copy.save.data.inventory.items).find(i=>i.typeId==='CopperCoil').quantity,2);
+});
+
+test('legacy instance saves migrate and source/count tampering is rejected',()=>{
+ const e=create(),old=JSON.parse(e.save.export());
+ old.inventory={items:Object.fromEntries(content.initialInventory.map(i=>[i.id,structuredClone(i)])),order:content.initialInventory.map(i=>i.id)};
+ const containers=content.containers.slice(0,2);
+ for(const c of containers){const item=c.items[0];old.inventory.items[item.id]=structuredClone(item);old.inventory.order.push(item.id);old.containers[c.id]={opened:true,takenItemIds:[item.id]};}
+ e.save.import(JSON.stringify(old));e.initialize();
+ const stack=Object.values(e.save.data.inventory.items).find(i=>i.typeId==='CopperCoil');
+ assert.equal(stack.quantity,2);assert.equal(stack.sourceIds.length,2);
+ const valid=e.save.export();e.save.import(valid);e.initialize();assert.equal(e.save.export(),valid);
+ for(const mutate of [i=>i.quantity++,i=>i.sourceIds.push('unknown-source')]){
+  const bad=JSON.parse(valid);mutate(bad.inventory.items[stack.id]);e.save.import(JSON.stringify(bad));
+  assert.throws(()=>e.initialize(),/inventory/);
+ }
+});

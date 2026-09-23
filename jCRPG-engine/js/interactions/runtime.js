@@ -1,3 +1,4 @@
+import {grantInventoryItem,inventoryCount,itemQuantity,stackSignature} from './inventory.js';
 import {validateContent,INTERACTION_VERSION} from './format.js';
 import {initialPuzzle,puzzleStep,puzzleHint} from './puzzles.js';
 import {validateSave} from '../world/save_deltas.js';
@@ -17,23 +18,32 @@ export function predicate(p,s,engine,depth=0){
  case 'puzzle':return !!s.puzzles[v]?.completed;
  case 'evidence':return !!s.evidence[v];
  case 'commitment':return s.commitments[v[0]]===v[1];
- case 'hasItem':return s.inventory.order.filter(id=>s.inventory.items[id].typeId===v[0]).length>=v[1];
+ case 'hasItem':return inventoryCount(s.inventory,v[0])>=v[1];
  default:throw Error('Unknown predicate '+op);
  }
 }
 export class InteractionRuntime {
  constructor(content,save){this.content=content;this.maps=validateContent(content);this.save=save;this.panel=null;this.initialize();}
- initialize(){const s=this.save.data;this.validateState(s);if(!s.flags.initialInventory){for(const item of this.content.initialInventory)this.grant(s,item);s.flags.initialInventory=true;}this.refresh(s);}
+ initialize(){const s=validateSave(this.save.data);this.validateState(s);if(!s.flags.initialInventory){for(const item of this.content.initialInventory)this.grant(s,item);s.flags.initialInventory=true;}this.refresh(s);this.save.data=s;}
  validateState(s){
  if(s.navMissionId!=null&&!Object.hasOwn(this.maps.missions,s.navMissionId))throw Error('Unknown navigation quest');
  const check=(field,group)=>{for(const id of Object.keys(s[field]))if(!Object.hasOwn(this.maps[group],id))throw Error('Unknown saved '+field+': '+id);};
  for(const [f,g]of [['puzzles','puzzles'],['shrines','shrines'],['containers','containers'],['missions','missions'],['shrineRoutes','routes']])check(f,g);
  for(const [id,p]of Object.entries(s.puzzles)){const def=this.maps.puzzles[id];if(p.values.length!==def.demands.length||p.values.some(n=>n>def.capacity)||p.cursor>def.sequence.length||p.observed.some(x=>!def.componentIds.includes(x)))throw Error('Invalid puzzle state for '+id);}
  const concrete=new Map([...this.content.initialInventory,...this.content.containers.flatMap(c=>c.items)].map(i=>[i.id,i]));
- for(const item of Object.values(s.inventory.items))if(!concrete.has(item.id)||concrete.get(item.id).typeId!==item.typeId)throw Error('Unknown inventory instance');
+ for (const item of Object.values(s.inventory.items)) {
+  let quantity = 0;
+  for (const id of item.sourceIds) {
+   const source = concrete.get(id);
+   if (!source || source.typeId !== item.typeId) throw Error('Unknown inventory instance');
+   if (stackSignature(source) !== stackSignature(item)) throw Error('Incompatible inventory stack');
+   quantity += itemQuantity(source);
+  }
+  if (!Number.isSafeInteger(quantity) || item.quantity !== quantity) throw Error('Invalid inventory stack quantity');
+ }
  for(const [id,c]of Object.entries(s.containers))if(c.takenItemIds.some(x=>!this.maps.containers[id].items.some(i=>i.id===x)))throw Error('Unknown taken item');
  }
- grant(s,item){if(s.inventory.items[item.id])return;if(s.inventory.order.length>=4096)throw Error('Inventory is full');s.inventory.items[item.id]=structuredClone(item);s.inventory.order.push(item.id);}
+ grant(s,item){grantInventoryItem(s.inventory,item);}
  missionState(id,s=this.save.data){const m=this.maps.missions[id];if(!m)throw Error('Unknown mission '+id);return s.missions[id]?.state??((m.requires??[]).every(dep=>s.missions[dep]?.state==='completed')?'available':'locked');}
  objectiveSources(o,s){
  return o.targetIds.filter(id=>({shrine:()=>s.shrines[id]?.activated,puzzle:()=>s.puzzles[id]?.completed,evidence:()=>s.evidence[id],commitment:()=>s.commitments[id]!==undefined,actor:()=>s.actors[id]?.talked,mission:()=>s.missions[id]?.state==='completed'})[o.kind]());
