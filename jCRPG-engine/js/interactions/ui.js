@@ -19,13 +19,13 @@ export class InteractionUI {
  }
  advanceFromBackdrop(){
   const buttons=[...this.body.querySelectorAll('button')];
-  if(this.state.interactions.panel?.kind!=='dialogue'&&!(buttons.length===1&&buttons[0].textContent==='Continue exploring'))return;
+  if(this.state.interactions.panel?.kind!=='dialogue'&&!(buttons.length===1&&['Continue','Continue exploring'].includes(buttons[0].textContent)))return;
   const active=document.activeElement;
   (buttons.includes(active)?active:buttons[0])?.click();
  }
  text(tag,value,parent=this.body){const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;}
  button(label,action,parent=this.body){const b=this.text('button',label,parent);b.type='button';b.onclick=()=>{try{action();}catch(error){this.log(error.message);}};return b;}
- open(title,kind=''){this.title.textContent=title;this.body.replaceChildren();const conversation=kind==='dialogue';this.dialog.classList.toggle('conversation',conversation);this.closeButton.hidden=conversation;const button=this.closeButton;button.textContent='Close';button.setAttribute('aria-label','Close interaction');button.onclick=()=>this.close();if(!this.dialog.open){this.returnFocus=document.activeElement;this.renderer.setInputEnabled(false);this.dialog.showModal();}}
+ open(title,kind=''){this.title.textContent=title;this.body.replaceChildren();const conversation=kind==='dialogue';this.dialog.classList.toggle('conversation',conversation);this.dialog.classList.toggle('intuition',kind==='intuition');this.closeButton.hidden=conversation||kind==='intuition';const button=this.closeButton;button.textContent='Close';button.setAttribute('aria-label','Close interaction');button.onclick=()=>this.close();if(!this.dialog.open){this.returnFocus=document.activeElement;this.renderer.setInputEnabled(false);this.dialog.showModal();}}
  focus(){(this.body.querySelector('button')??(this.closeButton.hidden?this.dialog:this.closeButton)).focus();}
  close(){this.state.interactions.panel=null;this.dialog.close();this.renderer.setInputEnabled(true);this.returnFocus?.focus();this.renderer.requestRender();}
  commit(actions){const result=this.state.interactions.transact(actions);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.log(result.message);this.renderer.requestRender();return result;}
@@ -34,7 +34,7 @@ export class InteractionUI {
   else {const c=engine.maps.containers[panel.id],taken=this.state.saveDeltas.data.containers[c.id]?.takenItemIds??[];this.open(c.name);const items=c.items.filter(i=>!taken.includes(i.id));if(!items.length)this.text('p','This container is empty. Its contents are in your party inventory.');for(const i of items)this.button('Take '+engine.maps.itemTypes[i.typeId].name,()=>{this.commit([{op:'take',id:c.id,itemIds:[i.id]}]);this.show();});if(items.length)this.button('Take All',()=>{this.commit([{op:'take',id:c.id}]);this.show();});this.button('Continue exploring',()=>this.close());}
   this.focus();
  }
- openIntuition(anchor){const info=this.state.interactions.intuition(anchor);if(!info?.summary)return;this.open('Intuition · '+info.name);this.text('p',info.summary);this.button('Continue exploring',()=>this.close());this.focus();}
+ openIntuition(anchor){const info=this.state.interactions.intuition(anchor);if(!info?.summary)return;this.open('Intuition · '+info.name,'intuition');this.text('p',info.summary);this.button('Continue',()=>this.close());this.focus();}
  openJournal(){this.open('Journal');const engine=this.state.interactions,s=this.state.saveDeltas.data;
   let count=0;
   for(const category of ['active','ready-to-turn-in','available','completed','failed','archived']){

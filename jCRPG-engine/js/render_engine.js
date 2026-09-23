@@ -95,6 +95,11 @@ export class SceneRenderer {
 		});
 		window.addEventListener('keyup', event => { this._keys.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key); this.requestRender(); });
 		c.style.touchAction = "none";
+		// Long presses belong to the game's hold gesture, not the browser menu.
+		c.addEventListener('contextmenu', event => event.preventDefault());
+		c.addEventListener('touchstart', event => {
+			if (this._inputEnabled && event.cancelable) event.preventDefault();
+		}, { passive: false });
 
 		const sideForClientX = (clientX) => {
 			const rect = c.getBoundingClientRect();
