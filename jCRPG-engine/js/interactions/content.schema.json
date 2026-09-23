@@ -86,7 +86,26 @@
             "type": "string"
           },
           "nodes": {
-            "type": "object"
+            "type": "object",
+            "description": "Nodes provide text or 1\u201364 authored captions, optional knowledge and predicate-gated choices. Captions may be strings or objects with text and knowledge. validateDialogue checks captions and all entry/choice node references."
+          },
+          "entries": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "required": [
+                "nodeId"
+              ],
+              "properties": {
+                "nodeId": {
+                  "type": "string"
+                },
+                "when": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }

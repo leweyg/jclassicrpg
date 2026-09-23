@@ -1,3 +1,4 @@
+import {authorOpeningDialogue} from './opening_dialogue.mjs';
 import {validateInteractionNavigation} from './interaction_navigation.mjs';
 import {CELL as C,wallBit,FACE} from '../jCRPG-engine/js/world/format.js';
 import {validateContent,validateAnchor,compareId} from '../jCRPG-engine/js/interactions/format.js';
@@ -130,6 +131,7 @@ export function compileInteractions({data,world,chunks,structures,portals,emit})
  const types=new Map(data.objectInstances.map(i=>[i.typeId,{id:i.typeId,name:i.typeId.replace(/([a-z])([A-Z])/g,'$1 $2'),icon:i.icon,usable:false,note:'Carried evidence; use effects are not implemented.'}]));
  types.set('CopperCoil',{id:'CopperCoil',name:'Salvaged copper coil',usable:false,note:'Optional salvage from the old grid.'});content.itemTypes=[...types.values()];
  for(const c of chunks)for(const o of c.objects)if(o.kind==='chest'){const items=[{id:'item:'+o.id+':0',typeId:'CopperCoil',quantity:1,sourceKind}];content.containers.push({id:o.id,name:'Old grid chest',position:o.position,realm:'surface',items,lock:null,trap:null,sourceKind});anchor('container',o.id,o.position,{prompt:'Open chest'});for(const n of c.nodes)if(n.userData.jcrpg.objectId===o.id)Object.assign(n.userData.jcrpg,{containerId:o.id,interactionId:'interaction:container:'+o.id});}
+ authorOpeningDialogue(content);
  // Explicit reconciliation: all fixed ownership survives, even when no house was built.
  const ownership=data.districts.flatMap(d=>d.fixedInfrastructure.map(f=>({districtId:d.id,ownerMemberId:f.ownerMemberId,structureId:structures.find(s=>s.districtId===d.id&&s.ownerMemberId===f.ownerMemberId)?.id??null})));
  for(const record of ownership){record.anchorKind=record.structureId?'owned-structure':'district-fallback';const existing=content.actors.find(a=>a.legacy?.numericId===record.ownerMemberId);if(existing){record.actorId=existing.id;continue;}const legacy=data.actors.find(a=>a.numericId===record.ownerMemberId),town=settlements.get(districtById.get(record.districtId).townId),s=structures.find(s=>s.id===record.structureId);const a=actor(legacy.id,'Resident '+legacy.numericId,'Local witness',town,s?[s.origin[0]-1,s.origin[1],s.origin[2]+1]:town.position,'The Drift changes what reaches our homes. The circuit keepers can explain the regional work; shrines preserve each relay you awaken.',legacy,byCulture[legacy.entityType]);a.anchorKind=record.anchorKind;record.actorId=a.id;}

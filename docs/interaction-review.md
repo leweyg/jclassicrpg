@@ -60,3 +60,30 @@ This is a working campaign implementation with some deliberate simplifications f
 - Inventory is party-wide and optional, with concrete salvage loot. Equipment effects, item consumption, locks and traps are disabled. Save migration supports the shipped v1 world; future removed-content migration needs an explicit ID map.
 
 The original v1 world is retained, and the pre-existing `.gitignore` edit was preserved. No GitHub push or local commit was made.
+
+## Dialogue update (current UI)
+
+The Wammigmig opening now uses authored click-through captions for Marn, Pella,
+and Orro. Continue, E, and a backdrop tap advance one caption; response choices
+appear only after the last caption. Reading a caption does not accept a quest,
+make a commitment, or grant a reward. Map discovery sees only the displayed
+caption and its visible choices.
+
+Marn has first-meeting, repeat, active, ready-to-report, and completed greetings;
+acceptance, commitments, hints, and the Awshowam handoff have their own passages.
+Pella explains observed household demand versus her judgment about priority;
+Orro explains settings, the observable pulse order, and recovery after mistakes.
+State-specific reactions no longer overwrite unrelated conversation topics.
+The current borderless presentation, quotation layout, response indicator,
+keyboard/touch input, inventory stacks, and saved progression are preserved.
+
+This is an additive dialogue update for `interactions-v1`. It retains the
+existing quantity-plus-resonance circuit (Storage 2, Homes 3, Street 1, followed
+by Homes → Storage → Street). The root-level review's four switch families,
+weighted-sum replacement, and Pella's collection/use follow-up describe a
+separate gameplay revision; they are not claimed as implemented by this update.
+No campaign reset or interaction-content migration is performed here.
+
+Authoring lives in `scripts/opening_dialogue.mjs`, called by the world compiler.
+Runtime caption/entry selection lives in `js/interactions/dialogue.js`;
+`dialogue.test.mjs` covers the complete opening handoff and save/reload.

@@ -191,3 +191,18 @@ test('container intuition displays the remaining quantity including zero', t => 
         assert.equal(ui.body.querySelectorAll('p')[1].textContent,`${count} ${count===1?'item':'items'} remaining.`);
     }
 });
+
+test('dialogue Continue uses click, E and backdrop to advance captions before offering choices', t => {
+    const {ui,engine,calls} = fixture(t);
+    let caption = 0;
+    engine.panel = {kind:'dialogue'};
+    engine.dialogue = () => ({actor:{name:'Guide'},text:['One.','Two.','Three.'][caption],canAdvance:caption<2,choices:caption<2?[]:[{text:'Accept'}]});
+    engine.advanceDialogue = () => { caption++; };
+    ui.show();
+    assert.deepEqual(ui.body.querySelectorAll('button').map(b=>b.textContent), ['Continue']);
+    ui.dialog.emit('keydown', {key:'e'}); assert.equal(caption,1);
+    ui.advanceFromBackdrop(); assert.equal(caption,2);
+    assert.deepEqual(ui.body.querySelectorAll('button').map(b=>b.textContent), ['Accept']);
+    assert.ok(!calls.includes('save'), 'reading alone does not commit an interaction');
+    ui.primaryButton.click(); assert.ok(calls.includes('save'));
+});

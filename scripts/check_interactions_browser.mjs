@@ -30,12 +30,13 @@ const helper=`window.walkToInteraction=async function(id){
 await evaluate(helper);
 const content=await evaluate('__gameState.interactions.content');
 const actor=name=>content.actors.find(a=>a.name===name);
-async function clickText(text){await evaluate(`(()=>{const b=[...document.querySelectorAll('#interaction-panel button')].find(b=>b.textContent===${JSON.stringify(text)});if(!b)throw Error('Missing UI choice: '+${JSON.stringify(text)});b.click();})()`);}
+async function readCaptions(){await evaluate(`(()=>{let remaining=64;while(__gameState.interactions.panel?.kind==='dialogue'&&__gameState.interactions.dialogue().canAdvance){if(!remaining--)throw Error('Caption loop');const button=[...document.querySelectorAll('#interaction-body button')].find(b=>b.textContent==='Continue');if(!button)throw Error('Missing caption Continue');button.click();}})()`);}
+async function clickText(text){await readCaptions();await evaluate(`(()=>{const b=[...document.querySelectorAll('#interaction-panel button')].find(b=>b.textContent===${JSON.stringify(text)});if(!b)throw Error('Missing UI choice: '+${JSON.stringify(text)});b.click();})()`);}
 const walk=target=>evaluate(`walkToInteraction(${JSON.stringify(target)})`);
 const close=()=>clickText('Close');
 await screenshot('spawn');
 await walk('interaction:shrine:shrine:shrine 19 22:782:903');
-await walk('interaction:actor:'+actor('Marn Even-Tally').id);await screenshot('marn-dialogue');await clickText('Accept: A Fair Share of Light');
+await walk('interaction:actor:'+actor('Marn Even-Tally').id);await screenshot('marn-dialogue');await clickText('Accept: A Fair Share of Light');await clickText('Until next time.');
 for(const id of ['storage','hut','homes'])await walk('interaction:evidence:evidence:wammigmig:'+id);
 const opening=content.puzzles.find(p=>p.id==='puzzle:wammigmig:distribution');for(const input of opening.solution.slice(0,6))await walk('interaction:puzzle:'+input);
 // Save a partially configured circuit, reload, import through the real file UI,
@@ -44,7 +45,7 @@ const partial=await evaluate('__gameState.saveDeltas.export()');fs.writeFileSync
 await send('Page.reload');await loaded();await evaluate(helper);
 await send('DOM.enable');const doc=await send('DOM.getDocument');const inputNode=await send('DOM.querySelector',{nodeId:doc.root.nodeId,selector:'#world-import'});await send('DOM.setFileInputFiles',{nodeId:inputNode.nodeId,files:[out+'/partial-save.json']});await delay(400);
 for(const input of opening.solution.slice(6))await walk('interaction:puzzle:'+input);
-await walk('interaction:actor:'+actor('Marn Even-Tally').id);await clickText('Fairness must include households and the shared relay.');await walk('interaction:actor:'+actor('Marn Even-Tally').id);await clickText('Report: A Fair Share of Light');
+await walk('interaction:actor:'+actor('Marn Even-Tally').id);await clickText('Fairness must include households and the shared relay.');await clickText('Back');await clickText('Report: A Fair Share of Light');await clickText('Until next time.');
 await evaluate('document.getElementById("world-journal").click()');await screenshot('opening-completed-journal');await close();
 let saved=await evaluate('__gameState.saveDeltas.export()');
 await send('Page.reload');await loaded();await evaluate(helper);

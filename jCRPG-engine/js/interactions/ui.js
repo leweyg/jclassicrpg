@@ -220,6 +220,19 @@ export class InteractionUI {
             this.saveAndRefresh();
         }
 
+        if (dialogue.canAdvance) {
+            this.button('Continue', () => {
+                engine.advanceDialogue();
+                this.show();
+            }, { primary: true, backdrop: true });
+            return;
+        }
+
+        if (!dialogue.choices.length) {
+            this.button('Continue', () => this.close(), { primary: true, backdrop: true });
+            return;
+        }
+
         for (let i = 0; i < dialogue.choices.length; i++) {
             this.button(dialogue.choices[i].text, () => {
                 const result = engine.choose(i);

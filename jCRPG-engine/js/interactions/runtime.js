@@ -1,3 +1,4 @@
+import {dialogueStart,dialogueView} from './dialogue.js';
 import {grantInventoryItem,inventoryCount,itemQuantity,stackSignature} from './inventory.js';
 import {validateContent,INTERACTION_VERSION} from './format.js';
 import {initialPuzzle,puzzleStep,puzzleHint} from './puzzles.js';
@@ -119,19 +120,40 @@ export class InteractionRuntime {
   return anchor;
  }
  interact(anchor,token){
- if(anchor.kind==='actor'){this.transact([{op:'talk',id:anchor.targetId}],token);this.panel={kind:'dialogue',actorId:anchor.targetId,nodeId:this.maps.dialogues[this.maps.actors[anchor.targetId].dialogueId].start};return this.dialogue();}
+ if(anchor.kind==='actor'){this.transact([{op:'talk',id:anchor.targetId}],token);this.panel={kind:'dialogue',actorId:anchor.targetId,nodeId:dialogueStart(this.maps.dialogues[this.maps.actors[anchor.targetId].dialogueId],condition=>predicate(condition,this.save.data,this)),captionIndex:0};return this.dialogue();}
  if(anchor.kind==='container'){const result=this.transact([{op:'open',id:anchor.targetId}],token);this.panel={kind:'container',id:anchor.targetId};return result;}
  if(anchor.kind==='shrine'){const result=this.transact([{op:'shrine',id:anchor.targetId}],token);const cue=this.maps.shrines[anchor.targetId].cue;result.message+=' '+(cue??'');return result;}
  if(anchor.kind==='puzzle')return this.transact([{op:'puzzle',id:anchor.targetId,input:anchor.input??anchor.componentId}],token);
  if(anchor.kind==='evidence')return this.transact([{op:'evidence',id:anchor.targetId,text:anchor.fact}],token);
  throw Error('Unsupported interaction');
  }
- dialogue(){
- const a=this.maps.actors[this.panel.actorId],d=this.maps.dialogues[a.dialogueId],node=d.nodes[this.panel.nodeId];
- const balance=this.save.data.settlements[a.townId]?.balanceState;const reaction=balance==='integrated'?a.integratedText:balance==='stable'?a.stableText:null;
- return {actor:a,text:reaction??node.text,knowledge:node.knowledge??'testimony',choices:(node.choices??[]).filter(c=>predicate(c.when,this.save.data,this))};
+ dialogue() {
+  return dialogueView(this, condition => predicate(condition, this.save.data, this));
  }
- choose(i,token){const choice=this.dialogue().choices[i];if(!choice)throw Error('Choice no longer available');const result=this.transact(choice.actions??[],token);if(choice.next)this.panel.nodeId=choice.next;else this.panel=null;return result;}
+ advanceDialogue() {
+  const current = this.dialogue();
+  if (!current.canAdvance) return current;
+  this.panel.captionIndex = current.captionIndex + 1;
+  return this.dialogue();
+ }
+ choose(index, token) {
+  const dialogue = this.dialogue();
+  if (dialogue.canAdvance) throw Error('Finish reading before choosing a response');
+  const choice = dialogue.choices[index];
+  if (!choice) throw Error('Choice no longer available');
+  const result = this.transact(choice.actions ?? [], token);
+  if (result.duplicate) return result;
+  if (choice.next) {
+   const definition = this.maps.dialogues[dialogue.actor.dialogueId];
+   this.panel.nodeId = choice.next === definition.start
+    ? dialogueStart(definition, condition => predicate(condition, this.save.data, this))
+    : choice.next;
+   this.panel.captionIndex = 0;
+  } else {
+   this.panel = null;
+  }
+  return result;
+ }
  navigationGoal(){return this.save.data.navLocation??questGoal(this,this.save.data.navMissionId);}
  setNavigationGoal(id){if(!questGoal(this,id))throw Error('This quest has no remaining destination.');this.save.data.navMissionId=id;this.save.data.navLocation=null;this.save.data.deltaRevision++;}
  setNavigationLocation(marker){const goal={id:marker.id,name:marker.name,position:[marker.x,marker.y??0,marker.z],realm:marker.realm??'surface'};validateSave({...this.save.data,navLocation:goal});this.save.data.navLocation=goal;this.save.data.navMissionId=null;this.save.data.deltaRevision++;}
