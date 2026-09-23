@@ -6,6 +6,7 @@ export class InteractionUI {
   this.dialog=document.createElement('dialog');this.dialog.id='interaction-panel';this.dialog.setAttribute('aria-labelledby','interaction-title');
   this.dialog.innerHTML='<header><h2 id="interaction-title"></h2><button type="button" aria-label="Close interaction">Close</button></header><div id="interaction-body"></div>';
   document.body.append(this.dialog);this.body=this.dialog.querySelector('#interaction-body');this.title=this.dialog.querySelector('h2');
+  this.closeButton=this.dialog.querySelector('header button');
   // Modal backdrops receive pointer events instead of the covered game canvas.
   let backdropPress=null;
   const outside=e=>{const r=this.dialog.getBoundingClientRect();return e.target===this.dialog&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom);};
@@ -13,7 +14,7 @@ export class InteractionUI {
   this.dialog.addEventListener('pointermove',e=>{if(backdropPress&&Math.hypot(e.clientX-backdropPress.x,e.clientY-backdropPress.y)>=8)backdropPress=null;});
   this.dialog.addEventListener('pointercancel',()=>{backdropPress=null;});
   this.dialog.addEventListener('pointerup',e=>{const p=backdropPress;backdropPress=null;if(p&&p.id===e.pointerId&&outside(e)&&Math.hypot(e.clientX-p.x,e.clientY-p.y)<8)this.advanceFromBackdrop();});
-  this.dialog.querySelector('header button').onclick=()=>this.close();this.dialog.addEventListener('cancel',e=>{e.preventDefault();this.close();});
+  this.closeButton.onclick=()=>this.close();this.dialog.addEventListener('cancel',e=>{e.preventDefault();this.close();});
   this.dialog.addEventListener('keydown',e=>{if(e.repeat)return;if(e.key.toLowerCase()==='e'){e.preventDefault();(this.dialog.contains(document.activeElement)&&document.activeElement.tagName==='BUTTON'?document.activeElement:this.body.querySelector('button'))?.click();}if(['ArrowDown','ArrowUp','w','s'].includes(e.key)){e.preventDefault();const buttons=[...this.body.querySelectorAll('button')],index=buttons.indexOf(document.activeElement),direction=['ArrowUp','w'].includes(e.key)?-1:1;buttons[(index+direction+buttons.length)%buttons.length]?.focus();}});
  }
  advanceFromBackdrop(){
@@ -24,12 +25,12 @@ export class InteractionUI {
  }
  text(tag,value,parent=this.body){const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;}
  button(label,action,parent=this.body){const b=this.text('button',label,parent);b.type='button';b.onclick=()=>{try{action();}catch(error){this.log(error.message);}};return b;}
- open(title){this.title.textContent=title;this.body.replaceChildren();const button=this.dialog.querySelector('header button');button.textContent='Close';button.setAttribute('aria-label','Close interaction');button.onclick=()=>this.close();if(!this.dialog.open){this.returnFocus=document.activeElement;this.renderer.setInputEnabled(false);this.dialog.showModal();}}
- focus(){(this.body.querySelector('button')??this.dialog.querySelector('button')).focus();}
+ open(title,kind=''){this.title.textContent=title;this.body.replaceChildren();const conversation=kind==='dialogue';this.dialog.classList.toggle('conversation',conversation);this.closeButton.hidden=conversation;const button=this.closeButton;button.textContent='Close';button.setAttribute('aria-label','Close interaction');button.onclick=()=>this.close();if(!this.dialog.open){this.returnFocus=document.activeElement;this.renderer.setInputEnabled(false);this.dialog.showModal();}}
+ focus(){(this.body.querySelector('button')??(this.closeButton.hidden?this.dialog:this.closeButton)).focus();}
  close(){this.state.interactions.panel=null;this.dialog.close();this.renderer.setInputEnabled(true);this.returnFocus?.focus();this.renderer.requestRender();}
  commit(actions){const result=this.state.interactions.transact(actions);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.log(result.message);this.renderer.requestRender();return result;}
  show(){const engine=this.state.interactions,panel=engine.panel;if(!panel){if(this.dialog.open)this.close();return;}
-  if(panel.kind==='dialogue'){const d=engine.dialogue();this.open(d.actor.name);this.text('small',d.actor.role+' · '+d.knowledge);this.text('p',d.text);if(revealReadDialogue(this.state.saveDeltas,this.state.mapMarkers??[],d,engine.content.actors)){this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.renderer.requestRender();}for(let i=0;i<d.choices.length;i++)this.button(d.choices[i].text,()=>{const r=engine.choose(i);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);if(r.message)this.log(r.message);this.show();this.renderer.requestRender();});}
+  if(panel.kind==='dialogue'){const d=engine.dialogue();this.open(d.actor.name,'dialogue');const speech=this.text('p','');this.text('span','"',speech);this.text('span',d.text+'"',speech);if(revealReadDialogue(this.state.saveDeltas,this.state.mapMarkers??[],d,engine.content.actors)){this.state.saveDeltas.persist(this.state.party.position,this.state.realm);this.renderer.requestRender();}for(let i=0;i<d.choices.length;i++)this.button(d.choices[i].text,()=>{const r=engine.choose(i);this.state.saveDeltas.persist(this.state.party.position,this.state.realm);if(r.message)this.log(r.message);this.show();this.renderer.requestRender();});}
   else {const c=engine.maps.containers[panel.id],taken=this.state.saveDeltas.data.containers[c.id]?.takenItemIds??[];this.open(c.name);const items=c.items.filter(i=>!taken.includes(i.id));if(!items.length)this.text('p','This container is empty. Its contents are in your party inventory.');for(const i of items)this.button('Take '+engine.maps.itemTypes[i.typeId].name,()=>{this.commit([{op:'take',id:c.id,itemIds:[i.id]}]);this.show();});if(items.length)this.button('Take All',()=>{this.commit([{op:'take',id:c.id}]);this.show();});this.button('Continue exploring',()=>this.close());}
   this.focus();
  }
@@ -46,7 +47,7 @@ export class InteractionUI {
   this.focus();this.dialog.scrollTop=0;
  }
  openQuest(id){const engine=this.state.interactions,m=engine.journal().find(m=>m.id===id);if(!m)return this.openJournal();
-  this.open(m.title);const back=this.dialog.querySelector('header button');back.textContent='Back';back.setAttribute('aria-label','Back to journal');back.onclick=()=>this.openJournal();
+  this.open(m.title);const back=this.closeButton;back.textContent='Back';back.setAttribute('aria-label','Back to journal');back.onclick=()=>this.openJournal();
   this.text('small',m.state.replaceAll('-',' '));this.text('p',m.summary);
   for(const o of m.progress)this.text('p',`${o.count}/${o.required??o.targetIds.length} — ${o.text}`);
   const actor=engine.maps.actors[m.turnInActorId];this.text('p','Return to '+actor.name+'.');
