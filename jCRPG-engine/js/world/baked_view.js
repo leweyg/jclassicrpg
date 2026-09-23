@@ -1,8 +1,9 @@
 import * as THREE from '../threejs/three.module.js';
+import {CaveMarkers} from './cave_markers.js';
 import {loadObjModel} from '../obj_mtl_loader.js';
 /** Shared immutable source assets; only instance buffers belong to slots. */
 export class BakedView {
- constructor(scene,stream,wake){this.scene=scene;this.stream=stream;this.wake=wake;this.assets=new Map();this.slots=stream.chunks.map(()=>({revision:-1,ticket:0,group:new THREE.Group(),batches:new Map()}));this.dummy=new THREE.Object3D();this.routeArrows=new Map();this.realm='surface';this.debug=false;this.stats={assetFailures:[],instances:0};
+ constructor(scene,stream,wake){this.scene=scene;this.stream=stream;this.wake=wake;this.assets=new Map();this.slots=stream.chunks.map(()=>({revision:-1,ticket:0,group:new THREE.Group(),batches:new Map()}));this.dummy=new THREE.Object3D();this.routeArrows=new Map();this.realm='surface';this.debug=false;this.caveMarkers=new CaveMarkers(scene);this.stats={assetFailures:[],instances:0};
   this.fallbackGeometry=new THREE.BoxGeometry(1,1,.1);this.fallbackGeometry.translate(0,.5,0);this.fallbackMaterial=new THREE.MeshStandardMaterial({color:0x92795a,side:THREE.DoubleSide});for(const s of this.slots)scene.add(s.group);
  }
  async asset(source){if(!this.assets.has(source)){const url=new URL(source),at=url.href.lastIndexOf('/');this.assets.set(source,loadObjModel(url.href.slice(0,at),url.href.slice(at+1),{yUp:true}).catch(error=>{this.stats.assetFailures.push(`${source}: ${error.message}`);const g=new THREE.Group();g.add(new THREE.Mesh(this.fallbackGeometry,this.fallbackMaterial));return g;}));}return this.assets.get(source);}
@@ -20,7 +21,7 @@ export class BakedView {
   for(const [key,b]of s.batches)if(!used.has(key)){s.group.remove(b.mesh);b.mesh.dispose();s.batches.delete(key);}
   s.group.position.set(c.x*32,0,c.z*32);this.appearanceDirty=true;this.wake?.();
  }
- setRealm(realm,save=null){if(!this.appearanceDirty&&this.realm===realm&&this.appearanceSave===save&&this.deltaRevision===(save?.deltaRevision??0))return;this.appearanceDirty=false;this.appearanceSave=save;this.deltaRevision=save?.deltaRevision??0;this.realm=realm;this.syncRouteArrows(save);this.stats.instances=0;for(const s of this.slots)for(const b of s.batches.values()){
+ setRealm(realm,save=null){this.caveMarkers.sync(this.stream.chunks,realm);if(!this.appearanceDirty&&this.realm===realm&&this.appearanceSave===save&&this.deltaRevision===(save?.deltaRevision??0))return;this.appearanceDirty=false;this.appearanceSave=save;this.deltaRevision=save?.deltaRevision??0;this.realm=realm;this.syncRouteArrows(save);this.stats.instances=0;for(const s of this.slots)for(const b of s.batches.values()){
    b.mesh.visible=b.realm===realm;if(b.mesh.visible)this.stats.instances+=b.mesh.count;
    // Instance color marks persistent looted containers without destroying assets.
    if(save&&b.nodes){for(let i=0;i<b.nodes.length;i++){
@@ -44,5 +45,5 @@ export class BakedView {
   }
   for(const [id,arrow]of this.routeArrows)if(!used.has(id)){this.scene.remove(arrow);arrow.dispose();this.routeArrows.delete(id);}
  }
- dispose(){for(const arrow of this.routeArrows.values()){this.scene.remove(arrow);arrow.dispose();}this.routeArrows.clear();for(const s of this.slots){s.ticket++;this.scene.remove(s.group);for(const b of s.batches.values())b.mesh.dispose();}this.fallbackGeometry.dispose();this.fallbackMaterial.dispose();}
+ dispose(){this.caveMarkers.dispose();for(const arrow of this.routeArrows.values()){this.scene.remove(arrow);arrow.dispose();}this.routeArrows.clear();for(const s of this.slots){s.ticket++;this.scene.remove(s.group);for(const b of s.batches.values())b.mesh.dispose();}this.fallbackGeometry.dispose();this.fallbackMaterial.dispose();}
 }

@@ -64,3 +64,7 @@ Run the headless checks with `node --test jCRPG-engine/js/tests/*.test.mjs`
 (Node 22+). They cover saved-map coverage, hashing, cache reuse over 1,000 moves,
 revisits, terrain seams, world wrapping, camera-relative swipe direction, map
 markers (including unknown types), sky orientation and idle frame scheduling.
+
+Cave debug landmarks: gold arches and floor rings mark exits to the surface;
+blue beacons mark people, violet marks puzzle controls, and green marks evidence
+readings. These markers only appear in loaded caves and are occluded by walls.
