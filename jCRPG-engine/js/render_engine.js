@@ -17,7 +17,10 @@ import { VISIBLE_RADIUS } from "./map_model.js";
 import { createSky } from "./sky.js";
 
 // A little darker than the skybox mountains, so distant silhouettes blend into blue.
-const SURFACE_FOG_COLOR = 0x3f6099;
+const SURFACE_FOG_COLOR = 0x1f2f49;
+const SURFACE_FOG_CAVE_COLOR = 0x171e21;
+const SURFACE_FOG_DISTANCE = 0.61*VISIBLE_RADIUS;
+const SURFACE_FOG_CAVE_DISTANCE = SURFACE_FOG_DISTANCE*0.3;
 
 const MOVE_SPEED = 4; // world units/sec at full stick deflection
 const STICK_RADIUS = 55; // px a "move" stick drag is clamped to
@@ -35,7 +38,7 @@ export class SceneRenderer {
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-		this.scene.fog = new THREE.Fog(SURFACE_FOG_COLOR, 25, VISIBLE_RADIUS);
+		this.scene.fog = new THREE.Fog(SURFACE_FOG_COLOR, 0.0, SURFACE_FOG_DISTANCE);
 
 		this._yaw = Math.PI; // facing -Z into the scene
 		this._pitch = -0.08;
@@ -280,9 +283,10 @@ export class SceneRenderer {
 			const pos=this.gameState.party.position;
 			const inside=this.gameState.exploration.cellAt?.(pos.x,pos.y,pos.z,this.gameState.realm)?.flags & 2048;
 			if(this._lantern){this._lantern.visible=cave||!!inside;this._lantern.position.copy(this.camera.position);}
-			this.scene.fog.color.set(cave?0x171e21:SURFACE_FOG_COLOR);
+			this.scene.fog.color.set(cave?SURFACE_FOG_CAVE_COLOR:SURFACE_FOG_COLOR);
+			this.scene.fog.far = (cave?SURFACE_FOG_CAVE_DISTANCE:SURFACE_FOG_DISTANCE);
 			if (!this.scene.background?.isColor) this.scene.background=new THREE.Color();
-			this.scene.background.set(cave?0x171e21:0x9fc2d1);
+			this.scene.background.set(cave?SURFACE_FOG_CAVE_COLOR:0x9fc2d1);
 		}
 		this.renderer.render(this.scene, this.camera);
 		this.onViewChange?.(now, !moving);
