@@ -138,7 +138,7 @@ export class InteractionUI {
         this.title.textContent = title;
         this.body.replaceChildren();
         this.dialog.dataset.kind = kind;
-        this.closeButton.hidden = ['dialogue', 'intuition'].includes(kind);
+        this.closeButton.hidden = ['dialogue', 'intuition', 'container'].includes(kind);
         this.primaryButton = null;
         this.backdropButtons.clear();
         this.backdropPress = null;
@@ -242,19 +242,20 @@ export class InteractionUI {
         for (const [index, item] of items.entries()) {
             this.button('Take ' + engine.maps.itemTypes[item.typeId].name, () => {
                 this.commit([{ op: 'take', id: container.id, itemIds: [item.id] }]);
-                this.show();
+                this.close();
             }, { primary: index === 0 });
         }
-        if (items.length) {
+        if (items.length > 1) {
             this.button('Take All', () => {
                 this.commit([{ op: 'take', id: container.id }]);
-                this.show();
+                this.close();
             });
         }
-        this.button('Continue exploring', () => this.close(), {
+        const continueButton = this.button('Continue', () => this.close(), {
             primary: !items.length,
             backdrop: !items.length,
         });
+        continueButton.className = 'container-continue';
     }
 
     openIntuition(anchor) {
@@ -263,6 +264,9 @@ export class InteractionUI {
 
         this.open('Intuition · ' + info.name, 'intuition');
         this.text('p', info.summary);
+        if (info.itemCount !== undefined) {
+            this.text('p', `${info.itemCount} ${info.itemCount === 1 ? 'item' : 'items'} remaining.`);
+        }
         this.button('Continue', () => this.close(), { primary: true, backdrop: true });
         this.focus();
     }

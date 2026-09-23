@@ -95,7 +95,9 @@ export class InteractionRuntime {
   if(anchor.kind==='container'){
    const c=this.maps.containers[anchor.targetId];if(!c)return null;
    const saved=this.save.data.containers[c.id];
-   return {name:c.name,summary:c.description??(saved?.looted?'An empty container. Its contents have been collected.':'A container that can be opened to inspect its contents.')};
+   const taken = new Set(saved?.takenItemIds ?? []);
+   const itemCount = c.items.reduce((count, item) => count + (taken.has(item.id) ? 0 : itemQuantity(item)), 0);
+   return {name:c.name,itemCount,summary:c.description??(itemCount===0?'An empty container. Its contents have been collected.':'A container that can be opened to inspect its contents.')};
   }
   if(anchor.kind==='shrine'){
    const s=this.maps.shrines[anchor.targetId];if(!s)return null;

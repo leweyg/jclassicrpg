@@ -164,3 +164,30 @@ test('inventory table shows stack counts and item details return through Back', 
     row.emit('click',{target:row.querySelectorAll('td')[2]});assert.equal(ui.title.textContent,'Coin');
     assert.equal(ui.backdropButtons.size,0,'item details do not activate unrelated actions');
 });
+
+test('successful Take and Take All close the container; failed transfers keep it open', t => {
+    const {ui,engine,calls} = fixture(t);
+    const container = {id:'chest',name:'Chest',items:[{id:'one',typeId:'coin'},{id:'two',typeId:'coin'}]};
+    engine.transact = () => ({message:'Taken'});
+    for (const label of ['Take Coin','Take All']) {
+        ui.showContainer(container);
+        ui.body.querySelectorAll('button').find(button=>button.textContent===label).click();
+        assert.equal(ui.dialog.open,false);
+        assert.equal(engine.panel,null);
+        assert.equal(calls.at(-2),'resume');
+    }
+    ui.showContainer(container);
+    engine.transact = () => {throw Error('Transfer failed');};
+    ui.primaryButton.click();
+    assert.equal(ui.dialog.open,true);
+    assert.equal(calls.at(-1),'Transfer failed');
+});
+
+test('container intuition displays the remaining quantity including zero', t => {
+    const {ui,engine} = fixture(t);
+    for (const count of [0,1,3]) {
+        engine.intuition = () => ({name:'Chest',summary:'A wooden chest.',itemCount:count});
+        ui.openIntuition({});
+        assert.equal(ui.body.querySelectorAll('p')[1].textContent,`${count} ${count===1?'item':'items'} remaining.`);
+    }
+});

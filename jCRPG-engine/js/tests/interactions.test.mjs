@@ -36,6 +36,7 @@ test('intuition describes nearby characters and objects without activating or re
  const targets=[{kind:'actor',targetId:actor.id},{kind:'container',targetId:content.containers[0].id},{kind:'shrine',targetId:content.shrines[0].id},{kind:'puzzle',targetId:puzzle.id,componentId:puzzle.componentIds[0]},{kind:'puzzle',targetId:puzzle.id,componentId:puzzle.id+':reset'},{kind:'evidence',targetId:'reading',fact:'A measured reading.'}];
  for(const target of targets){const info=e.intuition(target);assert.ok(info.name);assert.ok(info.summary);}
  assert.equal(e.intuition(targets[0]).name,actor.name);
+ assert.equal(e.intuition(targets[1]).itemCount,content.containers[0].items.reduce((n,i)=>n+(i.quantity??1),0));
  assert.equal(e.intuition(targets.at(-1)).summary,'A measured reading.');
  assert.equal(e.intuition(null),null);assert.equal(e.intuition({kind:'unknown'}),null);
  assert.equal(e.save.export(),before);assert.equal(e.panel,null);
@@ -58,7 +59,7 @@ test('a failed multi-action transaction leaves no partial state; tokens deduplic
 });
 test('inventory transfer, take-all rollback, migration and portable saves',()=>{
  const e=create(),c=content.containers[0];e.save.import(JSON.stringify({saveVersion:1,worldId:'seed0-web-v1',generatorVersion:'web-baked-v1',player:{x:800,y:41,z:907,realm:'surface'},openedContainers:{[c.id]:true},discoveredLocations:{}}));e.initialize();assert.equal(e.save.data.containers[c.id].legacySearched,true);assert.deepEqual(e.save.data.containers[c.id].takenItemIds,[]);assert.equal(e.save.data.inventory.order.length,4);
- run(e,[{op:'open',id:c.id}]);const before=e.save.export();assert.throws(()=>run(e,[{op:'take',id:c.id,itemIds:[c.items[0].id,'bad']} ]));assert.equal(e.save.export(),before);run(e,[{op:'take',id:c.id}]);run(e,[{op:'take',id:c.id}]);assert.equal(e.save.data.inventory.order.length,5);
+ run(e,[{op:'open',id:c.id}]);const before=e.save.export();assert.throws(()=>run(e,[{op:'take',id:c.id,itemIds:[c.items[0].id,'bad']} ]));assert.equal(e.save.export(),before);run(e,[{op:'take',id:c.id}]);run(e,[{op:'take',id:c.id}]);assert.equal(e.save.data.inventory.order.length,5);assert.equal(e.intuition({kind:'container',targetId:c.id}).itemCount,0);
  const copy=create();copy.save.import(e.save.export());copy.initialize();assert.deepEqual(copy.save.data,e.save.data);assert.throws(()=>validateSave({...e.save.data,puzzles:{bad:{values:[-1],cursor:0,observed:[],completed:false}}}));assert.throws(()=>validateSave(JSON.parse('{"__proto__":{"polluted":true}}')));
 });
 test('all missions can progress in dependency order; early world work backfills',()=>{
