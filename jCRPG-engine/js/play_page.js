@@ -79,7 +79,10 @@ async function main() {
 		renderHud(sim.gameState);
 		if(sim.gameState.saveDeltas.error)appendLog(sim.gameState.saveDeltas.error);
 		const renderer = new SceneRenderer(canvas);
+		const retryButton = document.getElementById('world-retry');
+		renderer.onWorldLoadError = () => { retryButton.hidden = false; };
 		await renderer.buildWorld(sim.gameState);
+		if (sim.gameState.exploration.chunks.some(chunk => !chunk.ready && chunk.error)) retryButton.hidden = false;
 		const worldMap = new WorldMap(sim.gameState, renderer);
 		const interactionsUI = new InteractionUI(sim.gameState,renderer,appendLog);
 		interactionsUI.onShowQuestMap=(goal,mission)=>worldMap.showQuestGoal(goal,mission);
@@ -128,7 +131,6 @@ async function main() {
 			menu.showModal();
 			menuButton.setAttribute('aria-expanded', 'true');
 		});
-		document.getElementById('menu-close').addEventListener('click', closeMenu);
 		menu.addEventListener('cancel', event => { event.preventDefault(); closeMenu(); });
 		menu.addEventListener('click', event => {
 			if (event.target !== menu) return;
@@ -141,7 +143,10 @@ async function main() {
 			['world-inventory', () => interactionsUI.openInventory()],
 		]) document.getElementById(id).addEventListener('click', () => { closeMenu(); open(); });
 		document.getElementById('world-import-open').addEventListener('click', () => document.getElementById('world-import').click());
-		document.getElementById('world-retry').addEventListener('click', () => sim.gameState.exploration.retry());
+		retryButton.addEventListener('click', () => {
+			retryButton.hidden = true;
+			sim.gameState.exploration.retry();
+		});
 		document.getElementById('world-save').addEventListener('click', () => {
 			const state=sim.gameState;state.saveDeltas.persist(state.party.position,state.realm);
 			const url=URL.createObjectURL(new Blob([state.saveDeltas.export()],{type:'application/json'}));

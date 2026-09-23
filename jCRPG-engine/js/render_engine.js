@@ -296,7 +296,7 @@ export class SceneRenderer {
 		this.worldView = new WorldView(this.scene, gameState.exploration, () => this.requestRender());
 		await this.worldView.build();
 		gameState.exploration.onChange = () => { this.worldView.sync(); this.requestRender(); };
-		gameState.exploration.onError = error => { this.onStatus?.(`World data unavailable: ${error.message}. Retry from the toolbar.`); this.requestRender(); };
+		gameState.exploration.onError = error => { this.onWorldLoadError?.(error); this.onStatus?.(`World data unavailable: ${error.message}. Select Reconnected in the game menu to retry.`); this.requestRender(); };
 		gameState.moveParty(0, 0);
 		this._syncCamera();
 		this._applyLook();
