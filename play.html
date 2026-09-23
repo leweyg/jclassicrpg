@@ -286,7 +286,9 @@
 #interaction-panel[data-kind="dialogue"] h2 { font-size:16px; width:fit-content; max-width:100%; box-sizing:border-box; padding:0 8px; background:#172823; overflow-wrap:anywhere; }
 #interaction-panel[data-kind="dialogue"] #interaction-body { min-height:0; overflow:auto; padding:4px; }
 #interaction-panel[data-kind="dialogue"] #interaction-body>p { display:grid; grid-template-columns:0.65em minmax(0,1fr); margin:0 0 16px; overflow-wrap:anywhere; }
-#interaction-panel[data-kind="dialogue"] #interaction-body>button { display:grid; grid-template-columns:minmax(0,1fr) 1.4em; align-items:center; gap:8px; text-align:right; border:0; background:#294a3b; }
+#interaction-panel[data-kind="dialogue"] #interaction-body>button { display:grid; grid-template-columns:minmax(0,1fr) 1.4em; align-items:center; gap:8px; text-align:right; background:#294a3b; }
+#interaction-panel[data-kind="dialogue"] #interaction-body>button.dialogue-continue { display:block; border:0; background:transparent; }
+#interaction-panel[data-kind="dialogue"] #interaction-body>button.dialogue-continue::after { content:none; }
 #interaction-panel[data-kind="dialogue"] #interaction-body>button:focus-visible { outline:none; }
 #interaction-panel[data-kind="dialogue"] #interaction-body>button::after { content:'💬' / ''; font-size:0.85em; text-align:center; visibility:hidden; }
 #interaction-panel[data-kind="dialogue"] #interaction-body>button:focus::after,

@@ -22,6 +22,20 @@ export function dialogueView(engine, matches) {
     const captionIndex = Math.min(panel.captionIndex ?? 0, captions.length - 1);
     const caption = captions[captionIndex];
     const canAdvance = captionIndex < captions.length - 1;
+    const choices = canAdvance ? [] : (node.choices ?? []).filter(choice => matches(choice.when));
+    const hasAcceptedMission = (actor.missionIds ?? []).some(id =>
+        ['active', 'ready-to-turn-in', 'completed'].includes(engine.missionState(id))
+    );
+    const missionActionIndex = choices.findIndex(choice =>
+        choice.actions?.some(action => ['accept', 'turnIn'].includes(action.op))
+    );
+    // Farewells end the conversation, sometimes recording that the actor was met.
+    const farewellIndex = choices.findIndex(choice =>
+        !choice.next && (choice.actions ?? []).every(action => action.op === 'flag')
+    );
+    const defaultChoiceIndex = hasAcceptedMission || panel.returnedToGreeting
+        ? (missionActionIndex >= 0 ? missionActionIndex : Math.max(0, farewellIndex))
+        : 0;
     return {
         actor,
         text: typeof caption === 'string' ? caption : caption.text,
@@ -30,7 +44,8 @@ export function dialogueView(engine, matches) {
         captionIndex,
         captionCount: captions.length,
         canAdvance,
-        choices: canAdvance ? [] : (node.choices ?? []).filter(choice => matches(choice.when)),
+        choices,
+        defaultChoiceIndex,
     };
 }
 

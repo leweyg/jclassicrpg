@@ -44,6 +44,24 @@ test('left drag moves; keyboard movement enables unpressed look and normalizes u
  c.win.emit('keyup', {key: 'w'}); c.canvas.emit('pointermove', {movementX: 10}); assert.equal(c.r._yaw, -.06);
  c.r._inputEnabled = false; c.win.emit('keydown', {key: 'w'}); assert.equal(c.r._keys.size, 0);
 });
+test('farewell E closes the dialog without reopening it through world controls', async t => {
+ const {InteractionUI} = await import('../interactions/ui.js');
+ const c = controls(t);
+ c.r._inputEnabled = false;
+ let open = true;
+ const farewell = {tagName: 'BUTTON', click() {open = false; c.r._inputEnabled = true;}};
+ document.activeElement = farewell;
+ const ui = {dialog: {contains: element => element === farewell}, primaryButton: farewell};
+ const event = {key: 'e', target: farewell, defaultPrevented: false, preventDefault() {this.defaultPrevented = true;}};
+ InteractionUI.prototype.handleKeyDown.call(ui, event);
+ c.win.listeners.keydown(event);
+ assert.equal(open, false);
+ assert.equal(c.r._inputEnabled, true);
+ assert.deepEqual(c.actions, []);
+ c.win.emit('keydown', {key: 'e'});
+ assert.deepEqual(c.actions, ['interact']);
+});
+
 test('cancellation and simultaneous fingers never activate an action', t => {
  const c = controls(t);
  for (const event of ['pointercancel', 'lostpointercapture', 'pointerleave']) {

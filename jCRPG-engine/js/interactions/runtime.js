@@ -145,10 +145,14 @@ export class InteractionRuntime {
   if (result.duplicate) return result;
   if (choice.next) {
    const definition = this.maps.dialogues[dialogue.actor.dialogueId];
+   if (choice.next === definition.start) this.panel.returnedToGreeting = true;
    this.panel.nodeId = choice.next === definition.start
     ? dialogueStart(definition, condition => predicate(condition, this.save.data, this))
     : choice.next;
    this.panel.captionIndex = 0;
+   if (choice.next === definition.start) {
+    this.panel.captionIndex = this.dialogue().captionCount - 1;
+   }
   } else {
    this.panel = null;
   }

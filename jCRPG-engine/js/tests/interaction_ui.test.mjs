@@ -123,6 +123,58 @@ test('dialogue keyboard selection and backdrop use the selected response; E has 
     assert.equal(ui.dialog.open, false);
 });
 
+test('dialogue focuses the farewell default and uses it for E and backdrop activation', t => {
+    const { ui, engine, calls } = fixture(t);
+    engine.dialogue = () => ({
+        actor: { name: 'Guide' }, text: 'How is the work going?',
+        choices: [{ text: 'Review the mission', next: 'hint' }, { text: 'Until next time.' }],
+        defaultChoiceIndex: 1,
+    });
+    for (const activate of [() => ui.dialog.emit('keydown', { key: 'e' }), () => ui.advanceFromBackdrop()]) {
+        engine.panel = { kind: 'dialogue' };
+        ui.show();
+        assert.equal(document.activeElement.textContent, 'Until next time.');
+        assert.equal(ui.primaryButton, document.activeElement);
+        activate();
+        assert.equal(ui.dialog.open, false);
+    }
+    assert.deepEqual(calls.filter(call => typeof call === 'number'), [1, 1]);
+});
+
+test('dialogue text and panel taps activate the default; buttons and drags do not', t => {
+    const { ui, engine, calls } = fixture(t);
+    engine.panel = { kind: 'dialogue' };
+    engine.dialogue = () => ({
+        actor: { name: 'Guide' }, text: 'Welcome.',
+        choices: [{ text: 'Review', next: 'hint' }, { text: 'Until next time.' }],
+        defaultChoiceIndex: 1,
+    });
+    const pointer = target => ({target, button: 0, pointerId: 1, clientX: 50, clientY: 50});
+    for (const targetOf of [() => ui.body.querySelector('span'), () => ui.body, () => ui.dialog, () => ui.title]) {
+        engine.panel = { kind: 'dialogue' };
+        ui.show();
+        ui.body.querySelector('button').focus();
+        const event = pointer(targetOf());
+        ui.dialog.emit('pointerdown', event);
+        ui.dialog.emit('pointerup', event);
+        assert.equal(ui.dialog.open, false);
+    }
+    assert.deepEqual(calls.filter(call => typeof call === 'number'), [1, 1, 1, 1]);
+    engine.panel = { kind: 'dialogue' };
+    ui.show();
+    const button = ui.body.querySelector('button');
+    ui.dialog.emit('pointerdown', pointer(button));
+    ui.dialog.emit('pointerup', pointer(button));
+    assert.equal(ui.dialog.open, true);
+    const text = pointer(ui.body.querySelector('span'));
+    ui.dialog.emit('pointerdown', text);
+    ui.dialog.emit('pointermove', {...text, clientX: 70});
+    ui.dialog.emit('pointerup', text);
+    assert.equal(ui.dialog.open, true);
+    button.click();
+    assert.equal(calls.filter(call => typeof call === 'number').at(-1), 0);
+});
+
 test('container actions never activate from a backdrop tap; empty-container dismissal opts in', t => {
     const { ui, save } = fixture(t);
     const container = { id: 'chest', name: 'Chest', items: [{ id: 'coin1', typeId: 'coin' }] };
@@ -199,7 +251,7 @@ test('dialogue Continue uses click, E and backdrop to advance captions before of
     engine.dialogue = () => ({actor:{name:'Guide'},text:['One.','Two.','Three.'][caption],canAdvance:caption<2,choices:caption<2?[]:[{text:'Accept'}]});
     engine.advanceDialogue = () => { caption++; };
     ui.show();
-    assert.deepEqual(ui.body.querySelectorAll('button').map(b=>b.textContent), ['Continue']);
+    assert.deepEqual(ui.body.querySelectorAll('button').map(b=>b.textContent), ['...']);
     ui.dialog.emit('keydown', {key:'e'}); assert.equal(caption,1);
     ui.advanceFromBackdrop(); assert.equal(caption,2);
     assert.deepEqual(ui.body.querySelectorAll('button').map(b=>b.textContent), ['Accept']);

@@ -48,9 +48,20 @@ export class InteractionUI {
         );
     }
 
+    advanceArea(event) {
+        if (this.isBackdrop(event)) return 'backdrop';
+        if (this.dialog.dataset.kind === 'dialogue'
+            && this.dialog.contains(event.target)
+            && ![...this.dialog.querySelectorAll('button')].some(button => button.contains(event.target))) {
+            return 'dialogue';
+        }
+        return null;
+    }
+
     handlePointerDown(event) {
-        this.backdropPress = event.button === 0 && this.isBackdrop(event)
-            ? { id: event.pointerId, x: event.clientX, y: event.clientY }
+        const area = this.advanceArea(event);
+        this.backdropPress = event.button === 0 && area
+            ? { id: event.pointerId, x: event.clientX, y: event.clientY, area }
             : null;
     }
 
@@ -69,10 +80,11 @@ export class InteractionUI {
         const press = this.backdropPress;
         this.backdropPress = null;
         if (
-            press && press.id === event.pointerId && this.isBackdrop(event)
+            press && press.id === event.pointerId && this.advanceArea(event) === press.area
             && Math.hypot(event.clientX - press.x, event.clientY - press.y) < 8
         ) {
-            this.advanceFromBackdrop();
+            if (press.area === 'dialogue') this.primaryButton?.click();
+            else this.advanceFromBackdrop();
         }
     }
 
@@ -220,16 +232,17 @@ export class InteractionUI {
             this.saveAndRefresh();
         }
 
-        if (dialogue.canAdvance) {
-            this.button('Continue', () => {
-                engine.advanceDialogue();
-                this.show();
+        if (dialogue.canAdvance || !dialogue.choices.length) {
+            const button = this.button('...', () => {
+                if (dialogue.canAdvance) {
+                    engine.advanceDialogue();
+                    this.show();
+                } else {
+                    this.close();
+                }
             }, { primary: true, backdrop: true });
-            return;
-        }
-
-        if (!dialogue.choices.length) {
-            this.button('Continue', () => this.close(), { primary: true, backdrop: true });
+            button.className = 'dialogue-continue';
+            button.setAttribute('aria-label', 'Continue');
             return;
         }
 
@@ -240,7 +253,7 @@ export class InteractionUI {
                 if (result.message) this.log(result.message);
                 this.show();
                 this.renderer.requestRender();
-            }, { primary: i === 0, backdrop: true });
+            }, { primary: i === (dialogue.defaultChoiceIndex ?? 0), backdrop: true });
         }
     }
 

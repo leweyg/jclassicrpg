@@ -95,7 +95,7 @@ export class SceneRenderer {
 	_bindControls() {
 		const c = this.canvas;
 		window.addEventListener('keydown', event => {
-			if (!this._inputEnabled || /INPUT|TEXTAREA|SELECT/.test(event.target?.tagName)) return;
+			if (event.defaultPrevented || !this._inputEnabled || /INPUT|TEXTAREA|SELECT/.test(event.target?.tagName)) return;
 			const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 			if (['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(key)) { event.preventDefault(); this._keys.add(key); this.requestRender(); }
 			if (event.key.toLowerCase()==='e' && !event.repeat) this.onInteract?.();

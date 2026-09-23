@@ -44,7 +44,8 @@ test('authored captions gate choices without committing transactions, and entry 
     assert.ok(engine.dialogue().captionCount > 1);
     assert.deepEqual(engine.dialogue().choices, []);
     assert.throws(() => engine.choose(0), /Finish reading/);
-    readToChoices(engine);
+    const offered = readToChoices(engine);
+    assert.equal(offered.choices[offered.defaultChoiceIndex].text, 'Accept: A Fair Share of Light');
     assert.equal(engine.save.export(), before);
     choose(engine, 'Accept: A Fair Share of Light');
     assert.equal(engine.missionState(missionId), 'active');
@@ -55,6 +56,8 @@ test('authored captions gate choices without committing transactions, and entry 
     assert.equal(engine.panel, null);
     talk(engine);
     assert.equal(engine.panel.nodeId, 'progress');
+    const progress = readToChoices(engine);
+    assert.equal(progress.choices[progress.defaultChoiceIndex].text, 'Until next time.');
     choose(engine, 'Review: A Fair Share of Light');
     assert.match(readToChoices(engine).text, /responsibility/);
 });
@@ -73,8 +76,11 @@ test('opening slice completes through dialogue, preserves rewards once, and reta
     talk(engine); choose(engine, 'Fairness must include households and the shared relay.');
     choose(engine, 'Back');
     assert.equal(engine.panel.nodeId, 'ready');
+    assert.equal(engine.dialogue().canAdvance, false, 'Back goes straight to the current mission choices');
     const token = engine.save.data.lastTransaction + 1;
-    const reportIndex = readToChoices(engine).choices.findIndex(c => c.text === 'Report: A Fair Share of Light');
+    const ready = readToChoices(engine);
+    const reportIndex = ready.choices.findIndex(c => c.text === 'Report: A Fair Share of Light');
+    assert.equal(ready.defaultChoiceIndex, reportIndex);
     engine.choose(reportIndex, token);
     assert.equal(engine.panel.nodeId, 'handoff');
     assert.equal(engine.missionState(missionId), 'completed');
@@ -88,6 +94,8 @@ test('opening slice completes through dialogue, preserves rewards once, and reta
     const restored = fixture(); restored.save.import(snapshot); restored.initialize(); talk(restored);
     assert.equal(restored.panel.nodeId, 'completed');
     assert.ok(!readToChoices(restored).choices.some(c => c.text.startsWith('Report:')));
+    const completed = restored.dialogue();
+    assert.equal(completed.choices[completed.defaultChoiceIndex].text, 'Until next time.');
 });
 
 test('only the visible caption reveals named places; unread later captions remain hidden', () => {
@@ -113,6 +121,31 @@ test('Pella and Orro retain their specific topics after the circuit is restored'
     talk(engine, 'Pella Sharekeeper'); assert.equal(engine.panel.nodeId, 'restored');
     choose(engine, 'What should I promise Marn?');
     assert.match(engine.dialogue().text, /another person can check/);
+});
+
+test('Pella defaults to farewell after returning from readings instead of repeating the topic', () => {
+    for (const accepted of [false, true]) {
+        const engine = fixture();
+        if (accepted) {
+            talk(engine);
+            choose(engine, 'Accept: A Fair Share of Light');
+            choose(engine, 'Until next time.');
+        }
+        talk(engine, 'Pella Sharekeeper');
+        let dialogue = readToChoices(engine);
+        assert.equal(dialogue.choices[dialogue.defaultChoiceIndex].text, 'Show me how the readings differ.');
+        engine.choose(dialogue.defaultChoiceIndex);
+        choose(engine, 'Back');
+        dialogue = engine.dialogue();
+        assert.equal(dialogue.canAdvance, false);
+        assert.equal(dialogue.captionIndex, dialogue.captionCount - 1);
+        assert.equal(dialogue.choices[dialogue.defaultChoiceIndex].text, 'Until next time.');
+        assert.ok(dialogue.choices.some(choice => choice.text === 'Show me how the readings differ.'));
+        engine.choose(dialogue.defaultChoiceIndex);
+        assert.equal(engine.panel, null);
+        talk(engine, 'Pella Sharekeeper');
+        assert.equal(engine.dialogue().captionIndex, 0, 'A new conversation still starts with the greeting');
+    }
 });
 
 test('caption validation catches empty passages and dangling entries', () => {
