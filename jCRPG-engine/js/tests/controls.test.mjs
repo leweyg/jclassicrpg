@@ -59,9 +59,9 @@ test('dialog backdrop advances the selected response without triggering journal 
  t.after(() => {globalThis.document = oldDocument;});
  const actions = [], first = {click() {actions.push('first');}}, selected = {click() {actions.push('selected');}};
  let buttons = [first, selected];
- const ui = Object.assign(Object.create(InteractionUI.prototype), {state: {interactions: {panel: {kind: 'dialogue'}}}, body: {querySelectorAll: () => buttons}});
+ const ui = Object.assign(Object.create(InteractionUI.prototype), {primaryButton: first, backdropButtons: new Set(buttons)});
  globalThis.document = {activeElement: selected}; ui.advanceFromBackdrop(); assert.deepEqual(actions, ['selected']);
  globalThis.document.activeElement = {}; ui.advanceFromBackdrop(); assert.deepEqual(actions, ['selected', 'first']);
- ui.state.interactions.panel = null; ui.advanceFromBackdrop(); assert.equal(actions.length, 2);
- buttons = [{textContent: 'Continue exploring', click() {actions.push('close');}}]; ui.advanceFromBackdrop(); assert.equal(actions.at(-1), 'close');
+ ui.backdropButtons.clear(); ui.advanceFromBackdrop(); assert.equal(actions.length, 2);
+ buttons = [{textContent: 'A completely different label', click() {actions.push('close');}}]; ui.primaryButton = buttons[0]; ui.backdropButtons.add(buttons[0]); ui.advanceFromBackdrop(); assert.equal(actions.at(-1), 'close');
 });

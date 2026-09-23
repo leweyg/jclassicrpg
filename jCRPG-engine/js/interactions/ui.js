@@ -19,81 +19,93 @@ export class InteractionUI {
         this.title = this.dialog.querySelector('h2');
         this.closeButton = this.dialog.querySelector('header button');
 
-        // Modal backdrops receive pointer events instead of the covered game canvas.
-        let backdropPress = null;
-        const outside = event => {
-            const rect = this.dialog.getBoundingClientRect();
-            return event.target === this.dialog && (
-                event.clientX < rect.left || event.clientX > rect.right
-                || event.clientY < rect.top || event.clientY > rect.bottom
-            );
+        this.primaryButton = null;
+        this.backdropButtons = new Set();
+        this.backdropPress = null;
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        const handlers = {
+            pointerdown: 'handlePointerDown',
+            pointermove: 'handlePointerMove',
+            pointercancel: 'handlePointerCancel',
+            pointerup: 'handlePointerUp',
+            cancel: 'handleCancel',
+            keydown: 'handleKeyDown',
         };
-
-        this.dialog.addEventListener('pointerdown', event => {
-            backdropPress = event.button === 0 && outside(event)
-                ? { id: event.pointerId, x: event.clientX, y: event.clientY }
-                : null;
-        });
-        this.dialog.addEventListener('pointermove', event => {
-            if (backdropPress && Math.hypot(
-                event.clientX - backdropPress.x,
-                event.clientY - backdropPress.y
-            ) >= 8) {
-                backdropPress = null;
-            }
-        });
-        this.dialog.addEventListener('pointercancel', () => {
-            backdropPress = null;
-        });
-        this.dialog.addEventListener('pointerup', event => {
-            const press = backdropPress;
-            backdropPress = null;
-            if (
-                press && press.id === event.pointerId && outside(event)
-                && Math.hypot(event.clientX - press.x, event.clientY - press.y) < 8
-            ) {
-                this.advanceFromBackdrop();
-            }
-        });
-
+        for (const [event, method] of Object.entries(handlers)) {
+            this.dialog.addEventListener(event, value => this[method](value));
+        }
         this.closeButton.onclick = () => this.close();
-        this.dialog.addEventListener('cancel', event => {
+    }
+
+    isBackdrop(event) {
+        const rect = this.dialog.getBoundingClientRect();
+        return event.target === this.dialog && (
+            event.clientX < rect.left || event.clientX > rect.right
+            || event.clientY < rect.top || event.clientY > rect.bottom
+        );
+    }
+
+    handlePointerDown(event) {
+        this.backdropPress = event.button === 0 && this.isBackdrop(event)
+            ? { id: event.pointerId, x: event.clientX, y: event.clientY }
+            : null;
+    }
+
+    handlePointerMove(event) {
+        const press = this.backdropPress;
+        if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) >= 8) {
+            this.backdropPress = null;
+        }
+    }
+
+    handlePointerCancel() {
+        this.backdropPress = null;
+    }
+
+    handlePointerUp(event) {
+        const press = this.backdropPress;
+        this.backdropPress = null;
+        if (
+            press && press.id === event.pointerId && this.isBackdrop(event)
+            && Math.hypot(event.clientX - press.x, event.clientY - press.y) < 8
+        ) {
+            this.advanceFromBackdrop();
+        }
+    }
+
+    handleCancel(event) {
+        event.preventDefault();
+        this.close();
+    }
+
+    handleKeyDown(event) {
+        if (event.repeat) return;
+
+        if (event.key.toLowerCase() === 'e') {
             event.preventDefault();
-            this.close();
-        });
-        this.dialog.addEventListener('keydown', event => {
-            if (event.repeat) return;
+            const active = document.activeElement;
+            const button = this.dialog.contains(active) && active.tagName === 'BUTTON'
+                ? active
+                : this.primaryButton;
+            button?.click();
+        }
 
-            if (event.key.toLowerCase() === 'e') {
-                event.preventDefault();
-                const active = document.activeElement;
-                const button = this.dialog.contains(active) && active.tagName === 'BUTTON'
-                    ? active
-                    : this.body.querySelector('button');
-                button?.click();
-            }
-
-            if (['ArrowDown', 'ArrowUp', 'w', 's'].includes(event.key)) {
-                event.preventDefault();
-                const buttons = [...this.body.querySelectorAll('button')];
-                const index = buttons.indexOf(document.activeElement);
-                const direction = ['ArrowUp', 'w'].includes(event.key) ? -1 : 1;
-                buttons[(index + direction + buttons.length) % buttons.length]?.focus();
-            }
-        });
+        if (['ArrowDown', 'ArrowUp', 'w', 's'].includes(event.key)) {
+            event.preventDefault();
+            const buttons = [...this.body.querySelectorAll('button')];
+            const index = buttons.indexOf(document.activeElement);
+            const direction = ['ArrowUp', 'w'].includes(event.key) ? -1 : 1;
+            buttons[(index + direction + buttons.length) % buttons.length]?.focus();
+        }
     }
 
     advanceFromBackdrop() {
-        const buttons = [...this.body.querySelectorAll('button')];
-        if (
-            this.state.interactions.panel?.kind !== 'dialogue'
-            && !(buttons.length === 1
-                && ['Continue', 'Continue exploring'].includes(buttons[0].textContent))
-        ) {
-            return;
-        }
         const active = document.activeElement;
-        (buttons.includes(active) ? active : buttons[0])?.click();
+        const button = this.backdropButtons.has(active) ? active : this.primaryButton;
+        if (this.backdropButtons.has(button)) button.click();
     }
 
     text(tag, value, parent = this.body) {
@@ -103,7 +115,8 @@ export class InteractionUI {
         return element;
     }
 
-    button(label, action, parent = this.body) {
+    /** Explicitly opt actions into keyboard defaults and backdrop activation. */
+    button(label, action, { parent = this.body, primary = false, backdrop = false } = {}) {
         const button = this.text('button', label, parent);
         button.type = 'button';
         button.onclick = () => {
@@ -113,18 +126,22 @@ export class InteractionUI {
                 this.log(error.message);
             }
         };
+        if (primary) {
+            this.primaryButton = button;
+            button.dataset.primary = 'true';
+        }
+        if (backdrop) this.backdropButtons.add(button);
         return button;
     }
 
     open(title, kind = '') {
         this.title.textContent = title;
         this.body.replaceChildren();
-        const conversation = kind === 'dialogue';
-        this.dialog.classList.toggle('conversation', conversation);
-        this.dialog.classList.toggle('intuition', kind === 'intuition');
-        this.dialog.classList.toggle('journal', kind === 'journal');
-        this.dialog.classList.toggle('inventory', kind === 'inventory');
-        this.closeButton.hidden = conversation || kind === 'intuition';
+        this.dialog.dataset.kind = kind;
+        this.closeButton.hidden = ['dialogue', 'intuition'].includes(kind);
+        this.primaryButton = null;
+        this.backdropButtons.clear();
+        this.backdropPress = null;
 
         const button = this.closeButton;
         button.textContent = 'Close';
@@ -138,22 +155,34 @@ export class InteractionUI {
     }
 
     focus() {
-        const target = this.body.querySelector('button')
+        const target = this.primaryButton ?? this.body.querySelector('button')
             ?? (this.closeButton.hidden ? this.dialog : this.closeButton);
         target.focus();
     }
 
     close() {
         this.state.interactions.panel = null;
+        this.primaryButton = null;
+        this.backdropButtons.clear();
+        this.backdropPress = null;
         this.dialog.close();
         this.renderer.setInputEnabled(true);
         this.returnFocus?.focus();
         this.renderer.requestRender();
     }
 
+    persist() {
+        this.state.saveDeltas.persist(this.state.party.position, this.state.realm);
+    }
+
+    saveAndRefresh() {
+        this.persist();
+        this.renderer.requestRender();
+    }
+
     commit(actions) {
         const result = this.state.interactions.transact(actions);
-        this.state.saveDeltas.persist(this.state.party.position, this.state.realm);
+        this.persist();
         this.log(result.message);
         this.renderer.requestRender();
         return result;
@@ -168,54 +197,64 @@ export class InteractionUI {
         }
 
         if (panel.kind === 'dialogue') {
-            const dialogue = engine.dialogue();
-            this.open(dialogue.actor.name, 'dialogue');
-            const speech = this.text('p', '');
-            this.text('span', '"', speech);
-            this.text('span', dialogue.text + '"', speech);
-
-            if (revealReadDialogue(
-                this.state.saveDeltas,
-                this.state.mapMarkers ?? [],
-                dialogue,
-                engine.content.actors
-            )) {
-                this.state.saveDeltas.persist(this.state.party.position, this.state.realm);
-                this.renderer.requestRender();
-            }
-
-            for (let i = 0; i < dialogue.choices.length; i++) {
-                this.button(dialogue.choices[i].text, () => {
-                    const result = engine.choose(i);
-                    this.state.saveDeltas.persist(this.state.party.position, this.state.realm);
-                    if (result.message) this.log(result.message);
-                    this.show();
-                    this.renderer.requestRender();
-                });
-            }
+            this.showDialogue(engine.dialogue());
         } else {
-            const container = engine.maps.containers[panel.id];
-            const taken = this.state.saveDeltas.data.containers[container.id]?.takenItemIds ?? [];
-            this.open(container.name);
-            const items = container.items.filter(item => !taken.includes(item.id));
-            if (!items.length) {
-                this.text('p', 'This container is empty. Its contents are in your party inventory.');
-            }
-            for (const item of items) {
-                this.button('Take ' + engine.maps.itemTypes[item.typeId].name, () => {
-                    this.commit([{ op: 'take', id: container.id, itemIds: [item.id] }]);
-                    this.show();
-                });
-            }
-            if (items.length) {
-                this.button('Take All', () => {
-                    this.commit([{ op: 'take', id: container.id }]);
-                    this.show();
-                });
-            }
-            this.button('Continue exploring', () => this.close());
+            this.showContainer(engine.maps.containers[panel.id]);
         }
         this.focus();
+    }
+
+    showDialogue(dialogue) {
+        const engine = this.state.interactions;
+        this.open(dialogue.actor.name, 'dialogue');
+        const speech = this.text('p', '');
+        this.text('span', '"', speech);
+        this.text('span', dialogue.text + '"', speech);
+
+        if (revealReadDialogue(
+            this.state.saveDeltas,
+            this.state.mapMarkers ?? [],
+            dialogue,
+            engine.content.actors
+        )) {
+            this.saveAndRefresh();
+        }
+
+        for (let i = 0; i < dialogue.choices.length; i++) {
+            this.button(dialogue.choices[i].text, () => {
+                const result = engine.choose(i);
+                this.persist();
+                if (result.message) this.log(result.message);
+                this.show();
+                this.renderer.requestRender();
+            }, { primary: i === 0, backdrop: true });
+        }
+    }
+
+    showContainer(container) {
+        const engine = this.state.interactions;
+        const taken = this.state.saveDeltas.data.containers[container.id]?.takenItemIds ?? [];
+        this.open(container.name, 'container');
+        const items = container.items.filter(item => !taken.includes(item.id));
+        if (!items.length) {
+            this.text('p', 'This container is empty. Its contents are in your party inventory.');
+        }
+        for (const [index, item] of items.entries()) {
+            this.button('Take ' + engine.maps.itemTypes[item.typeId].name, () => {
+                this.commit([{ op: 'take', id: container.id, itemIds: [item.id] }]);
+                this.show();
+            }, { primary: index === 0 });
+        }
+        if (items.length) {
+            this.button('Take All', () => {
+                this.commit([{ op: 'take', id: container.id }]);
+                this.show();
+            });
+        }
+        this.button('Continue exploring', () => this.close(), {
+            primary: !items.length,
+            backdrop: !items.length,
+        });
     }
 
     openIntuition(anchor) {
@@ -224,7 +263,7 @@ export class InteractionUI {
 
         this.open('Intuition · ' + info.name, 'intuition');
         this.text('p', info.summary);
-        this.button('Continue', () => this.close());
+        this.button('Continue', () => this.close(), { primary: true, backdrop: true });
         this.focus();
     }
 
@@ -252,7 +291,8 @@ export class InteractionUI {
             for (const mission of entries) {
                 const button = this.button(
                     (mission.id === save.navMissionId ? '◆ ' : '') + mission.title,
-                    () => this.openQuest(mission.id)
+                    () => this.openQuest(mission.id),
+                    { primary: count === 0 }
                 );
                 button.className = 'quest-row';
                 count++;
@@ -294,10 +334,10 @@ export class InteractionUI {
             this.button('Show on map', () => {
                 engine.setNavigationGoal(id);
                 const goal = engine.navigationGoal();
-                this.state.saveDeltas.persist(this.state.party.position, this.state.realm);
+                this.persist();
                 this.close();
                 this.onShowQuestMap?.(goal, mission);
-            });
+            }, { primary: true });
         }
         this.focus();
         this.dialog.scrollTop = 0;
@@ -313,7 +353,7 @@ export class InteractionUI {
             this.text('h4', type.name);
             this.text('p', type.note);
         }
-        this.button('Continue exploring', () => this.close());
+        this.button('Continue exploring', () => this.close(), { primary: true, backdrop: true });
         this.focus();
     }
 }

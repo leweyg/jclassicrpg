@@ -261,22 +261,22 @@
 #interaction-panel button:focus-visible {outline:3px solid #ffe29d;outline-offset:2px;}
 #interaction-panel article {border-top:1px solid #50705a;margin-top:16px;}
 #interaction-panel h4 {margin-bottom:4px;}
-#interaction-panel.journal, #interaction-panel.inventory { border:0; }
-#interaction-panel.intuition { border:0; outline:none; }
-#interaction-panel.intuition h2 { font-size:16px; }
-#interaction-panel.intuition #interaction-body>button { text-align:right; border:0; }
-#interaction-panel.intuition #interaction-body>button:focus-visible { outline:none; background:#365e4c; }
-#interaction-panel.conversation { overflow:visible; padding-top:20px; border:0; outline:none; }
-#interaction-panel.conversation[open] { display:flex; flex-direction:column; }
-#interaction-panel.conversation header { position:absolute; top:0; left:20px; right:20px; transform:translateY(-50%); display:block; }
-#interaction-panel.conversation h2 { font-size:16px; width:fit-content; max-width:100%; box-sizing:border-box; padding:0 8px; background:#172823; overflow-wrap:anywhere; }
-#interaction-panel.conversation #interaction-body { min-height:0; overflow:auto; padding:4px; }
-#interaction-panel.conversation #interaction-body>p { display:grid; grid-template-columns:0.65em minmax(0,1fr); margin:0 0 16px; overflow-wrap:anywhere; }
-#interaction-panel.conversation #interaction-body>button { display:grid; grid-template-columns:minmax(0,1fr) 1.4em; align-items:center; gap:8px; text-align:right; border:0; background:#294a3b; }
-#interaction-panel.conversation #interaction-body>button:focus-visible { outline:none; }
-#interaction-panel.conversation #interaction-body>button::after { content:'💬' / ''; font-size:0.85em; text-align:center; visibility:hidden; }
-#interaction-panel.conversation #interaction-body>button:focus::after,
-#interaction-panel.conversation #interaction-body:not(:has(>button:focus))>button:first-of-type::after { visibility:visible; }
+#interaction-panel[data-kind="journal"], #interaction-panel[data-kind="inventory"] { border:0; }
+#interaction-panel[data-kind="intuition"] { border:0; outline:none; }
+#interaction-panel[data-kind="intuition"] h2 { font-size:16px; }
+#interaction-panel[data-kind="intuition"] #interaction-body>button { text-align:right; border:0; }
+#interaction-panel[data-kind="intuition"] #interaction-body>button:focus-visible { outline:none; background:#365e4c; }
+#interaction-panel[data-kind="dialogue"] { overflow:visible; padding-top:20px; border:0; outline:none; }
+#interaction-panel[data-kind="dialogue"][open] { display:flex; flex-direction:column; }
+#interaction-panel[data-kind="dialogue"] header { position:absolute; top:0; left:20px; right:20px; transform:translateY(-50%); display:block; }
+#interaction-panel[data-kind="dialogue"] h2 { font-size:16px; width:fit-content; max-width:100%; box-sizing:border-box; padding:0 8px; background:#172823; overflow-wrap:anywhere; }
+#interaction-panel[data-kind="dialogue"] #interaction-body { min-height:0; overflow:auto; padding:4px; }
+#interaction-panel[data-kind="dialogue"] #interaction-body>p { display:grid; grid-template-columns:0.65em minmax(0,1fr); margin:0 0 16px; overflow-wrap:anywhere; }
+#interaction-panel[data-kind="dialogue"] #interaction-body>button { display:grid; grid-template-columns:minmax(0,1fr) 1.4em; align-items:center; gap:8px; text-align:right; border:0; background:#294a3b; }
+#interaction-panel[data-kind="dialogue"] #interaction-body>button:focus-visible { outline:none; }
+#interaction-panel[data-kind="dialogue"] #interaction-body>button::after { content:'💬' / ''; font-size:0.85em; text-align:center; visibility:hidden; }
+#interaction-panel[data-kind="dialogue"] #interaction-body>button:focus::after,
+#interaction-panel[data-kind="dialogue"] #interaction-body:not(:has(>button:focus))>button[data-primary="true"]::after { visibility:visible; }
 
 </style>
 </head>
