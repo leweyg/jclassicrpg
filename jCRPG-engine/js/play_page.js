@@ -106,6 +106,11 @@ async function main() {
 		};
 		renderer.onStatus = appendLog;
 		renderer.onInteract = () => renderer.interact();
+		renderer.canIntuition = () => !document.getElementById('world-intuition').disabled;
+		renderer.onIntuition = () => document.getElementById('world-intuition').click();
+		renderer.onGestureHighlight = action => {
+			for (const name of ['interact', 'intuition']) document.getElementById(`world-${name}`).classList.toggle('gesture-highlight', action === name);
+		};
 		document.getElementById('world-interact').addEventListener('click', () => renderer.interact());
 		document.getElementById('world-intuition').addEventListener('click', () => interactionsUI.openIntuition(renderer.nearbyInteraction()));
 		const menu = document.getElementById('game-menu');

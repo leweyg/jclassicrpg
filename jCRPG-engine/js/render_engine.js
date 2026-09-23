@@ -25,6 +25,8 @@ const SURFACE_FOG_CAVE_DISTANCE = SURFACE_FOG_DISTANCE*0.3;
 const MOVE_SPEED = 4; // world units/sec at full stick deflection
 const STICK_RADIUS = 55; // px a "move" stick drag is clamped to
 const LOOK_SENSITIVITY = 0.006;
+const GESTURE_SLOP = 8;
+const HOLD_MS = 600;
 
 export class SceneRenderer {
 	constructor(canvas) {
@@ -87,10 +89,11 @@ export class SceneRenderer {
 		const c = this.canvas;
 		window.addEventListener('keydown', event => {
 			if (!this._inputEnabled || /INPUT|TEXTAREA|SELECT/.test(event.target?.tagName)) return;
-			if (['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)) { event.preventDefault(); this._keys.add(event.key); this.requestRender(); }
+			const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+			if (['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(key)) { event.preventDefault(); this._keys.add(key); this.requestRender(); }
 			if (event.key.toLowerCase()==='e' && !event.repeat) this.onInteract?.();
 		});
-		window.addEventListener('keyup', event => { this._keys.delete(event.key); this.requestRender(); });
+		window.addEventListener('keyup', event => { this._keys.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key); this.requestRender(); });
 		c.style.touchAction = "none";
 
 		const sideForClientX = (clientX) => {
@@ -98,35 +101,67 @@ export class SceneRenderer {
 			return clientX - rect.left < rect.width / 2 ? "move" : "look";
 		};
 
+		const clearAction = () => {
+			clearTimeout(this._holdTimer);
+			this._gestureAction = null;
+			this.onGestureHighlight?.(null);
+		};
+		const look = (dx, dy) => {
+			this._yaw -= dx * LOOK_SENSITIVITY;
+			this._pitch = Math.max(-1.2, Math.min(1.2, this._pitch - dy * LOOK_SENSITIVITY));
+		};
 		c.addEventListener("pointerdown", (e) => {
-			if (!this._inputEnabled) return;
+			if (!this._inputEnabled || e.button !== 0) return;
 			c.setPointerCapture?.(e.pointerId);
-			const side = sideForClientX(e.clientX);
-			this._pointers.set(e.pointerId, { side, startX: e.clientX, startY: e.clientY, curX: e.clientX, curY: e.clientY });
-			if (side === "move" && !this._movePointer) {
-				this._movePointer = this._pointers.get(e.pointerId);
-				this._joystickEl.style.left = `${e.clientX}px`;
-				this._joystickEl.style.top = `${e.clientY}px`;
-				this._joystickEl.style.display = "block";
+			const side = this._keys.size ? "look" : sideForClientX(e.clientX);
+			const p = { side, startX: e.clientX, startY: e.clientY, curX: e.clientX, curY: e.clientY, moved: false };
+			this._pointers.set(e.pointerId, p);
+			if (this._pointers.size > 1) {
+				for (const pointer of this._pointers.values()) pointer.noAction = true;
+				clearAction();
+			} else {
+				this._gestureAction = 'interact';
+				this.onGestureHighlight?.('interact');
+				this._holdTimer = setTimeout(() => {
+					if (!p.moved && !p.noAction && this.canIntuition?.()) {
+						this._gestureAction = 'intuition';
+						this.onGestureHighlight?.('intuition');
+					}
+				}, HOLD_MS);
 			}
 		});
 
 		const onMove = (e) => {
+			if (!this._inputEnabled) return;
 			const p = this._pointers.get(e.pointerId);
-			if (!p) return;
-			if (p.side === "look") {
-				const dx = e.clientX - p.curX;
-				const dy = e.clientY - p.curY;
-				this._yaw -= dx * LOOK_SENSITIVITY;
-				this._pitch = Math.max(-1.2, Math.min(1.2, this._pitch - dy * LOOK_SENSITIVITY));
+			if (!p) {
+				if (this._keys.size && e.pointerType !== 'touch') {
+					look(e.movementX || 0, e.movementY || 0);
+					this.requestRender();
+				}
+				return;
+			}
+			if (!p.moved && Math.hypot(e.clientX - p.startX, e.clientY - p.startY) >= GESTURE_SLOP) {
+				p.moved = true;
+				clearAction();
+				if (this._keys.size) p.side = 'look';
+				if (p.side === 'move' && !this._movePointer) {
+					this._movePointer = p;
+					this._joystickEl.style.left = `${p.startX}px`;
+					this._joystickEl.style.top = `${p.startY}px`;
+					this._joystickEl.style.display = 'block';
+				}
+			}
+			if (p.moved && (p.side === 'look' || this._keys.size)) {
+				if (p === this._movePointer) { this._movePointer = null; this._joystickEl.style.display = 'none'; }
+				p.side = 'look';
+				look(e.clientX - p.curX, e.clientY - p.curY);
 			}
 			p.curX = e.clientX;
 			p.curY = e.clientY;
 			if (p === this._movePointer) {
-				const dx = p.curX - p.startX;
-				const dy = p.curY - p.startY;
-				const dist = Math.min(Math.hypot(dx, dy), STICK_RADIUS);
-				const angle = Math.atan2(dy, dx);
+				const dx = p.curX - p.startX, dy = p.curY - p.startY;
+				const dist = Math.min(Math.hypot(dx, dy), STICK_RADIUS), angle = Math.atan2(dy, dx);
 				this._joystickEl.knob.style.left = `calc(50% + ${Math.cos(angle) * dist}px)`;
 				this._joystickEl.knob.style.top = `calc(50% + ${Math.sin(angle) * dist}px)`;
 			}
@@ -134,12 +169,18 @@ export class SceneRenderer {
 		};
 		const endPointer = (e) => {
 			const p = this._pointers.get(e.pointerId);
+			if (!p) return;
+			const action = e.type === 'pointerup' && !p.moved && !p.noAction &&
+				Math.hypot(e.clientX - p.startX, e.clientY - p.startY) < GESTURE_SLOP ? this._gestureAction : null;
+			clearAction();
 			if (p === this._movePointer) {
 				this._movePointer = null;
 				this._joystickEl.style.display = "none";
 			}
 			this._pointers.delete(e.pointerId);
 			this.requestRender();
+			if (action === 'intuition') this.onIntuition?.();
+			else if (action === 'interact') this.onInteract?.();
 		};
 
 		c.addEventListener("pointermove", onMove);
@@ -295,6 +336,9 @@ export class SceneRenderer {
 	}
 
 	cancelInput() {
+		clearTimeout(this._holdTimer);
+		this._gestureAction = null;
+		this.onGestureHighlight?.(null);
 		this._pointers.clear();
 		this._keys?.clear();
 		if (this.gameState?.saveDeltas) this.gameState.saveDeltas.persist(this.gameState.party.position,this.gameState.realm);

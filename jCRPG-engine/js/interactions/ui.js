@@ -6,8 +6,21 @@ export class InteractionUI {
   this.dialog=document.createElement('dialog');this.dialog.id='interaction-panel';this.dialog.setAttribute('aria-labelledby','interaction-title');
   this.dialog.innerHTML='<header><h2 id="interaction-title"></h2><button type="button" aria-label="Close interaction">Close</button></header><div id="interaction-body"></div>';
   document.body.append(this.dialog);this.body=this.dialog.querySelector('#interaction-body');this.title=this.dialog.querySelector('h2');
+  // Modal backdrops receive pointer events instead of the covered game canvas.
+  let backdropPress=null;
+  const outside=e=>{const r=this.dialog.getBoundingClientRect();return e.target===this.dialog&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom);};
+  this.dialog.addEventListener('pointerdown',e=>{backdropPress=e.button===0&&outside(e)?{id:e.pointerId,x:e.clientX,y:e.clientY}:null;});
+  this.dialog.addEventListener('pointermove',e=>{if(backdropPress&&Math.hypot(e.clientX-backdropPress.x,e.clientY-backdropPress.y)>=8)backdropPress=null;});
+  this.dialog.addEventListener('pointercancel',()=>{backdropPress=null;});
+  this.dialog.addEventListener('pointerup',e=>{const p=backdropPress;backdropPress=null;if(p&&p.id===e.pointerId&&outside(e)&&Math.hypot(e.clientX-p.x,e.clientY-p.y)<8)this.advanceFromBackdrop();});
   this.dialog.querySelector('header button').onclick=()=>this.close();this.dialog.addEventListener('cancel',e=>{e.preventDefault();this.close();});
   this.dialog.addEventListener('keydown',e=>{if(e.repeat)return;if(e.key.toLowerCase()==='e'){e.preventDefault();(this.dialog.contains(document.activeElement)&&document.activeElement.tagName==='BUTTON'?document.activeElement:this.body.querySelector('button'))?.click();}if(['ArrowDown','ArrowUp','w','s'].includes(e.key)){e.preventDefault();const buttons=[...this.body.querySelectorAll('button')],index=buttons.indexOf(document.activeElement),direction=['ArrowUp','w'].includes(e.key)?-1:1;buttons[(index+direction+buttons.length)%buttons.length]?.focus();}});
+ }
+ advanceFromBackdrop(){
+  const buttons=[...this.body.querySelectorAll('button')];
+  if(this.state.interactions.panel?.kind!=='dialogue'&&!(buttons.length===1&&buttons[0].textContent==='Continue exploring'))return;
+  const active=document.activeElement;
+  (buttons.includes(active)?active:buttons[0])?.click();
  }
  text(tag,value,parent=this.body){const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;}
  button(label,action,parent=this.body){const b=this.text('button',label,parent);b.type='button';b.onclick=()=>{try{action();}catch(error){this.log(error.message);}};return b;}
