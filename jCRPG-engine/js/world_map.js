@@ -4,6 +4,7 @@ import {knownLocation,rememberLocations,discoverVisited,cameraMapOffset} from '.
 
 import {MapViewport,bindMapGestures} from './map_viewport.js';
 import {mapGoalPosition} from './interactions/navigation.js';
+import {navigationWaypoint} from './interactions/cave_navigation.js';
 
 const TERRAIN_COLORS = [[126, 143, 88], [59, 94, 59], [128, 123, 113], [49, 102, 134], [161, 128, 82], [204, 179, 104]];
 const DASHED = [3, 3], SOLID = [];
@@ -221,25 +222,25 @@ export class WorldMap {
 
 	_drawMini() {
 		const ctx = this.mini.getContext('2d'), size = this.mini.width, p = this.state.party.position;
-		const yaw=this.renderer._yaw;
+		const yaw=this.renderer._yaw, radius=MINIMAP_RADIUS/(this.state.realm==='cave'?3:1);
 		ctx.clearRect(0,0,size,size);ctx.save();ctx.translate(size/2,size/2);ctx.rotate(yaw);ctx.scale(-1,1);ctx.translate(-size/2,-size/2);
-		this._background(ctx, size, p.x - MINIMAP_RADIUS, p.z + MINIMAP_RADIUS, MINIMAP_RADIUS * 2);
+		this._background(ctx, size, p.x - radius, p.z + radius, radius * 2);
 		ctx.restore();
-		const scale = size / (MINIMAP_RADIUS * 2);
+		const scale = size / (radius * 2);
 		ctx.strokeStyle = '#ffffff88'; ctx.setLineDash(DASHED); ctx.beginPath();
 		ctx.arc(size / 2, size / 2, VISIBLE_RADIUS * scale, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash(SOLID);
 		for (const marker of this.markers) {
 			if (!knownLocation(marker,this.state.saveDeltas?.data,this.showAll)||!this.enabled.has(this._kind(marker))) continue;
 			const dx = wrappedDelta(marker.x, p.x, this.world.sizeX), dz = wrappedDelta(marker.z, p.z, this.world.sizeZ);
 			const offset=cameraMapOffset(dx,dz,yaw);
-			if (Math.abs(offset.x) > MINIMAP_RADIUS || Math.abs(offset.y) > MINIMAP_RADIUS) continue;
+			if (Math.abs(offset.x) > radius || Math.abs(offset.y) > radius) continue;
 			this._marker(ctx, marker, size / 2 + offset.x * scale, size / 2 + offset.y * scale, 8);
 		}
 		this._player(ctx, size / 2, size / 2, 10, 0);
 		const north=cameraMapOffset(0,1,yaw),edge=(size/2-16)/Math.max(Math.abs(north.x),Math.abs(north.y));
 		ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=4;ctx.strokeStyle='#17251b';
 		ctx.strokeText('N',size/2+north.x*edge,size/2+north.y*edge);ctx.fillStyle='#fff';ctx.fillText('N',size/2+north.x*edge,size/2+north.y*edge);
-		const goal=this.state.interactions?.navigationGoal();
+		const goal=navigationWaypoint(this.state);
 		if(goal){const offset=cameraMapOffset(wrappedDelta(goal.position[0],p.x,this.world.sizeX),wrappedDelta(goal.position[2],p.z,this.world.sizeZ),yaw);this._navIcon(ctx,size/2+offset.x*scale,size/2+offset.y*scale,size,goal);}
 	}
 
@@ -250,7 +251,7 @@ export class WorldMap {
 		if(at.edge){ctx.rotate(at.angle);ctx.moveTo(12,0);ctx.lineTo(-8,-8);ctx.lineTo(-4,0);ctx.lineTo(-8,8);}
 		else {ctx.moveTo(0,-11);ctx.lineTo(9,0);ctx.lineTo(0,11);ctx.lineTo(-9,0);}
 		ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
-		if(goal.realm!==this.state.realm){ctx.save();ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#201907';ctx.fillStyle='#ffd75a';const label=goal.realm==='cave'?'Cave':'Surface';const ly=at.y>size/2?at.y-16:at.y+24;ctx.strokeText(label,at.x,ly);ctx.fillText(label,at.x,ly);ctx.restore();}
+		if(goal.caveExit||goal.realm!==this.state.realm){ctx.save();ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#201907';ctx.fillStyle='#ffd75a';const label=goal.caveExit?'Exit':goal.realm==='cave'?'Cave':'Surface';const ly=at.y>size/2?at.y-16:at.y+24;ctx.strokeText(label,at.x,ly);ctx.fillText(label,at.x,ly);ctx.restore();}
 	}
 
 	_drawFull() {
@@ -266,7 +267,7 @@ export class WorldMap {
 		}
 		const at=view.project(p.x,p.z);
 		if(at.x>=0&&at.x<=1&&at.y>=0&&at.y<=1)this._player(ctx,at.x*size,at.y*size,10);
-		const goal=this.state.interactions?.navigationGoal();
+		const goal=navigationWaypoint(this.state);
 		if(goal){const target=view.project(goal.position[0],goal.position[2]);this._navIcon(ctx,target.x*size,target.y*size,size,goal);}
 	}
 
@@ -274,8 +275,8 @@ export class WorldMap {
 		const rect = this.full.getBoundingClientRect(), size = this.full.width;
 		const x = (event.clientX - rect.left) / rect.width * size, y = (event.clientY - rect.top) / rect.height * size;
 		let best = null, distance = (14 * size / rect.width) ** 2;
-		const goal=this.state.interactions?.navigationGoal();
-		if(goal){const projected=this.viewport.project(goal.position[0],goal.position[2]),at=mapGoalPosition(projected.x*size,projected.y*size,size);if((at.x-x)**2+(at.y-y)**2<distance)return {id:goal.id,name:goal.name,kind:'mission',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true};}
+		const goal=navigationWaypoint(this.state);
+		if(goal){const projected=this.viewport.project(goal.position[0],goal.position[2]),at=mapGoalPosition(projected.x*size,projected.y*size,size);if((at.x-x)**2+(at.y-y)**2<distance)return {id:goal.id,name:goal.name,kind:goal.kind==='cave'?'cave':'mission',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true};}
 		for (const marker of this.markers) {
 			if (!this._visible(marker)) continue;
 			const at=this.viewport.project(marker.x,marker.z);
@@ -288,9 +289,17 @@ export class WorldMap {
 	}
 
 	update(force = false) {
-        const nav=this.state.interactions?.navigationGoal();
+        if(this._minimapRealm!==this.state.realm){
+            this._minimapRealm=this.state.realm;force=true;
+            const cave=this.state.realm==='cave',button=document.getElementById('hud-minimap');
+            button.querySelector('span').textContent=cave?'Map · Cave · 3× zoom':`Map · ${MINIMAP_RADIUS}-unit radius`;
+            button.title=cave?`Nearby cave map: 3× zoom, ${(MINIMAP_RADIUS/3).toFixed(1)}-unit radius`:`Nearby map: ${MINIMAP_RADIUS}-unit radius, twice the visible area`;
+        }
+        const nav=navigationWaypoint(this.state);
         document.getElementById('hud-minimap').setAttribute('aria-label',nav?'Open world map. Navigation goal: '+nav.name:'Open world map');
         document.getElementById('map-mission-note').textContent=nav?'◆ Navigation: '+nav.name+' · '+nav.realm+'. Gold arrows point toward offscreen goals.':'Select a quest in the journal to set a navigation goal.';
+        const navKey=JSON.stringify([this.state.realm,nav?.id,nav?.position]);
+        if(this._navKey!==navKey){this._navKey=navKey;force=true;}
         const save=this.state.saveDeltas;
         if(save&&discoverVisited(save,this.baseMarkers,this.state.party.position,this.state.realm,this.world.sizeX,this.world.sizeZ))save.persist(this.state.party.position,this.state.realm);
         const revision=save?.data.deltaRevision??0;
