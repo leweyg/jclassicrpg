@@ -64,7 +64,7 @@ test('inventory transfer, take-all rollback, migration and portable saves',()=>{
 });
 test('all missions can progress in dependency order; early world work backfills',()=>{
  const e=create();for(const s of content.shrines)run(e,[{op:'shrine',id:s.id}]);for(const p of content.puzzles)solve(e,p.id);
- const pending=new Set(content.missions.map(m=>m.id));let passes=0;while(pending.size){assert.ok(++passes<10,'mission dependency deadlock');let progress=0;for(const id of [...pending]){const m=e.maps.missions[id];if(e.missionState(id)!=='available')continue;run(e,[{op:'accept',id}]);for(const o of m.objectives)for(const target of o.targetIds){if(o.kind==='commitment')run(e,[{op:'commitment',id:target,value:'Tested promise'}]);if(o.kind==='evidence')run(e,[{op:'evidence',id:target}]);if(o.kind==='actor')run(e,[{op:'talk',id:target}]);}assert.equal(e.missionState(id),'ready-to-turn-in',id);run(e,[{op:'turnIn',id}]);assert.equal(e.missionState(id),'completed');assert.throws(()=>run(e,[{op:'accept',id}]));pending.delete(id);progress++;}assert.ok(progress);}
+ const pending=new Set(content.missions.map(m=>m.id));let passes=0;while(pending.size){assert.ok(++passes<10,'mission dependency deadlock');let progress=0;for(const id of [...pending]){const m=e.maps.missions[id];if(!['available','active','ready-to-turn-in'].includes(e.missionState(id)))continue;if(e.missionState(id)==='available')run(e,[{op:'accept',id}]);for(const o of m.objectives)for(const target of o.targetIds){if(o.kind==='commitment')run(e,[{op:'commitment',id:target,value:'Tested promise'}]);if(o.kind==='evidence')run(e,[{op:'evidence',id:target}]);if(o.kind==='actor')run(e,[{op:'talk',id:target}]);if(o.kind==='item'){const c=content.containers.find(c=>c.items.some(i=>i.id===target));run(e,[{op:'open',id:c.id},{op:'take',id:c.id}]);}if(o.kind==='fitting')run(e,[{op:'fit',id:target}]);}assert.equal(e.missionState(id),'ready-to-turn-in',id);run(e,[{op:'turnIn',id}]);assert.equal(e.missionState(id),'completed');assert.throws(()=>run(e,[{op:'accept',id}]));pending.delete(id);progress++;}assert.ok(progress);}
  for(const c of content.cultures)for(const id of [c.capitalTownId,...c.secondaryCapitalTownIds])assert.equal(e.save.data.settlements[id].balanceState,'integrated');
  assert.equal(e.save.data.shrineRoutes['route:wammigmig:awshowam'].state,'arrived');assert.ok(e.save.data.flags['letter:garrum']);
  const capital=content.cultures[0].capitalTownId;const powered=[...e.save.data.settlements[capital].poweredTargetIds];run(e,[{op:'settlement',id:capital}]);assert.equal(e.save.data.settlements[capital].balanceState,'integrated');assert.deepEqual(e.save.data.settlements[capital].poweredTargetIds,powered);
@@ -108,7 +108,7 @@ test('loot from different containers stacks, counts toward predicates and surviv
 test('legacy instance saves migrate and source/count tampering is rejected',()=>{
  const e=create(),old=JSON.parse(e.save.export());
  old.inventory={items:Object.fromEntries(content.initialInventory.map(i=>[i.id,structuredClone(i)])),order:content.initialInventory.map(i=>i.id)};
- const containers=content.containers.slice(0,2);
+ const containers=content.containers.filter(c=>c.items[0]?.typeId==='CopperCoil').slice(0,2);
  for(const c of containers){const item=c.items[0];old.inventory.items[item.id]=structuredClone(item);old.inventory.order.push(item.id);old.containers[c.id]={opened:true,takenItemIds:[item.id]};}
  e.save.import(JSON.stringify(old));e.initialize();
  const stack=Object.values(e.save.data.inventory.items).find(i=>i.typeId==='CopperCoil');

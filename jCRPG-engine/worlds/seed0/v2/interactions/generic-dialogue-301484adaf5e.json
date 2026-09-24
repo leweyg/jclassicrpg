@@ -1,0 +1,1 @@
+{"id":"{{dialogueId}}","start":"greeting","nodes":{"greeting":{"text":"A price tells you what someone can pay. It does not tell you what a cold household needs. Keep both facts in the account.","knowledge":"testimony","choices":[{"text":"Until next time."}]}}}

@@ -301,42 +301,43 @@ export class InteractionUI {
         this.open('Journal', 'journal');
         const engine = this.state.interactions;
         const save = this.state.saveDeltas.data;
+        const story = engine.content.stories?.[0];
+        if (story) {
+            this.text('h3', '★ Main story · ' + story.title);
+            const chapter = engine.currentStoryChapter();
+            this.text('p', chapter ? chapter.title : story.nextChapterFallback);
+            this.text('p', story.chapters.map(c => (c.missionId && engine.missionState(c.missionId) === 'completed' ? '✓ ' : '') + c.title + (c.status === 'planned' ? ' (planned)' : '')).join(' → '));
+            if (engine.mainNavigationGoal()) {
+                this.text('p', 'Next: ' + engine.mainNavigationGoal().name);
+                this.button('Continue main story', () => { engine.continueMainStory(); this.persist(); this.openJournal(); }, {primary:true});
+            }
+        }
         let count = 0;
-        for (const category of [
-            'active', 'ready-to-turn-in', 'available', 'completed', 'failed', 'archived'
-        ]) {
-            const entries = engine.journal()
-                .filter(mission => (
-                    (mission.id === save.navMissionId ? 'active' : mission.state) === category
-                    && (category !== 'available'
-                        || save.actors[mission.giverActorId]?.talked
-                        || mission.id === 'mission:wammigmig:fair-share')
-                ))
-                .sort((a, b) => (
-                    Number(b.id === save.navMissionId) - Number(a.id === save.navMissionId)
-                ));
+        for (const [kind, label] of [['main','★ Main story'],['side','◇ Side quests'],['mini','• Mini quests']]) {
+            const entries = engine.journal().filter(m => (m.kind ?? 'side') === kind && (m.state !== 'available' || save.actors[m.giverActorId]?.talked));
             if (!entries.length) continue;
-
-            this.text('h3', category.replaceAll('-', ' '));
+            this.text('h3', label);
+            let completed;
             for (const mission of entries) {
-                const button = this.button(
-                    (mission.id === save.navMissionId ? '◆ ' : '') + mission.title,
-                    () => this.openQuest(mission.id),
-                    { primary: count === 0 }
-                );
+                let parent;
+                if (mission.state === 'completed') {
+                    if (!completed) { completed = this.text('details', ''); this.text('summary', 'Completed', completed); }
+                    parent = completed;
+                }
+                const button = this.button((mission.id === save.navMissionId ? '◆ ' : '') + mission.title + ' · ' + mission.state.replaceAll('-', ' '), () => this.openQuest(mission.id), {primary:count === 0 && !story});
+                if (parent) parent.appendChild(button);
                 button.className = 'quest-row';
                 count++;
             }
         }
-        if (!count) {
-            this.text('p', 'No quests yet. Speak to people nearby to learn more.');
-        }
+        if (!count) this.text('p', 'Speak to people nearby to learn more.');
         this.focus();
         this.dialog.scrollTop = 0;
     }
 
-    openQuest(id) {
+    async openQuest(id) {
         const engine = this.state.interactions;
+        if(engine.loadRecord)await engine.loadRecord('missions',id);
         const mission = engine.journal().find(mission => mission.id === id);
         if (!mission) return this.openJournal();
 
@@ -346,7 +347,7 @@ export class InteractionUI {
         back.setAttribute('aria-label', 'Back to journal');
         back.onclick = () => this.openJournal();
 
-        this.text('small', mission.state.replaceAll('-', ' '));
+        this.text('small', (mission.kind ?? 'side') + ' · ' + mission.state.replaceAll('-', ' '));
         this.text('p', mission.summary);
         for (const objective of mission.progress) {
             this.text(

@@ -1,0 +1,1 @@
+{"id":"{{dialogueId}}","start":"greeting","nodes":{"greeting":{"text":"Unclaimed surplus looks like an invitation. Appetite is real; it does not decide every claim. Give it a place without feeding it everyone else’s share.","knowledge":"testimony","choices":[{"text":"Until next time."}]}}}

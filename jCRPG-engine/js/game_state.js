@@ -235,6 +235,7 @@ export class GameState {
 	async interact(action=this.nearbyInteraction()) {
 		if (!action) return 'Nothing nearby to use.';
 		if (action.kind!=='portal') {
+            if(action.kind==='actor')await this.interactions.loadRecord?.('dialogues',this.interactions.maps.actors[action.targetId].dialogueId);
             const result=this.interactions.interact(action);
             this.saveDeltas.persist(this.party.position,this.realm);
             return result.message??result.text??'Recorded.';

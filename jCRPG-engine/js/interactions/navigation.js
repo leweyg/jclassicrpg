@@ -14,7 +14,7 @@ export function questGoal(engine,id,seen=new Set()) {
   for(const target of o.targetIds.filter(t=>!done.includes(t))){
    if(o.kind==='mission'){const next=questGoal(engine,target,seen);if(next)return next;}
    const goal=engine.content.goals.find(g=>g.targetId===target);
-   if(goal)return {...goal,name:o.text};
+   if(goal){if(goal.realm==='cave'&&goal.entrancePosition&&s.player?.realm!=='cave')return {...goal,id:goal.portalId,position:goal.entrancePosition,realm:'surface',name:'Enter the southern cave'};return {...goal,name:o.text};}
   }
   return actorGoal(m.turnInActorId,o.text+' — speak to');
  }
@@ -22,17 +22,15 @@ export function questGoal(engine,id,seen=new Set()) {
 }
 
 export function advanceNavigation(engine,before,after){
- const missions=engine.content.missions;
- const changedTo=state=>missions.find(m=>before.missions[m.id]?.state!==state&&after.missions[m.id]?.state===state);
- const accepted=missions.find(m=>!before.missions[m.id]&&['active','ready-to-turn-in'].includes(after.missions[m.id]?.state));
- const ready=changedTo('ready-to-turn-in'),completed=changedTo('completed');
- if(accepted||ready||completed)after.navLocation=null;
- if(accepted||ready)after.navMissionId=(accepted??ready).id;
- else if(completed){
-  const next=missions.find(m=>(m.requires??[]).includes(completed.id)&&!(after.missions[m.id])&&(m.requires??[]).every(id=>after.missions[id]?.state==='completed'))
-   ??missions.find(m=>['ready-to-turn-in','active'].includes(after.missions[m.id]?.state));
-  after.navMissionId=next?.id??null;
- }
+ const accepted=engine.content.missions.find(m=>m.startMode!=='automatic'&&!before.missions[m.id]&&after.missions[m.id]);
+ if(accepted){after.navMissionId=accepted.id;after.navLocation=null;return;}
+ const selected=before.navMissionId;
+ if(selected&&!['completed','failed','archived'].includes(after.missions[selected]?.state))return;
+ if(before.navLocation)return;
+ const newlyAccepted=engine.content.missions.find(m=>m.startMode!=='automatic'&&!before.missions[m.id]&&after.missions[m.id]);
+ const main=engine.currentStoryChapter(after)?.missionId;
+ after.navMissionId=newlyAccepted?.id??main??null;
+ after.navLocation=null;
 }
 
 /** Keep an offscreen goal on the map edge, preserving its bearing. */

@@ -147,7 +147,7 @@
                 },
                 "kind": {
                   "type": "string",
-                  "pattern": "^(shrine|puzzle|evidence|commitment|actor|mission)$"
+                  "pattern": "^(shrine|puzzle|evidence|commitment|actor|mission|item|fitting)$"
                 },
                 "targetIds": {
                   "type": "array",
@@ -494,6 +494,24 @@
             }
           }
         }
+      }
+    },
+    "stories": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "fittings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "storyMigrations": {
+      "type": "array",
+      "items": {
+        "type": "object"
       }
     }
   }

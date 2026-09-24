@@ -1,4 +1,5 @@
-import {authorOpeningDialogue} from './opening_dialogue.mjs';
+import {storyTravel} from './story_travel.mjs';
+import {authorMainStory} from './main_story.mjs';
 import {validateInteractionNavigation} from './interaction_navigation.mjs';
 import {CELL as C,wallBit,FACE} from '../jCRPG-engine/js/world/format.js';
 import {validateContent,validateAnchor,compareId} from '../jCRPG-engine/js/interactions/format.js';
@@ -33,7 +34,7 @@ export function compileInteractions({data,world,chunks,structures,portals,emit})
   }throw Error('No safe interaction placement near '+p);
  }
  function anchor(kind,targetId,position,{realm='surface',prompt,componentId,fact,priority,asset,...extra}={}){
-  const a={id:'interaction:'+kind+':'+(componentId??targetId),kind,targetId,position,realm,range:2.1,priority:priority??({actor:70,shrine:50,puzzle:90,container:60,evidence:85}[kind]),prompt:prompt??'Interact',requiresLineOfSight:true,...(componentId?{componentId}:{}),...(fact?{fact}:{}),...extra};validateAnchor(a);chunk(position[0],position[2]).interactions.push(a);
+  const a={id:'interaction:'+kind+':'+(componentId??targetId),kind,targetId,position,realm,range:2.1,priority:priority??({actor:70,shrine:50,puzzle:90,container:60,evidence:85,fitting:85}[kind]),prompt:prompt??'Interact',requiresLineOfSight:true,...(componentId?{componentId}:{}),...(fact?{fact}:{}),...extra};validateAnchor(a);chunk(position[0],position[2]).interactions.push(a);
   if(asset)emit(asset,...position,0,[1,1,1],{realm,interactionId:a.id,stateTargetId:targetId,componentId,actorId:kind==='actor'?targetId:undefined,settlementId:extra.settlementId});
   content.goals.push({id:'goal:'+a.id,kind,targetId,position,realm,...(fact?{fact}:{}),sourceKind});return a;
  }
@@ -131,14 +132,30 @@ export function compileInteractions({data,world,chunks,structures,portals,emit})
  const types=new Map(data.objectInstances.map(i=>[i.typeId,{id:i.typeId,name:i.typeId.replace(/([a-z])([A-Z])/g,'$1 $2'),icon:i.icon,usable:false,note:'Carried evidence; use effects are not implemented.'}]));
  types.set('CopperCoil',{id:'CopperCoil',name:'Salvaged copper coil',usable:false,note:'Optional salvage from the old grid.'});content.itemTypes=[...types.values()];
  for(const c of chunks)for(const o of c.objects)if(o.kind==='chest'){const items=[{id:'item:'+o.id+':0',typeId:'CopperCoil',quantity:1,sourceKind}];content.containers.push({id:o.id,name:'Old grid chest',position:o.position,realm:'surface',items,lock:null,trap:null,sourceKind});anchor('container',o.id,o.position,{prompt:'Open chest'});for(const n of c.nodes)if(n.userData.jcrpg.objectId===o.id)Object.assign(n.userData.jcrpg,{containerId:o.id,interactionId:'interaction:container:'+o.id});}
- authorOpeningDialogue(content);
+ const storyPlacement=authorMainStory({content,portals,reachable,anchor,safeNear,mission,objective,route,solvePuzzle});
  // Explicit reconciliation: all fixed ownership survives, even when no house was built.
  const ownership=data.districts.flatMap(d=>d.fixedInfrastructure.map(f=>({districtId:d.id,ownerMemberId:f.ownerMemberId,structureId:structures.find(s=>s.districtId===d.id&&s.ownerMemberId===f.ownerMemberId)?.id??null})));
  for(const record of ownership){record.anchorKind=record.structureId?'owned-structure':'district-fallback';const existing=content.actors.find(a=>a.legacy?.numericId===record.ownerMemberId);if(existing){record.actorId=existing.id;continue;}const legacy=data.actors.find(a=>a.numericId===record.ownerMemberId),town=settlements.get(districtById.get(record.districtId).townId),s=structures.find(s=>s.id===record.structureId);const a=actor(legacy.id,'Resident '+legacy.numericId,'Local witness',town,s?[s.origin[0]-1,s.origin[1],s.origin[2]+1]:town.position,'The Drift changes what reaches our homes. The circuit keepers can explain the regional work; shrines preserve each relay you awaken.',legacy,byCulture[legacy.entityType]);a.anchorKind=record.anchorKind;record.actorId=a.id;}
+ // Residents without authored work share one conversation; actor IDs stay stable.
+ const defaultDialogueId='dialogue:default:resident';
+ const genericActors=content.actors.filter(a=>a.role==='Local witness'&&!a.missionIds.length);
+ const residentGroups=new Map();
+ for(const actor of genericActors){
+  const definition=content.dialogues.find(d=>d.id===actor.dialogueId);
+  const key=JSON.stringify({...definition,id:defaultDialogueId});
+  const group=residentGroups.get(key)??[];group.push(definition);residentGroups.set(key,group);
+ }
+ const defaults=[...residentGroups.values()].sort((a,b)=>b.length-a.length)[0]??[];
+ if(defaults.length>1){
+  const genericIds=new Set(defaults.map(d=>d.id));
+  content.dialogues=content.dialogues.filter(d=>!genericIds.has(d.id));
+  content.dialogues.push({...defaults[0],id:defaultDialogueId});
+  for(const a of genericActors)if(genericIds.has(a.dialogueId))a.dialogueId=defaultDialogueId;
+ }
  for(const list of Object.values(content))if(Array.isArray(list))list.sort((a,b)=>compareId(a.id,b.id));
  for(const s of content.shrines)s.neighbors.sort((a,b)=>compareId(a.id,b.id));
  const maps=validateContent(content);const allAnchors=chunks.flatMap(c=>c.interactions),anchorIds=new Set();for(const a of allAnchors){const group={actor:'actors',shrine:'shrines',puzzle:'puzzles',container:'containers'}[a.kind];if(group&&!maps[group][a.targetId])throw Error('Dangling anchor '+a.id);if(a.kind==='puzzle'&&a.input!=='reset'&&!maps.puzzles[a.targetId].componentIds.includes(a.componentId))throw Error('Unknown puzzle input '+a.id);if(anchorIds.has(a.id))throw Error('Duplicate anchor '+a.id);anchorIds.add(a.id);}
  const navigationReport=validateInteractionNavigation(chunks,content);
  const solvers=content.puzzles.map(p=>({id:p.id,...solvePuzzle(p)}));
- return {content,ownership,report:{navigation:navigationReport,legacyActors:data.actors.length,legacyNPCs:data.actors.filter(a=>!a.isPlayer).length,legacyItems:data.objectInstances.length,fixedOwners:ownership.length,ownerMatches:ownership.filter(o=>o.structureId).length,fallbackAnchors:ownership.filter(o=>!o.structureId).length,actors:content.actors.length,containers:content.containers.length,shrines:content.shrines.length,puzzles:content.puzzles.length,missions:content.missions.length,capitals:6,secondaryCapitals:24,anchors:allAnchors.length,solverWitnesses:solvers.map(s=>({id:s.id,steps:s.inputs.length})),danglingReferences:0,unsolvedPuzzles:0,deviations:['Narrative hierarchy, characters, dialogue, shrine routing, circuit puzzles and concrete loot are authored web content.','Shrine edges are a deterministic proximity graph, not recovered legacy roads.','Actor models are distinct static culture proxies; no MD5 animation runtime.','Regional circuits use accessible settlement controls; labyrinth generators use entrance-connected maze cells.','Surface reachability uses existing collision semantics; terrain slopes and full cross-world route traversal require browser review.']}};
+ return {content,ownership,report:{navigation:navigationReport,storyGraph:content.stories,travel:storyTravel(chunks,content,storyPlacement),storyCave:{portalId:storyPlacement.portal.id,reachableCells:storyPlacement.cells.length},legacyActors:data.actors.length,legacyNPCs:data.actors.filter(a=>!a.isPlayer).length,legacyItems:data.objectInstances.length,fixedOwners:ownership.length,ownerMatches:ownership.filter(o=>o.structureId).length,fallbackAnchors:ownership.filter(o=>!o.structureId).length,actors:content.actors.length,containers:content.containers.length,shrines:content.shrines.length,puzzles:content.puzzles.length,missions:content.missions.length,capitals:6,secondaryCapitals:24,anchors:allAnchors.length,solverWitnesses:solvers.map(s=>({id:s.id,steps:s.inputs.length})),danglingReferences:0,unsolvedPuzzles:0,deviations:['Narrative hierarchy, characters, dialogue, shrine routing, circuit puzzles and concrete loot are authored web content.','Shrine edges are a deterministic proximity graph, not recovered legacy roads.','Actor models are distinct static culture proxies; no MD5 animation runtime.','Regional circuits use accessible settlement controls; labyrinth generators use entrance-connected maze cells.','Surface reachability uses existing collision semantics; terrain slopes and full cross-world route traversal require browser review.']}};
 }

@@ -27,6 +27,7 @@ export class BakedView {
    if(save&&b.nodes){for(let i=0;i<b.nodes.length;i++){
      const n=b.nodes[i],id=n.stateTargetId;
      let color=save.containers?.[n.objectId]?.looted?0x687269:save.openedContainers?.[n.objectId]?0xb4ac83:0xffffff;
+     if(save.flags?.[id]===true)color=0xb0ffcf;
      if(save.settlements?.[n.settlementId]?.balanceState==='integrated')color=0xb0ffcf;
      if(save.shrines?.[id]?.activated||save.puzzles?.[id]?.completed)color=0x73ffd2;
      else if(save.puzzles?.[id]?.observed?.includes(n.componentId))color=0xffce73;

@@ -1,4 +1,4 @@
-import {dialogueStart,dialogueView} from './dialogue.js';
+import {dialogueStart,dialogueView,validateDialogue} from './dialogue.js';
 import {grantInventoryItem,inventoryCount,itemQuantity,stackSignature} from './inventory.js';
 import {validateContent,INTERACTION_VERSION} from './format.js';
 import {initialPuzzle,puzzleStep,puzzleHint} from './puzzles.js';
@@ -25,7 +25,16 @@ export function predicate(p,s,engine,depth=0){
 }
 export class InteractionRuntime {
  constructor(content,save){this.content=content;this.maps=validateContent(content);this.save=save;this.panel=null;this.initialize();}
- initialize(){const s=validateSave(this.save.data);this.validateState(s);if(!s.flags.initialInventory){for(const item of this.content.initialInventory)this.grant(s,item);s.flags.initialInventory=true;}this.refresh(s);this.save.data=s;}
+ initialize(){const s=validateSave(this.save.data);this.migrateStory(s);this.validateState(s);if(!s.flags.initialInventory){for(const item of this.content.initialInventory)this.grant(s,item);s.flags.initialInventory=true;}this.refresh(s);this.save.data=s;if(!s.navMissionId&&!s.navLocation)s.navMissionId=this.currentStoryChapter()?.missionId??null;}
+ migrateStory(s){
+ for(const migration of this.content.storyMigrations??[]){if(s.flags[migration.id])continue;
+  if(s.missions[migration.legacyMissionId]?.state==='completed')for(const id of migration.completedMissionIds)s.missions[id]??={state:'completed',objectiveSources:{}};
+  s.flags[migration.id]=true;
+ }
+ }
+ currentStoryChapter(s=this.save.data){const story=this.content.stories?.[0];return story?.chapters.find(c=>c.missionId&&s.missions[c.missionId]?.state!=='completed')??null;}
+ mainNavigationGoal(){return questGoal(this,this.currentStoryChapter()?.missionId);}
+ continueMainStory(){const id=this.currentStoryChapter()?.missionId;if(id)this.setNavigationGoal(id);}
  validateState(s){
  if(s.navMissionId!=null&&!Object.hasOwn(this.maps.missions,s.navMissionId))throw Error('Unknown navigation quest');
  const check=(field,group)=>{for(const id of Object.keys(s[field]))if(!Object.hasOwn(this.maps[group],id))throw Error('Unknown saved '+field+': '+id);};
@@ -47,9 +56,11 @@ export class InteractionRuntime {
  grant(s,item){grantInventoryItem(s.inventory,item);}
  missionState(id,s=this.save.data){const m=this.maps.missions[id];if(!m)throw Error('Unknown mission '+id);return s.missions[id]?.state??((m.requires??[]).every(dep=>s.missions[dep]?.state==='completed')?'available':'locked');}
  objectiveSources(o,s){
- return o.targetIds.filter(id=>({shrine:()=>s.shrines[id]?.activated,puzzle:()=>s.puzzles[id]?.completed,evidence:()=>s.evidence[id],commitment:()=>s.commitments[id]!==undefined,actor:()=>s.actors[id]?.talked,mission:()=>s.missions[id]?.state==='completed'})[o.kind]());
+ return o.targetIds.filter(id=>({shrine:()=>s.shrines[id]?.activated,puzzle:()=>s.puzzles[id]?.completed,evidence:()=>s.evidence[id],commitment:()=>s.commitments[id]!==undefined,actor:()=>s.actors[id]?.talked,mission:()=>s.missions[id]?.state==='completed',item:()=>Object.values(s.inventory.items).some(item=>item.sourceIds.includes(id)),fitting:()=>s.flags[id]===true})[o.kind]());
  }
  refresh(s){
+ for(const m of this.content.missions)if(m.startMode==='automatic'&&this.missionState(m.id,s)==='available')s.missions[m.id]={state:'active',objectiveSources:{}};
+
  for(const m of this.content.missions){const state=s.missions[m.id];if(!state||!['active','ready-to-turn-in'].includes(state.state))continue;state.objectiveSources=Object.fromEntries(m.objectives.map(o=>[o.id,this.objectiveSources(o,s)]));state.state=m.objectives.every(o=>state.objectiveSources[o.id].length>=(o.required??o.targetIds.length))?'ready-to-turn-in':'active';}
  for(const [id,route]of Object.entries(s.shrineRoutes)){const def=this.maps.routes[id];route.activatedShrineIds=def.shrineIds.filter(id=>s.shrines[id]?.activated);const first=def.shrineIds.findIndex(id=>!s.shrines[id]?.activated);route.litFrontierShrineIds=first<0?[]:[def.shrineIds[first]];route.state=first<0?'arrived':'active';}
  }
@@ -68,6 +79,7 @@ export class InteractionRuntime {
  if(!a||typeof a.op!=='string')throw Error('Invalid action');
  const get=(group,id)=>{const value=this.maps[group][id];if(!value)throw Error('Unknown '+group+': '+id);return value;};
  switch(a.op){
+ case 'fit':{const f=get('fittings',a.id);if(s.flags[f.id])break;if(!['active','ready-to-turn-in'].includes(this.missionState(f.missionId,s)))throw Error('The fitting is not ready');if(!Object.values(s.inventory.items).some(item=>item.sourceIds.includes(f.itemId)))throw Error('Bring the listening coil from the southern cave first.');s.flags[f.id]=true;messages.push('The coil settles into the socket. The road relay answers.');break;}
  case 'text':messages.push(a.text);break;
  case 'flag':if(['__proto__','constructor','prototype'].includes(a.id))throw Error('Invalid flag');s.flags[a.id]=a.value;break;
  case 'evidence':s.evidence[a.id]=true;messages.push(a.text??'Observation recorded as fact.');break;
@@ -114,6 +126,7 @@ export class InteractionRuntime {
  }
  describe(anchor){
   if(!anchor)return null;
+  if(anchor.kind==='puzzle'&&this.maps.puzzles[anchor.targetId].mechanic==='all')return {...anchor,label:'Toggle '+this.maps.puzzles[anchor.targetId].labels[this.maps.puzzles[anchor.targetId].componentIds.indexOf(anchor.componentId)]};
   if(anchor.kind==='puzzle'){const p=this.maps.puzzles[anchor.targetId],s=this.save.data.puzzles[p.id]??initialPuzzle(p),i=p.componentIds.indexOf(anchor.componentId);if(i>=0){const verb=s.completed?'Stable':!s.observed.includes(anchor.componentId)?'Inspect':p.family==='resonance'||s.values.every((n,j)=>n===p.demands[j])?'Pulse':'Set';return {...anchor,label:`${verb} ${p.labels[i]} · ${s.values[i]}/${p.demands[i]}`};}}
   if(anchor.kind==='actor'){const actor=this.maps.actors[anchor.targetId],ready=actor.missionIds.find(id=>this.missionState(id)==='ready-to-turn-in');if(ready)return {...anchor,label:'Report to '+actor.name};}
   if(anchor.kind==='shrine'&&this.save.data.shrines[anchor.targetId])return {...anchor,label:'Rest / recall relay pattern'};
@@ -124,6 +137,7 @@ export class InteractionRuntime {
  if(anchor.kind==='container'){const result=this.transact([{op:'open',id:anchor.targetId}],token);this.panel={kind:'container',id:anchor.targetId};return result;}
  if(anchor.kind==='shrine'){const result=this.transact([{op:'shrine',id:anchor.targetId}],token);const cue=this.maps.shrines[anchor.targetId].cue;result.message+=' '+(cue??'');return result;}
  if(anchor.kind==='puzzle')return this.transact([{op:'puzzle',id:anchor.targetId,input:anchor.input??anchor.componentId}],token);
+ if(anchor.kind==='fitting')return this.transact([{op:'fit',id:anchor.targetId}],token);
  if(anchor.kind==='evidence')return this.transact([{op:'evidence',id:anchor.targetId,text:anchor.fact}],token);
  throw Error('Unsupported interaction');
  }
@@ -164,7 +178,7 @@ export class InteractionRuntime {
  journal(){return this.content.missions.map(m=>({...m,state:this.missionState(m.id),progress:m.objectives.map(o=>({...o,count:this.objectiveSources(o,this.save.data).length}))})).filter(m=>m.state!=='locked');}
  markers(){
  const result=[],add=(id,name,kind,position,realm='surface')=>{if(position)result.push({id,name,kind,x:position[0],y:position[1],z:position[2],realm,implemented:true});};
- for(const m of this.journal())if(['active','ready-to-turn-in'].includes(m.state)){const actor=this.maps.actors[m.turnInActorId];add(m.id,m.state==='ready-to-turn-in'?'Return: '+actor.name:m.title,'mission',actor.position,actor.realm);for(const o of m.progress)if(o.count<(o.required??o.targetIds.length))for(const id of o.targetIds){for(const goal of this.content.goals.filter(g=>g.targetId===id))add(goal.id,o.text,'puzzle',goal.position,goal.realm);}}
+ for(const [goal,main] of [[this.navigationGoal(),false],[this.mainNavigationGoal(),true]])if(goal)add(goal.id,goal.name,main?'main-story':'mission',goal.position,goal.realm);
  for(const route of Object.values(this.save.data.shrineRoutes)){for(const id of [...route.activatedShrineIds,...route.litFrontierShrineIds]){const shrine=this.maps.shrines[id];add('route:'+id,this.save.data.shrines[id]?'Awake relay':'Next relay','mission',shrine.position);}const dest=this.maps.settlements[route.destinationTownId];add('route:'+dest.id,dest.name,'mission',dest.position,dest.realm);}
  return [...new Map(result.map(m=>[m.id,m])).values()];
  }
@@ -172,5 +186,14 @@ export class InteractionRuntime {
 export async function loadInteractions(base,save,fetcher=fetch){
  const read=async (url,desc=null)=>{const target=new URL(url,base),root=new URL('interactions/',base);if(target.origin!==root.origin||!target.pathname.startsWith(root.pathname))throw Error('Catalog outside world pack');const r=await fetcher(target);if(!r.ok)throw Error('Interaction content unavailable: '+url);const text=await r.text(),bytes=new TextEncoder().encode(text);if(desc&&bytes.length!==desc.byteLength)throw Error('Interaction content length mismatch');if(desc&&globalThis.crypto?.subtle){const digest=await crypto.subtle.digest('SHA-256',bytes),hash=[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');if(hash!==desc.sha256)throw Error('Interaction content hash mismatch');}return JSON.parse(text);};
  const manifest=await read('interactions/manifest.json');if(manifest.contentVersion!==INTERACTION_VERSION)throw Error('Unsupported interaction content');
- const c={};await Promise.all(Object.entries(manifest.catalogs).map(async([key,desc])=>{c[key]=await read(desc.url,desc);}));return new InteractionRuntime(c,save);
+ const c={};await Promise.all(Object.entries(manifest.runtimeCatalogs??manifest.catalogs).map(async([key,desc])=>{c[key]=await read(desc.url,desc);}));const engine=new InteractionRuntime(c,save),pending=new Map(),templates=new Map();
+ engine.loadRecord=async(group,id)=>{const desc=manifest.records?.[group]?.[id];if(!desc)return;if(!pending.has(id))pending.set(id,(async()=>{let record;
+ if(desc.template){
+  const template=desc.template;
+  if(!templates.has(template.url))templates.set(template.url,read(template.url,template).catch(error=>{templates.delete(template.url);throw error;}));
+  const substitute=value=>{if(typeof value==='string')return value.replace(/\{\{(\w+)\}\}/g,(_,key)=>{if(!Object.hasOwn(desc.parameters??{},key))throw Error('Missing dialogue parameter '+key);return desc.parameters[key];});if(Array.isArray(value))return value.map(substitute);if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[substitute(k),substitute(v)]));return value;};
+  record=substitute(await templates.get(template.url));
+ }else record=await read(desc.url,desc);
+ if(record.id!==id)throw Error('Record identity mismatch');if(group==='dialogues')validateDialogue(record);Object.assign(engine.maps[group][id],record);})().catch(error=>{pending.delete(id);throw error;}));await pending.get(id);};
+ return engine;
 }

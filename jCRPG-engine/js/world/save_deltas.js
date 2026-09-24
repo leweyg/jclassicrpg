@@ -19,6 +19,7 @@ export function validateSave(input){
   const old=data;data=emptySave();data.player=old.player;data.discoveredLocations=old.discoveredLocations;data.openedContainers=old.openedContainers;
   for(const [id,value]of Object.entries(old.openedContainers??{})){if(value!==true)throw Error('Invalid legacy container');data.containers[id]={inspected:true,legacySearched:true,takenItemIds:[]};}
  }
+ if(data?.interactionContentVersion==='interactions-v1')data.interactionContentVersion=INTERACTION_VERSION;
  if(data?.saveVersion!==2||data.worldId!==WORLD_ID||data.generatorVersion!==GENERATOR_VERSION||data.interactionContentVersion!==INTERACTION_VERSION)throw Error('Save belongs to a different compiled world');
  if(data.player&&(!['surface','cave'].includes(data.player.realm)||!['x','y','z'].every(k=>Number.isFinite(data.player[k]))||data.player.x<0||data.player.x>=1600||data.player.z<0||data.player.z>=1600||data.player.y<0||data.player.y>80))throw Error('Invalid saved position');
  for(const field of dictionaries)if(!data[field]||Array.isArray(data[field])||typeof data[field]!=='object')throw Error('Invalid save dictionary: '+field);

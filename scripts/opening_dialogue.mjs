@@ -14,8 +14,8 @@ export function authorOpeningDialogue(content) {
 
     const marn = definition('Marn Even-Tally');
     const originalChoices = marn.nodes.greeting.choices;
-    const accept = originalChoices.find(c => c.actions?.some(a => a.op === 'accept'));
-    const report = originalChoices.find(c => c.actions?.some(a => a.op === 'turnIn'));
+    const accept = originalChoices.find(c => c.actions?.some(a => a.op === 'accept' && a.id === mission));
+    const report = originalChoices.find(c => c.actions?.some(a => a.op === 'turnIn' && a.id === mission));
     const commitments = originalChoices.filter(c => c.actions?.some(a => a.op === 'commitment'));
     const choices = [
         {...accept, actions: [...accept.actions, {op:'flag', id:met, value:true}], next:'accepted'},

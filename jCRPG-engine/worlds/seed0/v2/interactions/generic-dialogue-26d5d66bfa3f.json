@@ -1,0 +1,1 @@
+{"id":"{{dialogueId}}","start":"greeting","nodes":{"greeting":{"text":"If we admit an unknown, how do we stop every claim becoming equally valid? I will keep a separate column for tested results.","knowledge":"testimony","choices":[{"text":"Until next time."}]}}}

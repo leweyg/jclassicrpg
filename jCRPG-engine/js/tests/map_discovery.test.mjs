@@ -37,7 +37,7 @@ test('only rendered dialogue and visible choices reveal place names, aliases and
 test('dialogue UI reveals the displayed passage, not unread nodes',()=>{
  const save=new SaveDeltas(storage());let shown='Welcome.',renders=0;
  const engine={panel:{kind:'dialogue'},content:{actors:[],dialogues:[{nodes:{unread:{text:'Secret cave'}}}]},dialogue:()=>({actor:{name:'Guide',role:'Guide'},knowledge:'testimony',text:shown,choices:[]})};
- const ui=Object.create(InteractionUI.prototype);Object.assign(ui,{state:{interactions:engine,saveDeltas:save,mapMarkers:markers,party:{position:{x:0,y:40,z:0}},realm:'surface'},renderer:{requestRender(){renders++;}},open(){},text(){},button(){},focus(){}});
+ const ui=Object.create(InteractionUI.prototype);Object.assign(ui,{state:{interactions:engine,saveDeltas:save,mapMarkers:markers,party:{position:{x:0,y:40,z:0}},realm:'surface'},renderer:{requestRender(){renders++;}},open(){},text(){},button(){return {setAttribute(){}};},focus(){}});
  ui.show();assert.equal(knownLocation(markers[3],save.data),false);
  shown='I found the Secret cave.';ui.show();assert.equal(knownLocation(markers[3],save.data),true);assert.equal(renders,1);
 });
@@ -78,7 +78,7 @@ test('compiled mission and dialogue locations reveal through the real map and su
   // Avoid any incidental visits while inspecting defaults.
   const state={interactions:engine,saveDeltas:save,party:{position:{x:0,y:79,z:0}},realm:'surface',exploration:{world:new FrozenWorld(worldData)}};
   const map=new QuietMap(state,{_yaw:0,setInputEnabled(){},requestRender(){}});map.update();
-  const initial=map.markers.filter(m=>map._visible(m));assert.equal(initial.length,3);assert.deepEqual(initial.filter(m=>m.kind==='settlement').map(m=>m.name).sort(),['Awshowam','Wammigmig']);
+  const initial=map.markers.filter(m=>map._visible(m));assert.equal(initial.length,4);assert.deepEqual(initial.filter(m=>m.kind==='settlement').map(m=>m.name).sort(),['Awshowam','Wammigmig']);
   assert.equal(map.baseMarkers.filter(m=>m.capital).length,30,'all other capitals remain in the catalogue');
   const mission=content.missions.find(m=>m.id==='mission:wammigmig:fair-share');
   engine.transact([{op:'accept',id:mission.id}]);map.update();

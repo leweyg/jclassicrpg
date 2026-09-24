@@ -11,6 +11,7 @@ import {buildStructure,indexOf} from '../jCRPG-engine/js/procedural/structures.j
 import {bakeCaveBlock} from '../jCRPG-engine/js/procedural/caves.js';
 import {CELL as C,FACE,wallBit,doorBit,FORMAT_VERSION,GENERATOR_VERSION,WORLD_ID,scene,chunkKey,chunkFile,canonicalJSON,validateScene} from '../jCRPG-engine/js/world/format.js';
 import {validateSchema} from './validate_schema.mjs';
+import {dialogueTemplateGroups} from './dialogue_templates.mjs';
 import {compileInteractions} from './compile_interactions.mjs';
 import {INTERACTION_VERSION} from '../jCRPG-engine/js/interactions/format.js';
 import {bakeAssets,terrainGLB} from './world_assets.mjs';
@@ -21,6 +22,9 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const arg=process.argv.indexOf('--out'),destination=arg>=0?path.resolve(process.argv[arg+1]):path.join(root,'jCRPG-engine/worlds/seed0/v2');
 fs.mkdirSync(path.dirname(destination),{recursive:true});
 const out=fs.mkdtempSync(path.join(path.dirname(destination),'.jcrpg-compile-'));
+// Remove this build's staging copy on failure. Successful publication renames
+// it away; recovery backups are deliberately retained if restoring one fails.
+process.on('exit',()=>{fs.rmSync(out,{recursive:true,force:true});});
 const data=JSON.parse(fs.readFileSync(path.join(root,'jCRPG-engine/json/frozen_world.json'))),world=new FrozenWorld(data);
 const schema=JSON.parse(fs.readFileSync(path.join(root,'jCRPG-engine/js/world/scene.schema.json')));
 const hash=b=>createHash('sha256').update(b).digest('hex');
@@ -94,7 +98,19 @@ validateSchema(interactions.content,JSON.parse(fs.readFileSync(path.join(root,'j
 const catalogs={};
 for(const [key,records] of Object.entries(interactions.content))catalogs[key]=write('interactions/'+key+'.json',records);
 interactions.report.catalogBytes=Object.values(catalogs).reduce((s,d)=>({raw:s.raw+d.byteLength,gzip:s.gzip+d.gzipBytes,brotli:s.brotli+d.brotliBytes}),{raw:0,gzip:0,brotli:0});
-const interactionManifest=write('interactions/manifest.json',{schemaVersion:1,contentVersion:INTERACTION_VERSION,catalogs});
+// Runtime loads navigation contracts globally and prose only when opened.
+const records={dialogues:{},missions:{}};
+for(const record of interactions.content.missions)records.missions[record.id]=write('interactions/missions-'+Buffer.from(record.id).toString('base64url')+'.json',record);
+for(const group of dialogueTemplateGroups(interactions.content)){
+ if(group.instances.length===1){const {id}=group.instances[0];records.dialogues[id]=write('interactions/dialogues-'+Buffer.from(id).toString('base64url')+'.json',interactions.content.dialogues.find(d=>d.id===id));continue;}
+ const template=write('interactions/generic-dialogue-'+hash(canonicalJSON(group.template)).slice(0,12)+'.json',group.template);
+ for(const {id,parameters} of group.instances)records.dialogues[id]={template,parameters};
+}
+
+const runtimeCatalogs={...catalogs,
+ dialogues:write('interactions/dialogue-index.json',interactions.content.dialogues.map(d=>d.id==='dialogue:default:resident'?d:({id:d.id,start:d.start,nodes:{[d.start]:{text:'Loading conversation…',choices:[]}}}))),
+ missions:write('interactions/mission-index.json',interactions.content.missions.map(({summary,...m})=>m))};
+const interactionManifest=write('interactions/manifest.json',{schemaVersion:2,contentVersion:INTERACTION_VERSION,catalogs,runtimeCatalogs,records});
 write('actors.json',data.actors);write('scenario.json',data.scenario);write('interactions/ownership.json',interactions.ownership);
 const stream=new WorldStream(world),sample=stream.chunks[0],allFloor=new Map();
 for(const s of structures)for(let z=s.origin[2]-1;z<=s.origin[2]+s.size[2];z++)for(let x=s.origin[0]-1;x<=s.origin[0]+s.size[0];x++)allFloor.set(`${(x+1600)%1600}:${(z+1600)%1600}`,s.origin[1]);

@@ -1,0 +1,1 @@
+{"id":"{{dialogueId}}","start":"greeting","nodes":{"greeting":{"text":"Tracks, cold and arrival times repeat imperfectly. Wild knowledge can be exact: record the observation and the conditions together.","knowledge":"testimony","choices":[{"text":"Until next time."}]}}}

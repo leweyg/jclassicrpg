@@ -1,0 +1,1 @@
+{"id":"{{dialogueId}}","start":"greeting","nodes":{"greeting":{"text":"Fact: current has measurable direction and quantity. Inference: my instruments describe everything important. Iris has shown me why that second claim needs testing.","knowledge":"testimony","choices":[{"text":"Until next time."}]}}}

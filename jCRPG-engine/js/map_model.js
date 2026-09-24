@@ -8,6 +8,7 @@ export const MARKER_STYLES = Object.freeze({
 	dungeon: { label: 'Dungeons / mazes', color: '#df9df0', symbol: '◆' },
 	cave: { label: 'Cave regions', color: '#b9c7df', symbol: '▲' },
 	storage: { label: 'Storage', color: '#80ddd0', symbol: '▣' },
+	'main-story': { label: 'Main story', color: '#ffe699', symbol: '★' },
 	mission: { label: 'Missions', color: '#ffca63', symbol: '!' },
 	puzzle: { label: 'Puzzles', color: '#c9adff', symbol: '?' },
 	start: { label: 'Starting point', color: '#aee4b5', symbol: '⚑' },

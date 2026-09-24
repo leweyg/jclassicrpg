@@ -142,7 +142,7 @@
         },
         "kind": {
           "type": "string",
-          "pattern": "^(actor|container|shrine|puzzle|portal|evidence)$"
+          "pattern": "^(actor|container|shrine|puzzle|portal|evidence|fitting)$"
         },
         "targetId": {
           "type": "string"
