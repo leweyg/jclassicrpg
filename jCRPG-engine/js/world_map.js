@@ -4,6 +4,7 @@ import {knownLocation,rememberLocations,discoverVisited,cameraMapOffset} from '.
 
 import {MapViewport,bindMapGestures} from './map_viewport.js';
 import {mapGoalPosition} from './interactions/navigation.js';
+import {MINIMAP_ZOOM_DEFAULTS,goalMapRadius,easeMapRadius} from './minimap_zoom.js';
 import {navigationWaypoint} from './interactions/cave_navigation.js';
 
 const TERRAIN_COLORS = [[126, 143, 88], [59, 94, 59], [128, 123, 113], [49, 102, 134], [161, 128, 82], [204, 179, 104]];
@@ -53,6 +54,16 @@ export class WorldMap {
 		this._buildAtlas();
 		this._buildFilters();
 		document.getElementById('map-show-all').addEventListener('change',event=>{this.showAll=event.target.checked;this.update(true);this._renderList();});
+        this.minimapZoom={...MINIMAP_ZOOM_DEFAULTS};
+        for(const [key,id] of Object.entries({enabled:'map-goal-zoom',goalFraction:'map-goal-fraction',stopDistance:'map-goal-stop',responseSeconds:'map-goal-response'})){
+            const input=document.getElementById(id);if(!input)continue;
+            if(key==='enabled')input.checked=this.minimapZoom[key];else input.value=this.minimapZoom[key];
+            input.addEventListener('input',()=>{
+                if(key==='enabled')this.minimapZoom[key]=input.checked;
+                else {const value=Number(input.value);if(!Number.isFinite(value)||value<Number(input.min)||value>Number(input.max))return;this.minimapZoom[key]=value;}
+                this.update(true);this.renderer.requestRender();
+            });
+        }
 		const miniButton = document.getElementById('hud-minimap');
 		miniButton.querySelector('span').textContent = `Map · ${MINIMAP_RADIUS}-unit radius`;
 		miniButton.title = `Nearby map: ${MINIMAP_RADIUS}-unit radius, twice the visible area`;
@@ -222,13 +233,14 @@ export class WorldMap {
 
 	_drawMini() {
 		const ctx = this.mini.getContext('2d'), size = this.mini.width, p = this.state.party.position;
-		const yaw=this.renderer._yaw, radius=MINIMAP_RADIUS/(this.state.realm==='cave'?3:1);
+		const yaw=this.renderer._yaw, radius=this._miniRadius??MINIMAP_RADIUS/(this.state.realm==='cave'?3:1);
 		ctx.clearRect(0,0,size,size);ctx.save();ctx.translate(size/2,size/2);ctx.rotate(yaw);ctx.scale(-1,1);ctx.translate(-size/2,-size/2);
 		this._background(ctx, size, p.x - radius, p.z + radius, radius * 2);
 		ctx.restore();
 		const scale = size / (radius * 2);
 		ctx.strokeStyle = '#ffffff88'; ctx.setLineDash(DASHED); ctx.beginPath();
-		ctx.arc(size / 2, size / 2, VISIBLE_RADIUS * scale, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash(SOLID);
+		if(VISIBLE_RADIUS<=radius){ctx.arc(size / 2, size / 2, VISIBLE_RADIUS * scale, 0, Math.PI * 2);ctx.stroke();}
+        ctx.setLineDash(SOLID);
 		for (const marker of this.markers) {
 			if (!knownLocation(marker,this.state.saveDeltas?.data,this.showAll)||!this.enabled.has(this._kind(marker))) continue;
 			const dx = wrappedDelta(marker.x, p.x, this.world.sizeX), dz = wrappedDelta(marker.z, p.z, this.world.sizeZ);
@@ -311,6 +323,15 @@ export class WorldMap {
             this.markers=[...new Map([...this.baseMarkers,...objectives].map(m=>[m.id,m])).values()];
             if(this.dialog.open)this._renderList();
         }
+        const settings=this.minimapZoom??MINIMAP_ZOOM_DEFAULTS,now=performance.now();
+        const target=goalMapRadius(this.state.party.position,nav,this.state.realm??'surface',this.world.sizeX,this.world.sizeZ,settings);
+        const radius=easeMapRadius(this._miniRadius,target,(now-(this._zoomTime??now))/1000,settings.responseSeconds);
+        this._zoomTime=now;
+        if(radius!==this._miniRadius){this._miniRadius=radius;force=true;}
+        if(radius!==target)this.renderer.requestRender();
+        const miniButton=document.getElementById('hud-minimap');
+        miniButton.querySelector('span').textContent=`Map · ${this.state.realm==='cave'?'Cave · ':''}${radius.toFixed(1)}-unit radius`;
+        miniButton.title=`Nearby map: ${radius.toFixed(1)}-unit radius${settings.enabled&&nav?' · goal zoom':''}`;
 		const p = this.state.party.position, yaw = this.renderer._yaw;
 		if (!force && p.x === this._lastX && p.z === this._lastZ && yaw === this._lastYaw) return;
 		this._lastX = p.x; this._lastZ = p.z; this._lastYaw = yaw;

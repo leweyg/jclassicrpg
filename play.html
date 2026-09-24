@@ -340,7 +340,13 @@
 	<details id="map-dev">
 		<summary>Dev options</summary>
 		<label><input id="map-show-all" type="checkbox"> Show undiscovered locations</label>
-		<div id="map-filters" role="group" aria-label="Visible marker types"></div>
+		<fieldset><legend>Minimap goal zoom</legend>
+        <label style="display:block"><input id="map-goal-zoom" type="checkbox" checked> Zoom toward the selected goal</label>
+        <label style="display:block">Goal distance from center (0.5 = halfway to edge) <input id="map-goal-fraction" type="number" min="0.2" max="0.85" step="0.05" value="0.5"></label>
+        <label style="display:block">Stop zooming within this many steps <input id="map-goal-stop" type="number" min="1" max="20" step="1" value="4"></label>
+        <label style="display:block">Zoom smoothing (seconds; 0 = instant) <input id="map-goal-response" type="number" min="0" max="2" step="0.05" value="0.18"></label>
+        </fieldset>
+        <div id="map-filters" role="group" aria-label="Visible marker types"></div>
 		<p class="map-notes">Dashed markers are unimplemented locations with surface teleport destinations.</p>
 	</details>
 	<p class="map-notes">Start, Wammigmig and Awshowam are always known. Explore, accept missions, and read dialogue to reveal more places. The minimap follows your camera; N points north. Pinch or scroll to zoom this map; drag to pan.</p>

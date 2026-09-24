@@ -60,6 +60,16 @@ Click the map background, Close, or Escape to return to the minimap. All recorde
 locations are shown, with dashed markers for unimplemented gameplay. Dashed cave-region
 markers identify saved cave areas; solid Cave entrance markers provide entry links. The export also carries
 dungeon/maze and storage locations alongside the generated world.
+The minimap zooms toward the selected goal, holding it halfway between the player
+and the map edge until it is within four world units (roughly four steps). Tune
+this under **Map → Dev options → Minimap goal zoom**: enable/disable, goal screen
+fraction, stopping distance, and smoothing seconds (zero is instant). These live
+controls apply for the current page session; shipped defaults are in
+`jCRPG-engine/js/minimap_zoom.js`. Surface and cave maps retain their normal
+maximum radius when no nearby goal is selected. The radius readout shows the
+current scale, and the dashed visibility circle remains a true world-distance
+indicator, hidden when it falls outside the zoomed map.
+
 The full map has type filters and a location search. A single cached terrain raster
 is shared by both maps, and neither map has its own timer or frame loop.
 
