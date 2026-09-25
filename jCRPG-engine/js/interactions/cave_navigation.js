@@ -1,3 +1,4 @@
+import {mazeNavigation} from './maze_navigation.js';
 import {CELL, FACE, wallBit} from '../world/format.js';
 
 const components = new WeakMap();
@@ -5,7 +6,10 @@ const components = new WeakMap();
 /** A temporary map waypoint; the saved quest/location selection stays intact. */
 export function navigationWaypoint(state) {
  const goal = state?.interactions?.navigationGoal() ?? null;
- if (state?.realm !== 'cave') return goal;
+ if (state?.realm !== 'cave') {
+  const maze = mazeNavigation(state, goal);
+  return maze ? maze.goal : goal;
+ }
  const stream = state.exploration, party = state.party.position;
  if (!stream?.cellAt) return null;
  const width = stream.world?.sizeX ?? 1600, depth = stream.world?.sizeZ ?? 1600;
