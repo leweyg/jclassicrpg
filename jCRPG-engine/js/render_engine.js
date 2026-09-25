@@ -23,6 +23,7 @@ const SURFACE_FOG_DISTANCE = 0.61*VISIBLE_RADIUS;
 const SURFACE_FOG_CAVE_DISTANCE = SURFACE_FOG_DISTANCE*0.3;
 
 const MOVE_SPEED = 4; // world units/sec at full stick deflection
+const TOUCH_FORWARD_SPEED_MULTIPLIER = 1.75;
 const STICK_RADIUS = 55; // px a "move" stick drag is clamped to
 const LOOK_SENSITIVITY = 0.006;
 const SCROLL_MOVE_SENSITIVITY = 0.01; // world units per scroll pixel
@@ -285,7 +286,7 @@ export class SceneRenderer {
 		const stick = this._moveVector();
 		if (!this.gameState || (stick.x === 0 && stick.y === 0)) return;
 		const speed = MOVE_SPEED * dt;
-		this._moveRelative(stick.x * speed, stick.y * speed);
+		this._moveRelative(stick.x * speed, stick.y * speed * (p?.touch ? TOUCH_FORWARD_SPEED_MULTIPLIER : 1));
 	}
 
 	_moveRelative(strafe, backward) {
