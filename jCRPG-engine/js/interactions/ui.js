@@ -134,7 +134,7 @@ export class InteractionUI {
         button.type = 'button';
         button.onclick = () => {
             try {
-                action();
+                return action();
             } catch (error) {
                 this.log(error.message);
             }
@@ -406,13 +406,32 @@ export class InteractionUI {
         const selected = this.state.saveDeltas.data.navMissionId === id;
         if (selected && goal) this.text('p', 'Navigation: ' + goal.name);
         if (['available', 'active', 'ready-to-turn-in'].includes(mission.state)) {
-            this.button('Show on map', () => {
+            const setWaypoint = () => {
                 engine.setNavigationGoal(id);
-                const goal = engine.navigationGoal();
                 this.persist();
+                return engine.navigationGoal();
+            };
+            this.button('Set waypoint', () => {
+                setWaypoint();
                 this.close();
-                this.onShowQuestMap?.(goal, mission);
             }, { primary: true });
+            const travel = this.button('Travel here', async () => {
+                if (travel.disabled) return;
+                travel.disabled = true;
+                try {
+                    const destination = setWaypoint();
+                    if (!destination) throw new Error('This mission has no current destination.');
+                    await this.onTravelQuest?.(destination);
+                    this.close();
+                } catch (error) {
+                    this.text('p', 'Could not travel: ' + error.message);
+                } finally { travel.disabled = false; }
+            });
+            this.button('Show on map', () => {
+                const destination = setWaypoint();
+                this.close();
+                this.onShowQuestMap?.(destination, mission);
+            });
         }
         this.focus();
         this.dialog.scrollTop = 0;

@@ -287,3 +287,21 @@ test('region intuition links tracked side and next main missions without changin
  assert.equal(ui.body.children.filter(e=>e.className==='intuition-mission-link').length,0);
  assert.ok(ui.body.children.some(e=>e.textContent.startsWith('No next mission')));
 });
+
+test('mission actions are ordered and set a waypoint, travel, or show the map',async t=>{
+ const {ui,engine,calls}=fixture(t);
+ const goal={id:'target',name:'Target',position:[12,42,30],realm:'cave'};
+ engine.navigationGoal=()=>goal;
+ let travelled,shown;
+ ui.onTravelQuest=async destination=>{travelled=destination;};
+ ui.onShowQuestMap=destination=>{shown=destination;};
+ await ui.openQuest('quest');
+ const actions=()=>ui.body.children.filter(e=>e.tagName==='BUTTON');
+ assert.deepEqual(actions().map(b=>b.textContent),['Set waypoint','Travel here','Show on map']);
+ actions()[0].click();assert.ok(calls.includes('quest'));assert.equal(ui.dialog.open,false);assert.equal(travelled,undefined);
+ await ui.openQuest('quest');await actions()[1].onclick();assert.equal(travelled,goal);assert.equal(ui.dialog.open,false);
+ await ui.openQuest('quest');actions()[2].click();assert.equal(shown,goal);
+ await ui.openQuest('quest');ui.onTravelQuest=async()=>{throw Error('No walkable floor');};
+ await actions()[1].onclick();assert.equal(ui.dialog.open,true);assert.equal(actions()[1].disabled,false);
+ assert.ok(ui.body.children.some(e=>e.textContent==='Could not travel: No walkable floor'));
+});

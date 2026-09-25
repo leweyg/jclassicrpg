@@ -86,6 +86,13 @@ async function main() {
 		const worldMap = new WorldMap(sim.gameState, renderer);
 		const interactionsUI = new InteractionUI(sim.gameState,renderer,appendLog);
 		interactionsUI.onShowQuestMap=(goal,mission)=>worldMap.showQuestGoal(goal,mission);
+        interactionsUI.onTravelQuest = async goal => {
+            await sim.gameState.teleport(goal.position[0], goal.position[2], goal.position[1], goal.realm ?? 'surface');
+            renderer.worldView.sync();
+            renderer._syncCamera();
+            worldMap.update(true);
+            renderer.requestRender();
+        };
 		document.getElementById('hud-log').addEventListener('click',()=>interactionsUI.openJournal());
 		renderer.onInteractionPanel=()=>interactionsUI.show();
 		window.__worldMap = worldMap;
