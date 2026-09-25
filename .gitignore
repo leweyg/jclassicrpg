@@ -5,3 +5,4 @@ jclassicrpg-interactions-missions-and-quests.md
 # The published worlds/seed0/v2 pack is required for static hosting.
 .jcrpg-compile-*/
 jclassicrpg-story-gallery.patch
+jclassicrpg-opening-lore.patch
