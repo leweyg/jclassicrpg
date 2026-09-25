@@ -307,7 +307,7 @@ export class WorldMap {
 		return best;
 	}
 
-	update(force = false) {
+	update(force = false, now = performance.now()) {
         if(this._minimapRealm!==this.state.realm){
             this._minimapRealm=this.state.realm;force=true;
             const cave=this.state.realm==='cave',button=document.getElementById('hud-minimap');
@@ -332,7 +332,7 @@ export class WorldMap {
             this.markers=[...new Map([...this.baseMarkers,...objectives,...exits].map(m=>[m.id,m])).values()];
             if(this.dialog.open)this._renderList();
         }
-        const settings=this.minimapZoom??MINIMAP_ZOOM_DEFAULTS,now=performance.now();
+        const settings=this.minimapZoom??MINIMAP_ZOOM_DEFAULTS;
         const target=goalMapRadius(this.state.party.position,nav,this.state.realm??'surface',this.world.sizeX,this.world.sizeZ,settings);
         const radius=easeMapRadius(this._miniRadius,target,(now-(this._zoomTime??now))/1000,settings.responseSeconds);
         this._zoomTime=now;

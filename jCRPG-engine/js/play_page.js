@@ -113,7 +113,6 @@ async function main() {
 			const area = state.realm==='cave' ? 'Natural cave' : cell?.structure.kind==='SimpleDungeonPart' ? 'Labyrinth' : landmark?.name ?? TERRAIN_NAMES[world.typeAt(p.x, p.z)];
 			const text = `${area} · ${Math.floor(p.x)}, ${Math.floor(p.z)}`;
 			if (text !== lastLocation) { location.textContent = text; lastLocation = text; }
-			worldMap.update();
 			if (area !== lastArea) { appendLog(`Entering ${area}.`); lastArea = area; }
 		};
 		renderer.onStatus = appendLog;
@@ -174,6 +173,7 @@ async function main() {
 			event.target.value='';
 		});
 		renderer.onViewChange = (now,force) => {
+            worldMap.update(false, now);
 			updateLocation(now,force);
 			const action=renderer.nearbyInteraction();
 			const button=document.getElementById('world-interact');
@@ -188,6 +188,7 @@ async function main() {
 			intuition.setAttribute('aria-label',info?`Intuition about ${info.name}`:'Intuition');
 		};
 		updateLocation();
+        worldMap.update();
 		renderer.start();
 		// No repeating HUD timers. Changes are driven by input/render events only.
 		window.addEventListener('pagehide', () => renderer.stop(), { once: true });
