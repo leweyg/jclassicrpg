@@ -7,12 +7,12 @@ const fetcher = async url => new Response(fs.readFileSync(url));
 test('homepage preview follows generated chapter order, mission summaries, and opening lore', async () => {
  const [story] = await loadStoryPreview(base, fetcher);
  assert.deepEqual(story.chapters.map(c=>c.id), story.chapterIds);
- assert.equal(story.chapters.filter(c=>c.status==='playable').length,3);
- assert.equal(story.chapters.filter(c=>!c.mission).length,2);
+ assert.equal(story.chapters.filter(c=>c.status==='playable').length,5);
+ assert.equal(story.chapters.filter(c=>!c.mission).length,0);
  assert.equal(story.chapters[0].mission.title,story.chapters[0].title);
  assert.ok(story.chapters[0].mission.summary.includes('Orro'));
  const cast = new Map(story.chapters.flatMap(c=>c.cast).map(a=>[a.id,a]));
- assert.equal(cast.size,4);
+ assert.equal(cast.size,5);
  for(const actor of cast.values()) assert.equal(actor.captions.length,3);
  assert.match(cast.get('actor:wammigmig:orro').captions[0],/grandmother/);
 });

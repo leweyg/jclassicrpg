@@ -1,10 +1,10 @@
-/** Stable authored save contracts. Later chapters have no playable mission yet. */
+/** Stable authored save contracts, including the Measured Oasis continuation. */
 export const STORY_ID='story:concordance:opening';
-export const MAIN_IDS=['mission:concordance:road','mission:concordance:current','mission:concordance:branches'];
+export const MAIN_IDS=['mission:concordance:road','mission:concordance:current','mission:concordance:branches','mission:concordance:meaning','mission:concordance:order'];
 export function authorMainStory({content,portals,reachable,anchor,safeNear,mission,objective,route,solvePuzzle}) {
  const actor=id=>content.actors.find(a=>a.id===id),marn=actor('legacy-actor:BoarmanTribe#381:544'),pella=actor('actor:wammigmig:pella'),orro=actor('actor:wammigmig:orro'),talla=actor('actor:boarman:regional:1');
  const titles=['The road remembers','A missing current','Every branch','What the numbers mean','An order worth keeping'];
- content.stories=[{id:STORY_ID,version:1,title:'The Concordance journey',premise:'A repair at Wammigmig reveals a broken current leading toward Migbushoprahshotra / the Measured Oasis.',chapterIds:titles.map((_,i)=>'chapter:concordance:'+ (i+1)),chapters:titles.map((title,i)=>({id:'chapter:concordance:'+(i+1),title,missionId:MAIN_IDS[i]??null,status:i<3?'playable':'planned',entry:i?{completedChapterId:'chapter:concordance:'+i}:{newGame:true},exit:i<3?{completedMissionId:MAIN_IDS[i]}:null,nextChapterId:i<4?'chapter:concordance:'+(i+2):null})),nextChapterFallback:'The next chapter at the Measured Oasis is not yet playable.'}];
+ content.stories=[{id:STORY_ID,version:1,title:'The Concordance journey',premise:'A repair at Wammigmig reveals a broken current leading toward Migbushoprahshotra / the Measured Oasis.',chapterIds:titles.map((_,i)=>'chapter:concordance:'+ (i+1)),chapters:titles.map((title,i)=>({id:'chapter:concordance:'+(i+1),title,missionId:MAIN_IDS[i]??null,status:'playable',entry:i?{completedChapterId:'chapter:concordance:'+i}:{newGame:true},exit:{completedMissionId:MAIN_IDS[i]},nextChapterId:i<4?'chapter:concordance:'+(i+2):null})),nextChapterFallback:'The Concordance journey is complete. Other local journeys remain open.'}];
  const portal=portals.find(p=>p.id==='cave:760:920:0');if(!portal)throw Error('Opening cave missing');
  const cells=reachable({origin:portal.to.map(Math.floor),size:[1,1,1]},'cave',portal.to.map(Math.floor));
  const position=cells[Math.min(cells.length-1,24)],containerId='container:concordance:listening-coil',itemId='item:concordance:listening-coil',fittingId='fitting:wammigmig:listening-coil';
@@ -21,10 +21,35 @@ export function authorMainStory({content,portals,reachable,anchor,safeNear,missi
  main(1,pella,[objective('pella','actor',[pella.id],'Ask Pella about the missing current.'),objective('coil','item',[itemId],'Retrieve the listening coil in the southern cave.'),objective('fit','fitting',[fittingId],'Fit the coil beside Pella.')],'Pella needs a listening coil from the southern cave. Follow the cave marker, take the coil, return through an exit and fit it beside her.',{onComplete:[{op:'route',id:road.id}]});
  talla.name='Talla Three-Wicks';
  const puzzle=content.puzzles.find(p=>p.id==='puzzle:boarman:regional:1');Object.assign(puzzle,{mechanic:'all',fact:'Exchange, Homes and Labyrinth share one supply. Wake each branch; no ordering is required.'});puzzle.solution=solvePuzzle(puzzle).inputs;
- main(2,talla,[objective('talla','actor',[talla.id],'Meet Talla Three-Wicks.'),objective('branches','puzzle',[puzzle.id],'Wake Exchange, Homes and Labyrinth.')],'Meet Talla in Wamwammigtraawsho, wake all three branches and report what the shared current reveals.',{onComplete:[{op:'flag',id:'story:concordance:opening:milestone',value:true},{op:'text',text:'Talla records your account for Saima at Migbushoprahshotra / the Measured Oasis. The next chapter is not yet playable.'}]});
+ main(2,talla,[objective('talla','actor',[talla.id],'Meet Talla Three-Wicks.'),objective('branches','puzzle',[puzzle.id],'Wake Exchange, Homes and Labyrinth.')],'Meet Talla in Wamwammigtraawsho, wake all three branches and report what the shared current reveals.',{onComplete:[{op:'flag',id:'story:concordance:opening:milestone',value:true},{op:'text',text:'Talla records your account for Saima at Migbushoprahshotra / the Measured Oasis. Bring her the three branch readings and ask what the numbers leave out.'}]});
+ const saima=actor('actor:antipion:principal:0');
+ const balanceId='mission:antipion:balance',regionalIds=['body','speech','mind','wisdom'].map(layer=>'mission:antipion:'+layer),synthesisId='mission:antipion:bliss';
+ main(3,saima,[objective('saima','actor',[saima.id],'Bring Talla’s account to Saima at the Measured Oasis.'),objective('balance','mission',[balanceId],'Help Saima restore the local balance and report the readings.')],'Bring Talla’s account to Saima of Nine Measures at Migbushoprahshotra / the Measured Oasis. Accept her local-balance task, compare the three conductors and report what the tables miss.',{onComplete:[{op:'text',text:'Saima keeps Talla’s account beside your local readings. Four regional keepers can now test whether those numbers hold beyond the oasis. Speak to each keeper, complete their work, then return to Saima.'}]});
+ main(4,saima,[...regionalIds.map((id,i)=>objective('region-'+i,'mission',[id],content.missions.find(m=>m.id===id).title+' — complete the regional keeper’s work.')),objective('synthesis','mission',[synthesisId],'Return to Saima and complete The Unquantized Remainder.')],'Follow the four regional keepers’ tasks: An Independent Reading, Careful Naming, A Failed Prediction and Hospitality to the Unknown. Compare evidence, listen to witnesses, record commitments and restore each circuit. Return to Saima to renew the shared practice and give your final account.',{onComplete:[{op:'flag',id:'story:concordance:complete',value:true},{op:'text',text:'Saima binds your account to Talla’s: the road, the missing current, the three branches and the four regional readings. The Concordance journey is complete. The record remains open to new evidence, and other local journeys await.'}]});
+ // Reuse stable task IDs so previously completed oasis work counts immediately.
+ for(const id of [balanceId,...regionalIds,synthesisId])content.missions.find(m=>m.id===id).returnToMainMissionId=id===balanceId?MAIN_IDS[3]:MAIN_IDS[4];
+ const sd=content.dialogues.find(d=>d.id===saima.dialogueId),choices=sd.nodes.greeting.choices.filter(c=>!c.actions?.some(a=>a.op==='accept'&&MAIN_IDS.includes(a.id)));
+ sd.nodes.greeting.captions=[
+  'I am Saima of Nine Measures. Talla counts the branches that carry the current; I keep the tables that describe it. At Migbushoprahshotra, the Measured Oasis, we must ask what those tables leave out.',
+  'Our instruments sometimes reject a pulse because it does not fit a prediction. That is a reason to repeat the reading, not to erase it. Help me compare the three local conductors. Read each once before changing its setting.',
+  'Begin with The Unquantized Remainder: A Local Balance. Bring me the results, and we will ask the regional keepers to test them against their own witnesses.'
+ ];
+ sd.nodes.greeting.choices=choices;
+ sd.entries=[
+  {when:{missionState:[MAIN_IDS[4],'completed']},nodeId:'journey-complete'},
+  {when:{missionState:[MAIN_IDS[4],'ready-to-turn-in']},nodeId:'final-account'},
+  {when:{missionState:[MAIN_IDS[3],'completed']},nodeId:'regional-account'},
+  {when:{missionState:[balanceId,'completed']},nodeId:'local-account'}
+ ];
+ for(const [id,text] of Object.entries({
+  'local-account':'The local readings hold, including the pulse our table failed to predict. Report what the numbers mean, and take that question to the four regional keepers.',
+  'regional-account':'Seek An Independent Reading, Careful Naming, A Failed Prediction and Hospitality to the Unknown. Each keeper needs evidence, a witness, a testable promise and a working circuit. I can light their routes. When all four accounts are ready, return for The Unquantized Remainder and renew our shared practice.',
+  'final-account':'You have brought the four regional accounts home and renewed our shared practice. Give me your final report: an order worth keeping must leave room for what we have not yet understood.',
+  'journey-complete':'From Orro’s roadside light to these regional accounts, you have made the current answerable to the people it reaches. Our journey is complete; our measurements and obligations still need care.'
+ }))sd.nodes[id]={text,knowledge:'testimony',choices};
  const relayReading='evidence:orro:relay';anchor('evidence',relayReading,safeNear([790,40,906]),{asset:'conductor',prompt:'Inspect Orro’s relay',fact:'The repaired relay returns a steady pulse.'});
  const mini=mission('mission:orro:relay','A steady pulse','Check the small relay beside Orro, then tell him whether its pulse holds.',orro,[objective('reading','evidence',[relayReading],'Inspect the relay beside Orro.')],{onComplete:[{op:'text',text:'Orro smiles. Carry that steady pulse back to the main journey.'}]});mini.kind='mini';
- for(const m of content.missions){m.kind??='side';m.startMode??='offer';m.reward??={};m.turnInRule??='report';if(m.kind!=='main')m.returnToMainMissionId=MAIN_IDS[0];}
+ for(const m of content.missions){m.kind??='side';m.startMode??='offer';m.reward??={};m.turnInRule??='report';if(m.kind!=='main')m.returnToMainMissionId??=MAIN_IDS[0];}
  const legacy=content.missions.find(m=>m.id==='mission:wammigmig:fair-share');legacy.summary='Optional: compare Marn’s three readings, balance the local circuit and record an obligation. Return to the main journey when ready.';
  const opening=new Map([
   [orro,[
@@ -52,7 +77,7 @@ export function authorMainStory({content,portals,reachable,anchor,safeNear,missi
   const d=content.dialogues.find(d=>d.id===a.dialogueId);const choices=d.nodes.greeting.choices.filter(c=>!c.actions?.some(x=>x.op==='accept'&&MAIN_IDS.includes(x.id)));
   d.entries=[];d.nodes.greeting={captions,knowledge:'testimony',choices};
   const mainId=a===marn?MAIN_IDS[0]:a===pella?MAIN_IDS[1]:a===talla?MAIN_IDS[2]:null;
-  if(mainId){d.entries=[{when:{missionState:[mainId,'completed']},nodeId:'story-complete'}];d.nodes['story-complete']={text:a===marn?'The road light is confirmed. Pella will show you where the missing current begins.':a===pella?'The socket holds. Follow the road marker to Talla Three-Wicks in Wamwammigtraawsho.':'All three branches answer. Our account belongs with Saima at Migbushoprahshotra, the Measured Oasis. That next chapter is still to come.',choices,knowledge:'testimony'};}
+  if(mainId){d.entries=[{when:{missionState:[mainId,'completed']},nodeId:'story-complete'}];d.nodes['story-complete']={text:a===marn?'The road light is confirmed. Pella will show you where the missing current begins.':a===pella?'The socket holds. Follow the road marker to Talla Three-Wicks in Wamwammigtraawsho.':'All three branches answer. Take our account to Saima at Migbushoprahshotra, the Measured Oasis. She needs an independent reading before she trusts the tables.',choices,knowledge:'testimony'};}
 
  }
  content.shrines.find(s=>s.id==='shrine:shrine 19 22:782:903').cue='The road light holds. Marn in Wammigmig can confirm its pulse.';

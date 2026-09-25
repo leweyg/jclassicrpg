@@ -61,10 +61,10 @@ await evaluate(`(async()=>{const s=__gameState,a=s.interactions.maps.actors['act
 await walk('interaction:actor:actor:boarman:regional:1');await close();
 for(const component of content.puzzles.find(p=>p.id==='puzzle:boarman:regional:1').componentIds)await walk('interaction:puzzle:'+component);
 await walk('interaction:actor:actor:boarman:regional:1');await clickText('Report: Every branch');
-await assert('__gameState.interactions.currentStoryChapter()===null','Milestone not completed');
+await assert("__gameState.interactions.currentStoryChapter().missionId==='mission:concordance:meaning'",'Saima chapter did not unlock');
 await evaluate(`(()=>{__gameState.saveDeltas.persist(__gameState.party.position,__gameState.realm);})()`);
 await send('Page.reload');await delay(600);await loaded();
-await assert('__gameState.interactions.currentStoryChapter()===null','Reload lost milestone');
+await assert("__gameState.interactions.currentStoryChapter().missionId==='mission:concordance:meaning'",'Reload lost Saima continuation');
 await screenshot('story-milestone');
 if(errors.length)throw Error(JSON.stringify(errors));
 fs.writeFileSync(out+'/story-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));ws.close();
