@@ -66,6 +66,7 @@ async function main() {
 	try {
 		if (status) status.textContent = "Loading saved world…";
 		await sim.gameState.startExploration();
+		const startingNewGame = !sim.gameState.saveDeltas.data.player;
 		const destinationURL = new URL(window.location.href);
 		if (destinationURL.searchParams.has('location')) {
 			try {
@@ -81,6 +82,7 @@ async function main() {
 		renderHud(sim.gameState);
 		if(sim.gameState.saveDeltas.error)appendLog(sim.gameState.saveDeltas.error);
 		const renderer = new SceneRenderer(canvas);
+		if (startingNewGame) renderer._yaw = -Math.PI / 2; // East (-X), matching the compass.
 		const retryButton = document.getElementById('world-retry');
 		renderer.onWorldLoadError = () => { retryButton.hidden = false; };
 		await renderer.buildWorld(sim.gameState);
