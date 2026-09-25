@@ -242,21 +242,6 @@
 	#game-menu h2 { margin: 0; font-size: 1.2rem; }
 	.game-menu-actions { display: grid; gap: 8px; }
 	#game-menu a { display: block; text-decoration: none; text-align: center; }
-	/* Movement/look split-screen hint — only shown briefly on small touch screens, purely visual. */
-	#hud-hint {
-		top: 50%; left: 0; right: 0;
-		transform: translateY(-50%);
-		display: none;
-		justify-content: space-between;
-		padding: 0 1rem;
-		color: rgba(255,255,255,0.35);
-		font-size: 0.75rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-	@media (hover: none) and (pointer: coarse) {
-		#hud-hint { display: flex; }
-	}
 	@media (max-width: 430px) {
 		#hud-portrait-card { width: 52px; }
 		#hud-log { max-height: 96px; }
@@ -347,7 +332,6 @@
 	<button id="world-intuition" type="button" aria-haspopup="dialog" hidden disabled>Intuition</button>
 	<button id="world-interact" type="button" title="Interact [E]" hidden disabled>Interact</button>
 </div>
-<div id="hud-hint" class="hud"><span>◐ move</span><span>look ◑</span></div>
 
 <dialog id="world-map-dialog" aria-labelledby="map-title">
 	<div class="map-heading"><h2 id="map-title">World map · N ↑</h2><button id="map-close" type="button" autofocus>Close</button></div>
