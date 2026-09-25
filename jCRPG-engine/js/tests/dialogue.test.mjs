@@ -81,7 +81,9 @@ test('opening slice completes through dialogue, preserves rewards once, and reta
     const ready = readToChoices(engine);
     const reportIndex = ready.choices.findIndex(c => c.text === 'Report: A Fair Share of Light');
     assert.equal(ready.defaultChoiceIndex, reportIndex);
-    engine.choose(reportIndex, token);
+    const report = engine.choose(reportIndex, token);
+    assert.deepEqual(report.completedMissions, [{id:missionId,title:mission.title}]);
+    assert.match(report.message, /Completed: A Fair Share of Light/);
     assert.equal(engine.panel.nodeId, 'handoff');
     assert.equal(engine.missionState(missionId), 'completed');
     assert.ok(engine.save.data.shrineRoutes['route:wammigmig:awshowam']);
@@ -144,7 +146,11 @@ test('Pella defaults to farewell after returning from readings instead of repeat
         engine.choose(dialogue.defaultChoiceIndex);
         assert.equal(engine.panel, null);
         talk(engine, 'Pella Sharekeeper');
-        assert.equal(engine.dialogue().captionIndex, 0, 'A new conversation still starts with the greeting');
+        assert.equal(engine.dialogue().canAdvance, false, 'Returning goes straight to conversation choices');
+        assert.equal(engine.dialogue().captionIndex, engine.dialogue().captionCount - 1);
+        const restored = fixture(); restored.save.import(engine.save.export()); restored.initialize();
+        talk(restored, 'Pella Sharekeeper');
+        assert.equal(restored.dialogue().canAdvance, false, 'Remember introductions across reloads');
     }
 });
 

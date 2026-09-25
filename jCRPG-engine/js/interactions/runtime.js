@@ -72,8 +72,9 @@ export class InteractionRuntime {
  const draft=structuredClone(this.save.data),messages=[];
  for(const action of actions)this.apply(draft,action,messages);
  this.refresh(draft);advanceNavigation(this,this.save.data,draft);draft.lastTransaction=token;draft.deltaRevision=(draft.deltaRevision??0)+1;
+ const completedMissions=this.content.missions.filter(m=>draft.missions[m.id]?.state==='completed'&&this.save.data.missions[m.id]?.state!=='completed').map(m=>({id:m.id,title:m.title}));
  validateSave(draft);this.validateState(draft);this.save.data=draft;
- return {message:messages.join(' '),transactionId:token};
+ return {message:messages.join(' '),transactionId:token,completedMissions};
  }
  apply(s,a,messages){
  if(!a||typeof a.op!=='string')throw Error('Invalid action');
@@ -133,12 +134,27 @@ export class InteractionRuntime {
   return anchor;
  }
  interact(anchor,token){
- if(anchor.kind==='actor'){this.transact([{op:'talk',id:anchor.targetId}],token);this.panel={kind:'dialogue',actorId:anchor.targetId,nodeId:dialogueStart(this.maps.dialogues[this.maps.actors[anchor.targetId].dialogueId],condition=>predicate(condition,this.save.data,this)),captionIndex:0};return this.dialogue();}
+ if(anchor.kind==='actor'){
+  const returning=!!this.save.data.actors[anchor.targetId]?.talked;
+  this.transact([{op:'talk',id:anchor.targetId}],token);
+  this.panel={kind:'dialogue',actorId:anchor.targetId,nodeId:dialogueStart(this.maps.dialogues[this.maps.actors[anchor.targetId].dialogueId],condition=>predicate(condition,this.save.data,this)),captionIndex:0,returnedToGreeting:returning};
+  if(returning)this.panel.captionIndex=this.dialogue().captionCount-1;
+  return this.dialogue();
+ }
  if(anchor.kind==='container'){const result=this.transact([{op:'open',id:anchor.targetId}],token);this.panel={kind:'container',id:anchor.targetId};return result;}
- if(anchor.kind==='shrine'){const result=this.transact([{op:'shrine',id:anchor.targetId}],token);const cue=this.maps.shrines[anchor.targetId].cue;result.message+=' '+(cue??'');return result;}
- if(anchor.kind==='puzzle')return this.transact([{op:'puzzle',id:anchor.targetId,input:anchor.input??anchor.componentId}],token);
- if(anchor.kind==='fitting')return this.transact([{op:'fit',id:anchor.targetId}],token);
- if(anchor.kind==='evidence')return this.transact([{op:'evidence',id:anchor.targetId,text:anchor.fact}],token);
+ if(['shrine','puzzle','fitting','evidence'].includes(anchor.kind)){
+  const id=anchor.targetId,s=this.save.data;
+  const wasComplete=anchor.kind==='shrine'?s.shrines[id]?.activated:anchor.kind==='puzzle'?s.puzzles[id]?.completed:anchor.kind==='fitting'?s.flags[id]:s.evidence[id];
+  const action=anchor.kind==='fitting'?{op:'fit',id}:anchor.kind==='puzzle'?{op:'puzzle',id,input:anchor.input??anchor.componentId}:anchor.kind==='evidence'?{op:'evidence',id,text:anchor.fact}:{op:'shrine',id};
+  const result=this.transact([action],token);
+  if(anchor.kind==='shrine')result.message+=' '+(this.maps.shrines[id].cue??'');
+  const completed=anchor.kind!=='puzzle'||this.save.data.puzzles[id]?.completed;
+  if(!result.duplicate&&!wasComplete&&completed&&result.message){
+   const titles={fitting:'Item used',shrine:'Relay activated',puzzle:'Task completed',evidence:'Observation recorded'};
+   this.panel={kind:'result',title:result.completedMissions?.length?'Mission completed':titles[anchor.kind],message:result.message};
+  }
+  return result;
+ }
  throw Error('Unsupported interaction');
  }
  dialogue() {

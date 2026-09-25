@@ -211,9 +211,18 @@ export class InteractionUI {
 
         if (panel.kind === 'dialogue') {
             this.showDialogue(engine.dialogue());
+        } else if (panel.kind === 'result') {
+            this.showResult(panel.title, panel.message, () => this.close());
         } else {
             this.showContainer(engine.maps.containers[panel.id]);
         }
+        this.focus();
+    }
+
+    showResult(title, message, continueAction) {
+        this.open(title, 'dialogue');
+        this.text('p', message);
+        this.button('Continue', continueAction, { primary: true, backdrop: true });
         this.focus();
     }
 
@@ -221,6 +230,7 @@ export class InteractionUI {
         const engine = this.state.interactions;
         this.open(dialogue.actor.name, 'dialogue');
         const speech = this.text('p', '');
+        speech.className = 'dialogue-speech';
         this.text('span', '"', speech);
         this.text('span', dialogue.text + '"', speech);
 
@@ -252,7 +262,11 @@ export class InteractionUI {
                 const result = engine.choose(i);
                 this.persist();
                 if (result.message) this.log(result.message);
-                this.show();
+                if (result.completedMissions?.length) {
+                    this.showResult('Mission completed', result.message, () => this.show());
+                } else {
+                    this.show();
+                }
                 this.renderer.requestRender();
             }, { primary: i === (dialogue.defaultChoiceIndex ?? 0), backdrop: true });
         }

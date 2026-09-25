@@ -20,7 +20,7 @@ test('automatic chapters, unique cave item, fitting and report survive every tra
  assert.throws(()=>act(e,{op:'fit',id:'fitting:wammigmig:listening-coil'}));
  e.save.data.player={x:786,y:20,z:928,realm:'cave'};assert.equal(e.navigationGoal().realm,'cave');
  const id='container:concordance:listening-coil';act(e,{op:'open',id},{op:'take',id});e=reload(e);assert.equal(e.navigationGoal().targetId,'fitting:wammigmig:listening-coil');
- const token=e.save.data.lastTransaction+1;const action={op:'fit',id:'fitting:wammigmig:listening-coil'};e.transact([action],token);assert.ok(e.transact([action],token).duplicate);e=reload(e);
+ const token=e.save.data.lastTransaction+1;const action={op:'fit',id:'fitting:wammigmig:listening-coil'};e.interact({kind:'fitting',targetId:action.id},token);assert.equal(e.panel.kind,'result');assert.equal(e.panel.title,'Item used');assert.match(e.panel.message,/The coil settles into the socket/);assert.ok(e.transact([action],token).duplicate);e.panel=null;e.interact({kind:'fitting',targetId:action.id});assert.equal(e.panel,null);e=reload(e);
  assert.equal(e.missionState(MAIN_IDS[1]),'ready-to-turn-in');act(e,{op:'turnIn',id:MAIN_IDS[1]});e=reload(e);
  const puzzle=e.maps.puzzles['puzzle:boarman:regional:1'];act(e,{op:'talk',id:'actor:boarman:regional:1'});for(const input of [...puzzle.componentIds].reverse())act(e,{op:'puzzle',id:puzzle.id,input});
  assert.equal(e.missionState(MAIN_IDS[2]),'ready-to-turn-in');act(e,{op:'turnIn',id:MAIN_IDS[2]});e=reload(e);assert.equal(e.currentStoryChapter(),null);assert.equal(e.mainNavigationGoal(),null);assert.ok(e.save.data.flags['story:concordance:opening:milestone']);

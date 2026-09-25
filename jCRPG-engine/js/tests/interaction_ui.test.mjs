@@ -305,3 +305,38 @@ test('mission actions are ordered and set a waypoint, travel, or show the map',a
  await actions()[1].onclick();assert.equal(ui.dialog.open,true);assert.equal(actions()[1].disabled,false);
  assert.ok(ui.body.children.some(e=>e.textContent==='Could not travel: No walkable floor'));
 });
+
+test('report completion is displayed without quotes before continuing or closing', t => {
+    const {ui,engine,calls} = fixture(t);
+    for (const hasFollowup of [false,true]) {
+        engine.panel = {kind:'dialogue'};
+        engine.dialogue = () => ({actor:{name:'Guide'},text:'The road is open.',choices:[{text:'Report'}]});
+        engine.choose = () => {
+            engine.panel = hasFollowup ? {kind:'dialogue'} : null;
+            return {message:'The relay answers. Completed: Restore the road',completedMissions:[{id:'road',title:'Restore the road'}]};
+        };
+        ui.show(); ui.primaryButton.click();
+        assert.equal(ui.dialog.open,true);
+        assert.equal(ui.title.textContent,'Mission completed');
+        assert.equal(ui.body.querySelector('p').textContent,'The relay answers. Completed: Restore the road');
+        assert.equal(ui.body.querySelectorAll('span').length,0);
+        assert.ok(calls.includes('The relay answers. Completed: Restore the road'));
+        ui.primaryButton.click();
+        assert.equal(ui.dialog.open,hasFollowup);
+        if(hasFollowup) assert.equal(ui.title.textContent,'Guide');
+        ui.close();
+    }
+});
+
+test('item-use result shows unquoted text and Continue restores game controls', t => {
+    const {ui,engine,calls}=fixture(t);
+    engine.panel={kind:'result',title:'Item used',message:'The coil settles into the socket. The road relay answers.'};
+    ui.show();
+    assert.equal(ui.title.textContent,'Item used');
+    assert.equal(ui.body.querySelector('p').textContent,engine.panel.message);
+    assert.equal(ui.body.querySelectorAll('span').length,0);
+    ui.primaryButton.click();
+    assert.equal(engine.panel,null);
+    assert.equal(ui.dialog.open,false);
+    assert.ok(calls.includes('resume'));
+});
