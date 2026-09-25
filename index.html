@@ -211,6 +211,7 @@
  #homepage-map button { cursor: pointer; }
  #homepage-map button:hover { border-color: var(--accent); }
  #atlas-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-bottom: 0.75rem; }
+ #location-filters { margin-bottom: 0.75rem; }
  .map-frame { position: relative; }
  .map-toolbar { position: absolute; z-index: 1; top: 0.5rem; left: 0.5rem; right: 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; width: fit-content; max-width: calc(100% - 1rem); box-sizing: border-box; padding: 0.35rem; border-radius: 8px; background: #101917e8; }
  .map-toolbar span, .map-toolbar output { padding: 0 0.3rem; font-size: 0.85rem; }
@@ -222,7 +223,9 @@
  #atlas:active { cursor: grabbing; }
  #atlas:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
  #atlas-detail { padding: 1rem; margin-bottom: 1rem; background: var(--panel); border-radius: 8px; line-height: 1.6; }
+ #atlas-detail:empty { display: none; }
  #atlas-detail a { color: var(--accent); }
+ #atlas-detail .map-travel { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border-radius: 6px; background: var(--accent); color: #10131a; text-decoration: none; }
  #atlas-list { max-height: 260px; overflow-y: auto; display: grid; gap: 0.4rem; margin-top: 0.75rem; }
  #atlas-list button { text-align: left; }
  #atlas-search { box-sizing: border-box; max-width: 100%; }
@@ -235,11 +238,15 @@
 		<a href="play.html">Continue</a>
 		<a href="play.html?new=1">New game</a>
 	</nav>
+	<p class="project-links">
+		<a href="https://github.com/leweyg/jclassicrpg">Source code</a>
+		<a href="https://jcrpg.blogspot.com/">Classic homepage</a>
+		<a href="https://sourceforge.net/projects/javacrpg/">Classic source code</a>
+	</p>
 
 </header>
 <main>
 <section class="screenshot-gallery" aria-label="Game screenshots">
-	<p>Scenes from the current web build. Swipe or scroll to browse; open a thumbnail to see the full image.</p>
 	<div class="screenshot-strip" aria-label="Game screenshots">
 		<a href="screenshots/town.png" target="_blank" rel="noopener"><img src="screenshots/town.png" alt="Timber building and street in a generated town" loading="lazy"><span>Town streets</span></a>
 		<a href="screenshots/marn-dialogue.png" target="_blank" rel="noopener"><img src="screenshots/marn-dialogue.png" alt="Conversation choices with Marn Even-Tally" loading="lazy"><span>Character dialogue</span></a>
@@ -252,22 +259,19 @@
 <section id="summary" aria-label="About the game">
 <p>Explore a world of settlements, shrines, caves, and labyrinths. Meet its people, restore the Concordance Grid, and follow a repair from Wammigmig toward the Measured Oasis.</p>
 <p>The first three main-story chapters are playable, alongside local quests and exploration. The final two capital chapters are planned.</p>
-	<p class="project-links">
-		<a href="https://github.com/leweyg/jclassicrpg">Source code</a>
-		<a href="https://jcrpg.blogspot.com/">Classic homepage</a>
-		<a href="https://sourceforge.net/projects/javacrpg/">Classic source code</a>
-	</p>
 </section>
 <section id="homepage-map" aria-labelledby="map-title">
 <h2 id="map-title">Map</h2>
-<p id="map-help">Drag to pan; scroll or pinch to zoom. Use + / − and arrow keys with the map focused. Select a marker or search the location list for details. Shrines and caves appear as dots until enabled.</p>
+<details class="reference-tree" id="location-filters">
+<summary>Location filters</summary>
 <fieldset id="atlas-filters"><legend>Show locations</legend></fieldset>
+</details>
 <div class="map-frame">
 <div class="map-toolbar"><button id="atlas-out" type="button" aria-label="Zoom out">−</button><button id="atlas-in" type="button" aria-label="Zoom in">+</button><button id="atlas-reset" type="button">Whole world</button><button id="atlas-story" type="button">Story area</button><span>Zoomable</span><output id="atlas-zoom" aria-label="Map zoom"></output></div>
-<canvas id="atlas" width="1000" height="1000" tabindex="0" aria-label="Interactive world map" aria-describedby="map-help">Use the location list below to explore the map.</canvas>
+<canvas id="atlas" width="1000" height="1000" tabindex="0" aria-label="Interactive world map">Use the location list below to explore the map.</canvas>
 </div>
 <p id="atlas-status" role="status">Loading world map…</p>
-<div id="atlas-detail" aria-live="polite">Select a location to see its details.</div>
+<div id="atlas-detail" aria-live="polite"></div>
 <details class="reference-tree" id="atlas-regions"><summary>Regions</summary>
 <label for="atlas-search">Find a location</label> <input id="atlas-search" type="search" placeholder="Name, type, or coordinates">
 <div id="atlas-list" aria-label="Map locations"></div>

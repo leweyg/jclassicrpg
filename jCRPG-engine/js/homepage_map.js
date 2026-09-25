@@ -14,7 +14,7 @@ async function loadMap() {
     return response.json();
   }));
   const markers = [];
-  const add = (kind, name, position, extra = {}) => markers.push({ kind, name, x: position[0], z: position[2], ...extra });
+  const add = (kind, name, position, extra = {}) => markers.push({ kind, name, x: position[0], y: position[1], z: position[2], ...extra });
   for (const town of towns) add(['capital', 'secondary-capital'].includes(town.settlementTier) ? 'capital' : 'settlement', town.name, town.position, { realm: town.realm, note: town.settlementTier, id: town.id });
   for (const shrine of shrines) add('shrine', 'Relay shrine', shrine.position);
   for (const portal of portals.filter(p => p.kind === 'cave')) add('cave', 'Cave entrance', portal.from, { note: `${portal.componentSize} connected cave cells` });
@@ -38,6 +38,7 @@ async function loadMap() {
   const size = terrain.side * terrain.step;
   const view = new MapViewport(size, size);
   view.minZoom = 1; view.maxZoom = 32;
+  view.zoomAt(2);
   const atlas = document.createElement('canvas');
   atlas.width = atlas.height = terrain.side;
   const terrainCtx = atlas.getContext('2d'), raster = terrainCtx.createImageData(terrain.side, terrain.side);
@@ -86,9 +87,11 @@ async function loadMap() {
     const title = document.createElement('strong'); title.textContent = marker.name;
     const text = document.createElement('p'); text.textContent = `${styles[marker.kind].label} · ${Math.round(marker.x)}, ${Math.round(marker.z)}${marker.realm === 'cave' ? ' · Underground' : ''}${marker.note ? ' · ' + marker.note : ''}`;
     byId('atlas-detail').replaceChildren(title, text);
-    if (marker.destination) {
-      const link = document.createElement('a'); link.href = `play.html?location=${marker.destination}`; link.textContent = 'Visit this place'; byId('atlas-detail').append(link);
-    }
+    const link = document.createElement('a');
+    const destination = marker.destination || `map:${marker.x},${marker.y},${marker.z},${marker.realm || 'surface'}`;
+    link.href = `play.html?${new URLSearchParams({ location: destination })}`;
+    link.className = 'map-travel'; link.textContent = 'Travel here';
+    byId('atlas-detail').append(link);
     if (center) { view.zoom = Math.max(view.zoom, 6); view.x = marker.x; view.z = marker.z; view.constrain(); }
     draw();
   }
@@ -120,6 +123,13 @@ async function loadMap() {
       if (d <= distance) { best = marker; distance = d; }
     }
     if (best) select(best);
+  });
+  canvas.addEventListener('dblclick', () => {
+    if (gestures.suppressClick() || !selected) return;
+    byId('atlas-detail').scrollIntoView({
+      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      block: 'nearest',
+    });
   });
   const zoom = factor => { view.zoomAt(factor); draw(); };
   byId('atlas-in').onclick = () => zoom(1.5);

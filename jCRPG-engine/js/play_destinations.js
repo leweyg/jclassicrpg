@@ -10,6 +10,17 @@ export const PLAY_DESTINATIONS = {
 };
 
 export async function visitPlayDestination(state, id) {
+	if (typeof id === 'string' && id.startsWith('map:')) {
+		const parts = id.slice(4).split(',');
+		const [x, y, z] = parts.slice(0, 3).map(Number);
+		const realm = parts[3];
+		if (parts.length !== 4 || parts.slice(0, 3).some(part => !part.trim()) ||
+			![x, y, z].every(Number.isFinite) || !['surface', 'cave'].includes(realm)) {
+			throw new Error('Invalid map destination. Choose a location on the homepage.');
+		}
+		await state.teleport(x, z, y, realm);
+		return `map location ${Math.round(x)}, ${Math.round(z)}`;
+	}
 	if (!Object.hasOwn(PLAY_DESTINATIONS, id)) throw new Error('Unknown destination. Choose a location on the homepage.');
 	const destination = PLAY_DESTINATIONS[id];
 	const [x, y, z] = destination.position;
