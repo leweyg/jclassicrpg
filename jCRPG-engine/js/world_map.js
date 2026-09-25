@@ -1,3 +1,4 @@
+import {Compass} from './compass.js';
 import {mazeNavigation} from './interactions/maze_navigation.js';
 import { buildMapMarkers, MARKER_STYLES, MINIMAP_RADIUS, VISIBLE_RADIUS, wrappedDelta } from './map_model.js';
 
@@ -15,6 +16,7 @@ const DASHED = [3, 3], SOLID = [];
 export class WorldMap {
 	constructor(gameState, renderer) {
 		this.state = gameState;
+        this.compass = new Compass(document.getElementById('hud-compass'));
 		this.renderer = renderer;
 		this.world = gameState.exploration.world;
 		this.baseMarkers = buildMapMarkers(this.world, this.world.additionalMapMarkers).map(m=>m.kind==='shrine'?{...m,id:m.id.replace('RoadShrine:','shrine:'),implemented:true}:m);
@@ -343,5 +345,6 @@ export class WorldMap {
 		if (!force && p.x === this._lastX && p.z === this._lastZ && yaw === this._lastYaw) return;
 		this._lastX = p.x; this._lastZ = p.z; this._lastYaw = yaw;
 		this._drawMini(); this._drawFull();
+        this.compass?.draw(yaw,p,nav,this.world.sizeX,this.world.sizeZ);
 	}
 }

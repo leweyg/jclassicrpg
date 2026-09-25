@@ -1,3 +1,4 @@
+import {bindHudLayout} from './hud_layout.js';
 import { InteractionUI } from './interactions/ui.js';
 /*
  * play_page.js
@@ -43,6 +44,7 @@ function appendLog(text) {
 }
 
 async function main() {
+    bindHudLayout();
 	const canvas = document.getElementById("scene-canvas");
 	const status = document.getElementById("load-status");
 
