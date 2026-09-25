@@ -186,6 +186,32 @@
 	.population-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
 	.population-list small { display: block; color: var(--muted); }
 	.story-text { white-space: pre-line; }
+	.story-walkthrough { margin: 1.4rem 0 2rem; padding: 1.25rem; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+	.story-walkthrough h2 { margin: 0 0 0.4rem; }
+	.story-walkthrough > p, .story-panel p { line-height: 1.6; }
+	.story-steps { display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.25rem 0 0.85rem; }
+	.story-steps button, .story-controls button { min-height: 48px; padding: 0.55rem 0.8rem; color: var(--text); background: #292f38; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; touch-action: manipulation; }
+	.story-steps button { flex: 1 0 132px; text-align: left; }
+	.story-steps button[aria-current="step"], .story-steps button:hover, .story-controls button:hover { border-color: var(--accent); color: var(--accent); }
+	.story-panel { padding: 0.8rem 0; border-top: 1px solid var(--border); }
+	.story-walkthrough.is-interactive .story-panel[hidden] { display: none; }
+	.story-panel h3 { margin: 0.4rem 0; }
+	.story-panel figure { margin: 0.9rem 0; }
+	.story-panel img { display: block; max-width: 100%; width: 100%; max-height: 390px; object-fit: contain; background: #101217; border-radius: 8px; }
+	.story-panel figcaption, .story-note { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+	.story-label { color: #ffcf7a; font-size: 0.85rem; letter-spacing: 0.03em; }
+	.story-actions, .story-controls { display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center; }
+	.story-actions a { display: inline-flex; min-height: 48px; align-items: center; padding: 0 0.9rem; color: #10131a; background: var(--accent); border-radius: 6px; text-decoration: none; }
+	.story-actions a + a { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+	.story-controls { justify-content: space-between; margin-top: 0.8rem; }
+	.story-controls[hidden] { display: none; }
+	.screenshot-gallery { margin: 1.5rem 0 2rem; }
+	.screenshot-gallery p { color: var(--muted); line-height: 1.5; }
+	.screenshot-strip { display: flex; gap: 0.8rem; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; padding: 0.3rem 0.2rem 1rem; }
+	.screenshot-strip a { flex: 0 0 min(70vw, 230px); scroll-snap-align: start; display: grid; gap: 0.45rem; color: var(--accent); text-decoration: none; }
+	.screenshot-strip img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+	.screenshot-strip a:hover img, .screenshot-strip a:focus-visible img { border-color: var(--accent); }
+	.screenshot-strip a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -217,6 +243,66 @@
 		<li><a href="play.html?location=awshowam">Awshowam — meet Garrum at the Grand Exchange</a></li>
 	</ul>
 </details>
+<section class="story-walkthrough" id="story-walkthrough" aria-labelledby="walkthrough-title">
+	<h2 id="walkthrough-title">A light worth keeping</h2>
+	<p>Begin with one repair. Follow its consequences from a household to a town and then to the Measured Oasis. Each new place joins a story task with exploration; returning to a familiar place lets its people tell you what changed.</p>
+	<div class="story-steps" role="group" aria-label="Choose a story moment">
+		<button type="button" data-story-step="0">1 · The first light</button>
+		<button type="button" data-story-step="1">2 · The missing current</button>
+		<button type="button" data-story-step="2">3 · Three branches</button>
+		<button type="button" data-story-step="3">4 · What we can count</button>
+		<button type="button" data-story-step="4">5 · What we keep open</button>
+	</div>
+	<article class="story-panel" id="story-step-1">
+		<span class="story-label">PERSON · MISSION + EXPLORATION · PLAYABLE</span>
+		<h3>Orro, Marn, and the first light</h3>
+		<p>Orro can tell whether a shrine carries a pulse. He cannot wake it while worrying about every result. Meet him on the road, touch the shrine, and bring what happened to Marn in Wammigmig. The single act is observable; pausing to attend to it is a small ritual.</p>
+		<figure><img src="screenshots/marn-dialogue.png" alt="Current web port conversation with Marn in Wammigmig" loading="lazy"><figcaption>Current build: Marn’s conversation. The shorter Orro → shrine → Marn chapter is playable.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?new=1">Begin a new game</a><a href="play.html?location=shrine">Preview the shrine</a></div>
+	</article>
+	<article class="story-panel" id="story-step-2">
+		<span class="story-label">HOUSEHOLD · MISSION + EXPLORATION · PLAYABLE</span>
+		<h3>Pella and the cave component</h3>
+		<p>Pella knows which homes go dark. A part hidden in a nearby cave could help their relay, if someone brings it back. The route into the cave is new ground; the return through Wammigmig gives the journey a person to answer to. Side passages remain yours to discover.</p>
+		<figure><img src="screenshots/cave.png" alt="Existing explorable cave in the web port" loading="lazy"><figcaption>Current build: cave scenery. Pella’s marked cave item quest is playable.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?location=cave">Preview the cave entrance</a><a href="play.html?location=wammigmig">Visit Wammigmig</a></div>
+	</article>
+	<article class="story-panel" id="story-step-3">
+		<span class="story-label">TOWN · MISSION + EXPLORATION · PLAYABLE</span>
+		<h3>Talla and the three branches</h3>
+		<p>In Wamwammigtraawsho, exchange, homes, and the labyrinth each depend on a branch of the grid. Talla asks you to wake all three. The switches make it easy to see what works; the people of the town give each branch a reason to matter.</p>
+		<figure><img src="screenshots/town.png" alt="Baked settlement buildings and streets in the web port" loading="lazy"><figcaption>Current build: an example generated town. The three-branch town chapter is playable.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?location=major">Preview the major town</a></div>
+	</article>
+	<article class="story-panel" id="story-step-4">
+		<span class="story-label">TOWN → NETWORK · MISSION + EXPLORATION · PLANNED QUEST</span>
+		<h3>Varo and Nemi: a careful unknown</h3>
+		<p>At the Measured Oasis, Varo asks what the numbers actually support. Nemi notices a pattern worth testing. A sum can be checked without declaring that every meaningful experience has already been counted. Optional conversations take you beyond the marked route.</p>
+		<figure><img src="docs/interaction-evidence/maze-generator-active.png" alt="Current web port illuminated circuit and maze generator" loading="lazy"><figcaption>Current build: a maze generator. The Oasis sum and the Varo–Nemi handoff are planned.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?location=oasis">Preview the Measured Oasis</a></div>
+	</article>
+	<article class="story-panel" id="story-step-5">
+		<span class="story-label">NETWORK · MISSION + EXPLORATION · PLANNED FINALE</span>
+		<h3>Saima and a practice that can change</h3>
+		<p>A final named sequence brings the network into view. Saima asks the capital to keep both the measured result and the unanswered remainder visible. A shared rite becomes a promise to check the next pulse together, from one body to the wider world.</p>
+		<figure><img src="screenshots/mobile-journal.png" alt="Current web port quest journal displayed on a phone" loading="lazy"><figcaption>Current build: mobile journal. The capital sequence and complete main-story arc are planned.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?location=oasis">Preview the capital</a><a href="play.html?new=1">Begin from the start</a></div>
+	</article>
+	<div class="story-controls" hidden><button type="button" id="story-prev">Previous moment</button><span id="story-progress" role="status" aria-live="polite"></span><button type="button" id="story-next">Next moment</button></div>
+	<p class="story-note">Location links are preview shortcuts into the existing world and keep your saved progress. “Begin a new game” starts from the beginning. The first three chapters are playable. The capital chapters are planned.</p>
+</section>
+<section class="screenshot-gallery" aria-labelledby="screenshots-title">
+	<h2 id="screenshots-title">Screenshots</h2>
+	<p>Scenes from the current web build. Swipe or scroll to browse; open a thumbnail to see the full image.</p>
+	<div class="screenshot-strip" aria-label="Game screenshots">
+		<a href="screenshots/town.png" target="_blank" rel="noopener"><img src="screenshots/town.png" alt="Timber building and street in a generated town" loading="lazy"><span>Town streets</span></a>
+		<a href="screenshots/house-interior.png" target="_blank" rel="noopener"><img src="screenshots/house-interior.png" alt="Wooden room in a walkable building" loading="lazy"><span>House interior</span></a>
+		<a href="screenshots/cave.png" target="_blank" rel="noopener"><img src="screenshots/cave.png" alt="Stone passage in an explorable cave" loading="lazy"><span>Natural cave</span></a>
+		<a href="screenshots/dungeon.png" target="_blank" rel="noopener"><img src="screenshots/dungeon.png" alt="Long corridor inside a stone labyrinth" loading="lazy"><span>Labyrinth</span></a>
+		<a href="screenshots/marn-dialogue.png" target="_blank" rel="noopener"><img src="screenshots/marn-dialogue.png" alt="Conversation choices with Marn Even-Tally" loading="lazy"><span>Character dialogue</span></a>
+		<a href="screenshots/mobile-journal.png" target="_blank" rel="noopener"><img src="screenshots/mobile-journal.png" alt="Quest journal displayed on a phone" loading="lazy"><span>Phone journal</span></a>
+	</div>
+</section>
 <details class="reference-tree" open>
 	<summary>World &amp; project reference</summary>
 	<div class="tree-children">
@@ -226,7 +312,7 @@
 	<details class="system-card" id="characters">
 		<summary>Starter characters</summary>
 		<p>The web party contains <strong>ELMO</strong> (Human Warrior), <strong>ELMARA</strong> (Elf Warrior), and <strong>PALMANO</strong> (Elf Warrior). Their names, portraits, attributes and skills come from the bundled character saves.</p>
-		<p class="content-status">Port status: party data is loaded; ELMARA appears in the Play HUD. Individual character controls and conversations are not implemented.</p>
+		<p class="content-status">Port status: party data is loaded; ELMARA appears in the Play HUD. Individual party-member controls remain limited; world-character conversations are playable.</p>
 		<ul id="character-list" class="character-list" aria-label="Starter character portraits"></ul>
 		<p>Listed in <a href="jCRPG-engine/json/starter_party.json">starter_party.json</a>. See <a href="jCRPG-engine/json/characters.json">characters.json</a> for races, professions and saved-character paths.</p>
 	</details>
@@ -243,13 +329,13 @@
 	<details class="system-card" id="conversations">
 		<summary>Conversations</summary>
 		<p>No authored dialogue trees or branching NPC conversations were found in the bundled scenario or Java source. The original engine does have encounter greetings and social skills such as Chatter and Diplomacy.</p>
-		<p class="content-status">Port status: conversation and social encounter gameplay are not implemented.</p>
+		<p class="content-status">Port status: the web port has authored world-character conversations and quest choices; the original social-skill encounter system is not ported.</p>
 		<p>Sources: <a href="jCRPG-engine/src/main/java/org/jcrpg/ui/window/interaction/EncounterWindow.java">EncounterWindow.java</a>, <a href="jCRPG-engine/src/main/java/org/jcrpg/world/ai/abs/skill/social/Chatter.java">Chatter.java</a>, <a href="jCRPG-engine/src/main/java/org/jcrpg/world/ai/abs/skill/social/Diplomacy.java">Diplomacy.java</a>.</p>
 	</details>
 	<details class="system-card" id="quests">
 		<summary>Quests &amp; story</summary>
 		<p>No authored quest list, objectives or quest journal were found in the bundled scenario. Its event list contains one introduction with two story blocks: a welcome to open-ended exploration and a keyboard/mouse tutorial for the original Java game.</p>
-		<p class="content-status">Port status: the story can be read here; it does not yet play as an event in Play.</p>
+		<p class="content-status">Port status: the original introduction can be read here. The web port has an authored main story; chapters four and five are planned.</p>
 		<div id="story-blocks"></div>
 		<p>Listed in <a href="scenario/jclassicrpg/events.xml">events.xml</a> and <a href="scenario/jclassicrpg/story/intro.xml">story/intro.xml</a>. Original playback: <a href="jCRPG-engine/src/main/java/org/jcrpg/game/scenario/Events.java">Events.java</a>; scenario flags: <a href="jCRPG-engine/src/main/java/org/jcrpg/game/scenario/ScenarioState.java">ScenarioState.java</a>.</p>
 	</details>
@@ -269,5 +355,6 @@
 </main>
 <script type="module" src="jCRPG-engine/js/content_catalog.js"></script>
 <script type="module" src="jCRPG-engine/js/summary_page.js"></script>
+<script type="module" src="jCRPG-engine/js/story_walkthrough.js"></script>
 </body>
 </html>

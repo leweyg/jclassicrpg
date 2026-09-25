@@ -4,3 +4,4 @@ jclassicrpg-interactions-missions-and-quests.md
 # Temporary world compiler staging directories and recovery backups.
 # The published worlds/seed0/v2 pack is required for static hosting.
 .jcrpg-compile-*/
+jclassicrpg-story-gallery.patch
