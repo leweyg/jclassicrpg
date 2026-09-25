@@ -258,3 +258,32 @@ test('dialogue Continue uses click, E and backdrop to advance captions before of
     assert.ok(!calls.includes('save'), 'reading alone does not commit an interaction');
     ui.primaryButton.click(); assert.ok(calls.includes('save'));
 });
+
+test('region intuition links tracked side and next main missions without changing tracking', async t => {
+ const {ui,engine,save}=fixture(t);
+ const main={id:'main',kind:'main',title:'Restore the road',state:'active',summary:'Main details',progress:[],turnInActorId:'guide'};
+ const side={id:'side',kind:'side',title:'Help the keeper',state:'active',summary:'Side details',progress:[],turnInActorId:'guide'};
+ engine.intuition=()=>null;ui.regionIntuition=()=>({name:'Forest',summary:'Trees surround you.'});
+ engine.journal=()=>[side,main];engine.currentStoryChapter=()=>({missionId:'main'});
+ engine.navigationGoal=()=>({name:'Speak to the keeper'});engine.mainNavigationGoal=()=>({name:'Wake the shrine'});
+ save.data.navMissionId='side';
+ ui.openIntuition(null);
+ const links=ui.body.children.filter(e=>e.className==='intuition-mission-link');
+ assert.equal(links.length,4);
+ assert.ok(ui.body.children.some(e=>e.textContent==='Next: Speak to the keeper'));
+ assert.ok(ui.body.children.some(e=>e.textContent==='Next: Wake the shrine'));
+ assert.deepEqual(links.map(link=>link.textContent),['Current: Help the keeper','Next: Speak to the keeper','Main story: Restore the road','Next: Wake the shrine']);
+ assert.equal(ui.primaryButton,ui.closeButton);
+ assert.equal(ui.closeButton.hidden,false);
+ assert.equal(ui.body.children.some(e=>e.textContent==='Continue'),false);
+ await links[1].onclick();assert.equal(ui.title.textContent,'Help the keeper');
+ ui.openIntuition(null);await ui.body.children.find(e=>e.className==='intuition-mission-link'&&e.textContent==='Next: Wake the shrine').onclick();
+ assert.equal(ui.title.textContent,'Restore the road');assert.equal(save.data.navMissionId,'side');
+ save.data.navMissionId='main';ui.openIntuition(null);
+ assert.equal(ui.body.children.filter(e=>e.className==='intuition-mission-link').length,2);
+ save.data.navMissionId=null;ui.openIntuition(null);
+ assert.equal(ui.body.children.filter(e=>e.className==='intuition-mission-link').length,2);
+ main.state='completed';side.state='completed';ui.openIntuition(null);
+ assert.equal(ui.body.children.filter(e=>e.className==='intuition-mission-link').length,0);
+ assert.ok(ui.body.children.some(e=>e.textContent.startsWith('No next mission')));
+});

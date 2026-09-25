@@ -296,8 +296,33 @@ export class InteractionUI {
         return {name, summary: `${setting} Your position is ${Math.floor(p.x)}, ${Math.floor(p.z)}.`};
     }
 
+    regionMissionLinks() {
+        const engine = this.state.interactions;
+        const missions = engine.journal().filter(m => ['available', 'active', 'ready-to-turn-in'].includes(m.state));
+        const main = missions.find(m => m.id === engine.currentStoryChapter()?.missionId);
+        const tracked = missions.find(m => m.id === this.state.saveDeltas.data.navMissionId);
+        const current = tracked || main;
+        const show = (mission, label, goal) => {
+            const link = this.button(`${label}: ${mission.title}`, () => this.openQuest(mission.id));
+            link.className = 'intuition-mission-link';
+            if (goal?.name) {
+                const next = this.button('Next: ' + goal.name, () => this.openQuest(mission.id));
+                next.className = 'intuition-mission-link';
+            }
+        };
+        if (current) {
+            show(current, 'Current', tracked ? engine.navigationGoal() : engine.mainNavigationGoal());
+            if (current.kind !== 'main' && main && main.id !== current.id) {
+                show(main, 'Main story', engine.mainNavigationGoal());
+            }
+        } else {
+            this.text('p', engine.content.stories?.[0]?.nextChapterFallback || 'No next mission is available. Speak to people nearby to find a new quest.');
+        }
+    }
+
     openIntuition(anchor) {
-        const info = this.state.interactions.intuition(anchor) || this.regionIntuition();
+        const objectInfo = this.state.interactions.intuition(anchor);
+        const info = objectInfo || this.regionIntuition();
         if (!info?.summary) return;
 
         this.open('Intuition · ' + info.name, 'intuition');
@@ -305,7 +330,14 @@ export class InteractionUI {
         if (info.itemCount !== undefined) {
             this.text('p', `${info.itemCount} ${info.itemCount === 1 ? 'item' : 'items'} remaining.`);
         }
-        this.button('Continue', () => this.close(), { primary: true, backdrop: true });
+        if (!objectInfo) {
+            this.regionMissionLinks();
+            this.closeButton.hidden = false;
+            this.primaryButton = this.closeButton;
+            this.backdropButtons.add(this.closeButton);
+        } else {
+            this.button('Continue', () => this.close(), { primary: true, backdrop: true });
+        }
         this.focus();
     }
 
