@@ -1,3 +1,4 @@
+import {TERRAIN_NAMES} from '../frozen_world.js';
 import { revealReadDialogue } from '../map_discovery.js';
 
 /** Accessible bounded panels; world movement pauses while a panel owns focus. */
@@ -284,8 +285,19 @@ export class InteractionUI {
         continueButton.className = 'container-continue';
     }
 
+    regionIntuition() {
+        const {exploration, party, realm} = this.state;
+        const p = party.position, world = exploration.world;
+        const cell = exploration.cellAt?.(p.x, p.y, p.z, realm);
+        const landmark = world.landmarkAt(p.x, p.z);
+        const maze = cell?.structure?.kind === 'SimpleDungeonPart';
+        const name = realm === 'cave' ? 'Natural cave' : maze ? 'Labyrinth' : landmark?.name || TERRAIN_NAMES[world.typeAt(p.x,p.z)];
+        const setting = realm === 'cave' ? 'You are underground. Follow the exit marker to return to the surface.' : maze ? 'You are inside a labyrinth. The map marks its exits and guides you toward your local objective or a way outside.' : `You are exploring ${TERRAIN_NAMES[world.typeAt(p.x,p.z)].toLowerCase()}${landmark ? ' near ' + landmark.name : ''}.`;
+        return {name, summary: `${setting} Your position is ${Math.floor(p.x)}, ${Math.floor(p.z)}.`};
+    }
+
     openIntuition(anchor) {
-        const info = this.state.interactions.intuition(anchor);
+        const info = this.state.interactions.intuition(anchor) || this.regionIntuition();
         if (!info?.summary) return;
 
         this.open('Intuition · ' + info.name, 'intuition');

@@ -4,8 +4,8 @@
  * Exploration rendering: streams the frozen saved world with shared
  * real jCRPG media/models assets (ground tiles + trees + bushes), a real sky
  * cubemap from media/textures/sky, and touch/mouse dual-stick style controls
- * (left half of the screen = move, right half = look; both work with mouse
- * drag or one-or-more simultaneous touches via the Pointer Events API). This
+ * (single touch = steer; multi-touch = left move/right look; mouse drag uses
+ * left move/right look via the Pointer Events API). This
  * is aimed at getting visually close to the reference screenshot in
  * jCRPG-engine/save/game1_20100426-004720.124/screen1272235643909.jpg, not at
  * reproducing exact procedural world generation (that is a later pass).
@@ -103,11 +103,14 @@ export class SceneRenderer {
 		});
 		window.addEventListener('keyup', event => { this._keys.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key); this.requestRender(); });
 		c.style.touchAction = "none";
-		// Long presses belong to the game's hold gesture, not the browser menu.
-		c.addEventListener('contextmenu', event => event.preventDefault());
-		c.addEventListener('touchstart', event => {
-			if (this._inputEnabled && event.cancelable) event.preventDefault();
-		}, { passive: false });
+        // Intuition can open on pointerdown, before the native contextmenu event.
+        // Capture at document level so the newly opened panel cannot receive it.
+        document.addEventListener('contextmenu', event => event.preventDefault(), { capture: true });
+        // Pointer Events handle game gestures; suppress native touch clicks,
+        // double-tap zoom and callouts even when a gesture just opened a panel.
+        for (const type of ['touchstart', 'touchend']) c.addEventListener(type, event => {
+            if (event.cancelable) event.preventDefault();
+        }, { passive: false });
 		c.addEventListener('wheel', event => {
 			if (event.defaultPrevented || !this._inputEnabled || event.ctrlKey) return;
 			event.preventDefault();
@@ -146,32 +149,30 @@ export class SceneRenderer {
 		};
 		c.addEventListener("pointerdown", (e) => {
 			if (!this._inputEnabled) return;
-			// A click exits latched steering and is consumed instead of interacting.
-			if (this._movePointer?.side === 'steer') {
-				for (const [pointerId, pointer] of this._pointers) {
-					if (pointer === this._movePointer) {
-						endPointer({ type: 'pointercancel', pointerId });
-						break;
-					}
-				}
-				return;
-			}
-			const steering = e.button === 2 && e.pointerType === 'mouse';
-			if (e.button !== 0 && !steering) return;
-			// Steering follows hover motion after release, without pointer capture.
-			if (!steering) c.setPointerCapture?.(e.pointerId);
-			const side = steering ? 'steer' : this._keys.size ? "look" : sideForClientX(e.clientX);
-			const p = { side, startX: e.clientX, startY: e.clientY, curX: e.clientX, curY: e.clientY, moved: false };
-			this._pointers.set(e.pointerId, p);
-			if (steering) {
-				p.noAction = true;
-				clearAction();
-				startStick(p);
-			}
+            if (e.button === 2 && e.pointerType === 'mouse') {
+                clearTimeout(this._clickTimer); clearAction(); this.onIntuition?.(); return;
+            }
+            if (e.button !== 0) return;
+            c.setPointerCapture?.(e.pointerId);
+            const touch = e.pointerType === 'touch';
+            if (touch && ![...this._pointers.values()].some(p => p.touch)) this._touchDual = false;
+            const side = touch ? (this._touchDual ? sideForClientX(e.clientX) : 'steer') : this._keys.size ? 'look' : sideForClientX(e.clientX);
+            const p = { side, touch, startX: e.clientX, startY: e.clientY, curX: e.clientX, curY: e.clientY, moved: false };
+            this._pointers.set(e.pointerId, p);
+            if (touch && [...this._pointers.values()].filter(p => p.touch).length > 1) {
+                this._touchDual = true;
+                this._movePointer = null; this._joystickEl.style.display = 'none';
+                for (const pointer of this._pointers.values()) if (pointer.touch) {
+                    pointer.side = sideForClientX(pointer.startX);
+                    // Recenter when switching controls so the camera cannot jump.
+                    pointer.startX = pointer.curX; pointer.startY = pointer.curY;
+                    if (pointer.side === 'move' && pointer.moved && !this._movePointer) startStick(pointer);
+                }
+            }
 			if (this._pointers.size > 1) {
 				for (const pointer of this._pointers.values()) pointer.noAction = true;
 				clearAction();
-			} else if (!steering) {
+			} else {
 				this._gestureAction = 'interact';
 				this.onGestureHighlight?.('interact');
 				this._holdTimer = setTimeout(() => {
@@ -195,13 +196,14 @@ export class SceneRenderer {
 			}
 			if (!p.moved && Math.hypot(e.clientX - p.startX, e.clientY - p.startY) >= GESTURE_SLOP) {
 				p.moved = true;
+                clearTimeout(this._clickTimer);
 				clearAction();
-				if (this._keys.size && p.side !== 'steer') p.side = 'look';
-				if (p.side === 'move' && !this._movePointer) {
+				if (!p.touch && this._keys.size && p.side !== 'steer') p.side = 'look';
+				if (['move','steer'].includes(p.side) && !this._movePointer) {
 					startStick(p);
 				}
 			}
-			if (p.moved && p.side !== 'steer' && (p.side === 'look' || this._keys.size)) {
+			if (p.moved && p.side !== 'steer' && (p.side === 'look' || (!p.touch && this._keys.size))) {
 				if (p === this._movePointer) { this._movePointer = null; this._joystickEl.style.display = 'none'; }
 				p.side = 'look';
 				look(e.clientX - p.curX, e.clientY - p.curY);
@@ -219,7 +221,6 @@ export class SceneRenderer {
 		const endPointer = (e) => {
 			const p = this._pointers.get(e.pointerId);
 			if (!p) return;
-			if (p.side === 'steer' && ['pointerup', 'lostpointercapture'].includes(e.type)) return;
 			const action = e.type === 'pointerup' && !p.moved && !p.noAction &&
 				Math.hypot(e.clientX - p.startX, e.clientY - p.startY) < GESTURE_SLOP ? this._gestureAction : null;
 			clearAction();
@@ -228,11 +229,24 @@ export class SceneRenderer {
 				this._joystickEl.style.display = "none";
 			}
 			this._pointers.delete(e.pointerId);
+            if (![...this._pointers.values()].some(pointer => pointer.touch)) this._touchDual = false;
 			this.requestRender();
 			if (action === 'intuition') this.onIntuition?.();
-			else if (action === 'interact') this.onInteract?.();
+			else if (action === 'interact') {
+                if (p.touch) this.onInteract?.();
+                else {
+                    clearTimeout(this._clickTimer);
+                    this._clickTimer = setTimeout(() => { if (this._inputEnabled) this.onInteract?.(); }, 350);
+                }
+            }
 		};
 
+        c.addEventListener('dblclick', event => {
+            event.preventDefault();
+            if (!this._inputEnabled) return;
+            clearTimeout(this._clickTimer); clearAction();
+            this.onIntuition?.();
+        });
 		c.addEventListener("pointermove", onMove);
 		c.addEventListener("pointerup", endPointer);
 		c.addEventListener("pointercancel", endPointer);
@@ -404,6 +418,8 @@ export class SceneRenderer {
 	}
 
 	cancelInput() {
+        clearTimeout(this._clickTimer);
+        this._touchDual = false;
 		clearTimeout(this._holdTimer);
 		this._gestureAction = null;
 		this.onGestureHighlight?.(null);

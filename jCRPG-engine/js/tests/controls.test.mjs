@@ -5,8 +5,8 @@ import {SceneRenderer} from '../render_engine.js';
 function controls(t, intuition = true) {
  const target = () => ({listeners: {}, style: {}, addEventListener(type, fn) {this.listeners[type] = fn;}, emit(type, values = {}) {this.listeners[type]?.({type, pointerId: 1, pointerType: 'mouse', button: 0, clientX: 150, clientY: 100, preventDefault() {}, ...values});}});
  const win = target(), doc = target(), canvas = target();
- t.mock.method(globalThis, 'setTimeout', fn => {win.hold = fn; return 1;});
- t.mock.method(globalThis, 'clearTimeout', () => {win.hold = null;});
+ t.mock.method(globalThis, 'setTimeout', (fn, ms) => {if(ms===600) {win.hold=fn;return 1;} win.click=fn;return 2;});
+ t.mock.method(globalThis, 'clearTimeout', id => {if(id===1)win.hold=null;if(id===2)win.click=null;});
  const oldWindow = globalThis.window, oldDocument = globalThis.document;
  globalThis.window = win; globalThis.document = doc;
  t.after(() => {globalThis.window = oldWindow; globalThis.document = oldDocument;});
@@ -14,12 +14,12 @@ function controls(t, intuition = true) {
  const r = Object.assign(Object.create(SceneRenderer.prototype), {canvas, _inputEnabled: true, _keys: new Set(), _pointers: new Map(), _yaw: 0, _pitch: 0, _stick: {}, _joystickEl: {style: {}, knob: {style: {}}}, requestRender() {}, onInteract() {actions.push('interact');}, onIntuition() {actions.push('intuition');}, canIntuition: () => intuition, onGestureHighlight(value) {highlight = value;}});
  const actions = []; let highlight;
  r._bindControls();
- return {r, canvas, win, actions, highlight: () => highlight};
+ return {r, canvas, win, doc, actions, highlight: () => highlight};
 }
 test('tap interacts; stationary hold highlights and activates intuition only on release', t => {
  const c = controls(t);
  c.canvas.emit('pointerdown'); assert.equal(c.highlight(), 'interact');
- c.canvas.emit('pointerup'); c.canvas.emit('lostpointercapture'); assert.deepEqual(c.actions, ['interact']);
+ c.canvas.emit('pointerup'); c.canvas.emit('lostpointercapture'); c.win.click(); assert.deepEqual(c.actions, ['interact']);
  c.canvas.emit('pointerdown'); c.win.hold(); assert.equal(c.highlight(), 'intuition'); assert.equal(c.actions.length, 1);
  c.canvas.emit('pointerup'); assert.deepEqual(c.actions, ['interact', 'intuition']); assert.equal(c.highlight(), null);
 });
@@ -27,7 +27,7 @@ test('unavailable intuition keeps interact; jitter does not turn or move', t => 
  const c = controls(t, false);
  c.canvas.emit('pointerdown', {clientX: 20}); c.canvas.emit('pointermove', {clientX: 23});
  assert.equal(c.r._movePointer, undefined); assert.equal(c.r._yaw, 0);
- c.win.hold(); assert.equal(c.highlight(), 'interact'); c.canvas.emit('pointerup', {clientX: 23}); assert.deepEqual(c.actions, ['interact']);
+ c.win.hold(); assert.equal(c.highlight(), 'interact'); c.canvas.emit('pointerup', {clientX: 23}); c.win.click(); assert.deepEqual(c.actions, ['interact']);
 });
 test('drag remains a drag after returning to origin and cancels the hold', t => {
  const c = controls(t);
@@ -123,80 +123,86 @@ test('dialog backdrop advances the selected response without triggering journal 
  buttons = [{textContent: 'A completely different label', click() {actions.push('close');}}]; ui.primaryButton = buttons[0]; ui.backdropButtons.add(buttons[0]); ui.advanceFromBackdrop(); assert.equal(actions.at(-1), 'close');
 });
 
-test('toggled steering continuously combines forward/back movement and turning from a fixed origin', t => {
+test('double-click fires intuition without a single-click interaction or latched movement', t => {
+ const c=controls(t);
+ for(let i=0;i<2;i++){c.canvas.emit('pointerdown');c.canvas.emit('pointerup');}
+ c.canvas.emit('dblclick');
+ assert.deepEqual(c.actions,['intuition']);assert.equal(c.win.click,null);
+ assert.equal(c.r._hasMovement(),false);
+ c.canvas.emit('pointerdown',{button:2});assert.deepEqual(c.actions,['intuition','intuition']);
+ assert.equal(c.r._pointers.size,0);
+});
+
+test('one touch on either half steers with forward/back and turning, and stops on release', t => {
  const c=controls(t), moves=[];
  Object.assign(c.r,{gameState:{moveParty(x,z){moves.push([x,z]);return false;}},_syncCamera(){}});
- c.canvas.emit('pointerdown',{button:2,clientX:20});
- assert.equal(c.r._movePointer.side,'steer');assert.equal(c.highlight(),null);assert.equal(c.win.hold,null);
- c.canvas.emit('pointerup',{button:2,clientX:20});
- c.canvas.emit('lostpointercapture');
- c.canvas.emit('pointermove',{buttons:0,clientX:75,clientY:45});
- assert.equal(c.r._movePointer.startX,20);assert.equal(c.r._movePointer.startY,100);
- assert.equal(c.r._yaw,0,'pointer motion changes the stick, not the camera directly');
- assert.deepEqual(c.r._moveVector(),{x:0,y:-.25});
- assert.equal(c.r._hasMovement(),true);
- c.r._updateMovement(.1);const firstYaw=c.r._yaw;
- c.r._updateMovement(.1);assert.ok(Math.abs(c.r._yaw-firstYaw*2)<1e-10);
- assert.ok(firstYaw<0,'dragging right turns toward camera-right');
- assert.equal(c.r._pitch,0);assert.equal(moves.length,2);
- assert.ok(Math.abs(Math.hypot(...moves[0])-.1)<1e-10);
- c.canvas.emit('pointermove',{buttons:2,clientX:20,clientY:155});
- assert.deepEqual(c.r._moveVector(),{x:0,y:.25});
- c.canvas.emit('pointerdown',{button:0,clientX:20,clientY:155});
- c.canvas.emit('pointerup',{button:0,clientX:20,clientY:155});
- assert.equal(c.r._hasMovement(),false);assert.equal(c.r._movePointer,null);
+ for(const x of [20,150]){
+  c.canvas.emit('pointerdown',{pointerType:'touch',clientX:x});
+  c.canvas.emit('pointermove',{pointerType:'touch',clientX:x+55,clientY:45});
+  assert.deepEqual(c.r._moveVector(),{x:0,y:-.25});
+  const before=c.r._yaw;c.r._updateMovement(.1);assert.ok(c.r._yaw<before);
+  assert.equal(c.r._pitch,0);
+  c.canvas.emit('pointerup',{pointerType:'touch',clientX:x+55,clientY:45});
+  assert.equal(c.r._hasMovement(),false);
+ }
+ assert.equal(moves.length,2);assert.deepEqual(c.actions,[]);
+});
+
+test('two touches switch to dual sticks and stay dual until every finger lifts', t => {
+ const c=controls(t);
+ const emit=(type,id,x,y=100)=>c.canvas.emit(type,{pointerType:'touch',pointerId:id,clientX:x,clientY:y});
+ emit('pointerdown',1,20);emit('pointermove',1,40);
+ assert.equal(c.r._movePointer.side,'steer');
+ emit('pointerdown',2,150);assert.equal(c.r._movePointer.side,'move');
+ emit('pointermove',1,65,80);assert.ok(c.r._moveVector().x>0);
+ const yaw=c.r._yaw;emit('pointermove',2,180);assert.ok(c.r._yaw<yaw);
+ emit('pointerup',2,180);assert.equal(c.r._touchDual,true);
+ emit('pointermove',1,80);assert.equal(c.r._movePointer.side,'move');
+ emit('pointerup',1,80);assert.equal(c.r._touchDual,false);
+ emit('pointerdown',3,150);emit('pointermove',3,180);assert.equal(c.r._movePointer.side,'steer');
+ emit('pointercancel',3,180);assert.equal(c.r._hasMovement(),false);
  assert.deepEqual(c.actions,[]);
 });
 
-test('right drag can turn in place, ignores small jitter, recenters, and has frame-independent speed', t => {
+test('remaining right finger stays look-only after left finger lifts',t=>{
  const c=controls(t);
- c.canvas.emit('pointerdown',{button:2});
- c.canvas.emit('pointermove',{buttons:2,clientX:154,clientY:104});
- assert.equal(c.r._hasMovement(),false);assert.deepEqual(c.r._moveVector(),{x:0,y:0});
- c.canvas.emit('pointermove',{buttons:2,clientX:95});
- assert.deepEqual(c.r._moveVector(),{x:0,y:0});assert.equal(c.r._hasMovement(),true);
- c.r._updateMovement(.1);const yaw=c.r._yaw;assert.ok(yaw>0);
- c.r._yaw=0;c.r._updateMovement(.05);c.r._updateMovement(.05);
- assert.ok(Math.abs(c.r._yaw-yaw)<1e-10);
- c.canvas.emit('pointermove',{buttons:2});assert.equal(c.r._hasMovement(),false);
- c.canvas.emit('pointerup',{button:2});assert.deepEqual(c.actions,[]);
+ c.canvas.emit('pointerdown',{pointerType:'touch',clientX:20});
+ c.canvas.emit('pointerdown',{pointerType:'touch',pointerId:2,clientX:150});
+ c.canvas.emit('pointerup',{pointerType:'touch',clientX:20});
+ c.canvas.emit('pointermove',{pointerType:'touch',pointerId:2,clientX:180});
+ assert.ok(c.r._yaw<0);assert.equal(c.r._hasMovement(),false);
+ c.r._frameId=null;c.win.emit('blur');assert.equal(c.r._touchDual,false);
 });
 
-test('toggled steering survives keyboard input and release, but stops on clicks, cancellation or blur', t => {
- const c=controls(t);c.r._frameId=null;
- c.win.emit('keydown',{key:'w'});
- c.canvas.emit('pointerdown',{button:2});c.canvas.emit('pointermove',{buttons:2,clientX:205});
- assert.equal(c.r._movePointer.side,'steer');assert.equal(c.r._yaw,0);
- c.win.emit('keyup',{key:'w'});
- c.canvas.emit('pointerup',{button:2});
- c.canvas.emit('pointermove',{buttons:0,clientX:205});
- assert.equal(c.r._movePointer.side,'steer','release keeps steering active');
- c.canvas.emit('pointerdown',{button:2});
- assert.equal(c.r._movePointer,null,'a second right click toggles steering off');
- for(const type of ['pointercancel','pointerleave']){
-  c.canvas.emit('pointerdown',{button:2});c.canvas.emit('pointermove',{buttons:2,clientX:205});
-  c.canvas.emit(type);assert.equal(c.r._hasMovement(),false);
- }
- c.canvas.emit('pointerdown',{button:2});c.win.emit('blur');
- assert.equal(c.r._movePointer,null);assert.equal(c.r._joystickEl.style.display,'none');
- c.r.setInputEnabled(false);c.canvas.emit('pointerdown',{button:2});
- assert.equal(c.r._pointers.size,0);assert.deepEqual(c.actions,[]);
+test('region intuition describes the current landscape, labyrinth, or cave',async()=>{
+ const {InteractionUI}=await import('../interactions/ui.js');
+ const state={realm:'surface',party:{position:{x:653.5,y:40,z:968.5}},exploration:{world:{landmarkAt:()=>({name:'Trawamtraaw'}),typeAt:()=>4},cellAt:()=>null}};
+ const ui=Object.assign(Object.create(InteractionUI.prototype),{state});
+ assert.equal(ui.regionIntuition().name,'Trawamtraaw');
+ assert.match(ui.regionIntuition().summary,/653, 968/);
+ state.exploration.cellAt=()=>({structure:{kind:'SimpleDungeonPart'}});
+ assert.equal(ui.regionIntuition().name,'Labyrinth');assert.match(ui.regionIntuition().summary,/exits/);
+ state.realm='cave';assert.equal(ui.regionIntuition().name,'Natural cave');
 });
 
-test('steering reaches normal walking speed and never exceeds it, even far from the origin', t => {
- const c=controls(t), distances=[];
- Object.assign(c.r,{
-  gameState:{moveParty(x,z){distances.push(Math.hypot(x,z));return false;}},
-  _syncCamera(){},
- });
- c.win.emit('keydown',{key:'w'});c.r._updateMovement(.1);c.win.emit('keyup',{key:'w'});
- const walkingDistance=distances.pop();
- assert.ok(Math.abs(walkingDistance-.4)<1e-10);
- c.canvas.emit('pointerdown',{button:2});c.canvas.emit('pointerup',{button:2});
- for(const offset of [-10000,-196,196,10000]){
-  c.canvas.emit('pointermove',{buttons:0,clientX:1000,clientY:100+offset});
-  assert.equal(Math.abs(c.r._moveVector().y),1);
-  c.r._updateMovement(.1);
-  assert.ok(Math.abs(distances.pop()-walkingDistance)<1e-10);
+test('native touch menus and double-tap defaults are suppressed even after a panel opens',t=>{
+ const c=controls(t);
+ for(const enabled of [true,false]) {
+  c.r._inputEnabled=enabled;
+  for(const type of ['touchstart','touchend','dblclick']) {
+   let prevented=false;
+   c.canvas.emit(type,{cancelable:true,preventDefault(){prevented=true;}});
+   assert.equal(prevented,true,`${type}: enabled=${enabled}`);
+  }
  }
+});
+
+test('secondary-click context menu is blocked after Intuition retargets it to the panel',t=>{
+ const c=controls(t);
+ c.r.onIntuition=()=>{c.r._inputEnabled=false;};
+ c.canvas.emit('pointerdown',{button:2});
+ assert.equal(c.r._inputEnabled,false);
+ let prevented=false;
+ c.doc.emit('contextmenu',{target:{id:'interaction-panel'},preventDefault(){prevented=true;}});
+ assert.equal(prevented,true);
 });

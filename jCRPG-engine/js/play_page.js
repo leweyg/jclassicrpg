@@ -109,8 +109,8 @@ async function main() {
 		};
 		renderer.onStatus = appendLog;
 		renderer.onInteract = () => renderer.interact();
-		renderer.canIntuition = () => !document.getElementById('world-intuition').disabled;
-		renderer.onIntuition = () => document.getElementById('world-intuition').click();
+		renderer.canIntuition = () => true;
+		renderer.onIntuition = () => interactionsUI.openIntuition(renderer.nearbyInteraction());
 		renderer.onGestureHighlight = action => {
 			for (const name of ['interact', 'intuition']) document.getElementById(`world-${name}`).classList.toggle('gesture-highlight', action === name);
 		};
