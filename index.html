@@ -210,7 +210,12 @@
  #homepage-map button, #atlas-search { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 6px; min-height: 44px; padding: 0.5rem 0.8rem; }
  #homepage-map button { cursor: pointer; }
  #homepage-map button:hover { border-color: var(--accent); }
- .map-toolbar, #atlas-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-bottom: 0.75rem; }
+ #atlas-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-bottom: 0.75rem; }
+ .map-frame { position: relative; }
+ .map-toolbar { position: absolute; z-index: 1; top: 0.5rem; left: 0.5rem; right: 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; width: fit-content; max-width: calc(100% - 1rem); box-sizing: border-box; padding: 0.35rem; border-radius: 8px; background: #101917e8; }
+ .map-toolbar span, .map-toolbar output { padding: 0 0.3rem; font-size: 0.85rem; }
+ #atlas-regions { margin-top: 1rem; }
+ #atlas-regions[open] { padding-bottom: 0.8rem; }
  #atlas-filters { border: 1px solid var(--border); }
  #atlas-filters label { display: flex; align-items: center; min-height: 44px; }
  #atlas { display: block; width: 100%; aspect-ratio: 1; background: #101917; touch-action: none; border-radius: 8px; cursor: grab; }
@@ -233,32 +238,18 @@
 
 </header>
 <main>
-<details class="slice-locations tree-branch">
-	<summary>Explore the vertical slice</summary>
-	<p>Jump straight to a location and keep your current progress.</p>
-	<ul>
-		<li><a href="play.html?location=start">Starting point — begin the journey</a></li>
-		<li><a href="play.html?location=shrine">Relay shrine — awaken the light</a></li>
-		<li><a href="play.html?location=wammigmig">Wammigmig — meet Marn and restore the town</a></li>
-		<li><a href="play.html?location=cave">Nearby cave — explore the underground entrance</a></li>
-		<li><a href="play.html?location=awshowam">Awshowam — meet Garrum at the Grand Exchange</a></li>
-	</ul>
-</details>
-
-<section class="screenshot-gallery" aria-labelledby="screenshots-title">
-	<h2 id="screenshots-title">Screenshots</h2>
+<section class="screenshot-gallery" aria-label="Game screenshots">
 	<p>Scenes from the current web build. Swipe or scroll to browse; open a thumbnail to see the full image.</p>
 	<div class="screenshot-strip" aria-label="Game screenshots">
 		<a href="screenshots/town.png" target="_blank" rel="noopener"><img src="screenshots/town.png" alt="Timber building and street in a generated town" loading="lazy"><span>Town streets</span></a>
+		<a href="screenshots/marn-dialogue.png" target="_blank" rel="noopener"><img src="screenshots/marn-dialogue.png" alt="Conversation choices with Marn Even-Tally" loading="lazy"><span>Character dialogue</span></a>
 		<a href="screenshots/house-interior.png" target="_blank" rel="noopener"><img src="screenshots/house-interior.png" alt="Wooden room in a walkable building" loading="lazy"><span>House interior</span></a>
+		<a href="screenshots/mobile-journal.png" target="_blank" rel="noopener"><img src="screenshots/mobile-journal.png" alt="Quest journal displayed on a phone" loading="lazy"><span>Phone journal</span></a>
 		<a href="screenshots/cave.png" target="_blank" rel="noopener"><img src="screenshots/cave.png" alt="Stone passage in an explorable cave" loading="lazy"><span>Natural cave</span></a>
 		<a href="screenshots/dungeon.png" target="_blank" rel="noopener"><img src="screenshots/dungeon.png" alt="Long corridor inside a stone labyrinth" loading="lazy"><span>Labyrinth</span></a>
-		<a href="screenshots/marn-dialogue.png" target="_blank" rel="noopener"><img src="screenshots/marn-dialogue.png" alt="Conversation choices with Marn Even-Tally" loading="lazy"><span>Character dialogue</span></a>
-		<a href="screenshots/mobile-journal.png" target="_blank" rel="noopener"><img src="screenshots/mobile-journal.png" alt="Quest journal displayed on a phone" loading="lazy"><span>Phone journal</span></a>
 	</div>
 </section>
-<section id="summary" aria-labelledby="summary-title">
-<h2 id="summary-title">Summary</h2>
+<section id="summary" aria-label="About the game">
 <p>Explore a world of settlements, shrines, caves, and labyrinths. Meet its people, restore the Concordance Grid, and follow a repair from Wammigmig toward the Measured Oasis.</p>
 <p>The first three main-story chapters are playable, alongside local quests and exploration. The final two capital chapters are planned.</p>
 	<p class="project-links">
@@ -266,8 +257,64 @@
 		<a href="https://jcrpg.blogspot.com/">Classic homepage</a>
 		<a href="https://sourceforge.net/projects/javacrpg/">Classic source code</a>
 	</p>
-<details class="reference-tree" open>
-	<summary>World &amp; project reference</summary>
+</section>
+<section id="homepage-map" aria-labelledby="map-title">
+<h2 id="map-title">Map</h2>
+<p id="map-help">Drag to pan; scroll or pinch to zoom. Use + / − and arrow keys with the map focused. Select a marker or search the location list for details. Shrines and caves appear as dots until enabled.</p>
+<fieldset id="atlas-filters"><legend>Show locations</legend></fieldset>
+<div class="map-frame">
+<div class="map-toolbar"><button id="atlas-out" type="button" aria-label="Zoom out">−</button><button id="atlas-in" type="button" aria-label="Zoom in">+</button><button id="atlas-reset" type="button">Whole world</button><button id="atlas-story" type="button">Story area</button><span>Zoomable</span><output id="atlas-zoom" aria-label="Map zoom"></output></div>
+<canvas id="atlas" width="1000" height="1000" tabindex="0" aria-label="Interactive world map" aria-describedby="map-help">Use the location list below to explore the map.</canvas>
+</div>
+<p id="atlas-status" role="status">Loading world map…</p>
+<div id="atlas-detail" aria-live="polite">Select a location to see its details.</div>
+<details class="reference-tree" id="atlas-regions"><summary>Regions</summary>
+<label for="atlas-search">Find a location</label> <input id="atlas-search" type="search" placeholder="Name, type, or coordinates">
+<div id="atlas-list" aria-label="Map locations"></div>
+</details>
+<noscript><p>Enable JavaScript to use the interactive map.</p></noscript>
+</section>
+<section class="story-walkthrough" id="story-walkthrough" aria-labelledby="walkthrough-title">
+	<h2 id="walkthrough-title">Main Story</h2>
+<details class="reference-tree" open><summary>A light worth keeping</summary>
+	<p>Begin with one repair. Follow its consequences from a household to a town and then to the Measured Oasis. Each new place joins a story task with exploration; returning to a familiar place lets its people tell you what changed.</p>
+
+	<details class="story-panel tree-branch" id="story-step-1"><summary>Orro, Marn, and the first light</summary>
+<span class="story-label">PERSON · MISSION + EXPLORATION · PLAYABLE</span>
+		<p>Orro can tell whether a shrine carries a pulse. He cannot wake it while worrying about every result. Meet him on the road, touch the shrine, and bring what happened to Marn in Wammigmig. The single act is observable; pausing to attend to it is a small ritual.</p>
+		<figure><img src="screenshots/marn-dialogue.png" alt="Current web port conversation with Marn in Wammigmig" loading="lazy"><figcaption>Current build: Marn’s conversation. The shorter Orro → shrine → Marn chapter is playable.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?new=1">Begin a new game</a><a href="play.html?location=shrine">Preview the shrine</a></div>
+	</details>
+	<details class="story-panel tree-branch" id="story-step-2"><summary>Pella and the cave component</summary>
+<span class="story-label">HOUSEHOLD · MISSION + EXPLORATION · PLAYABLE</span>
+		<p>Pella knows which homes go dark. A part hidden in a nearby cave could help their relay, if someone brings it back. The route into the cave is new ground; the return through Wammigmig gives the journey a person to answer to. Side passages remain yours to discover.</p>
+		<figure><img src="screenshots/cave.png" alt="Existing explorable cave in the web port" loading="lazy"><figcaption>Current build: cave scenery. Pella’s marked cave item quest is playable.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?location=cave">Preview the cave entrance</a><a href="play.html?location=wammigmig">Visit Wammigmig</a></div>
+	</details>
+	<details class="story-panel tree-branch" id="story-step-3"><summary>Talla and the three branches</summary>
+<span class="story-label">TOWN · MISSION + EXPLORATION · PLAYABLE</span>
+		<p>In Wamwammigtraawsho, exchange, homes, and the labyrinth each depend on a branch of the grid. Talla asks you to wake all three. The switches make it easy to see what works; the people of the town give each branch a reason to matter.</p>
+		<figure><img src="screenshots/town.png" alt="Baked settlement buildings and streets in the web port" loading="lazy"><figcaption>Current build: an example generated town. The three-branch town chapter is playable.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?location=major">Preview the major town</a></div>
+	</details>
+	<details class="story-panel tree-branch" id="story-step-4"><summary>Varo and Nemi: a careful unknown</summary>
+<span class="story-label">TOWN → NETWORK · MISSION + EXPLORATION · PLANNED QUEST</span>
+		<p>At the Measured Oasis, Varo asks what the numbers actually support. Nemi notices a pattern worth testing. A sum can be checked without declaring that every meaningful experience has already been counted. Optional conversations take you beyond the marked route.</p>
+		<figure><img src="docs/interaction-evidence/maze-generator-active.png" alt="Current web port illuminated circuit and maze generator" loading="lazy"><figcaption>Current build: a maze generator. The Oasis sum and the Varo–Nemi handoff are planned.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?location=oasis">Preview the Measured Oasis</a></div>
+	</details>
+	<details class="story-panel tree-branch" id="story-step-5"><summary>Saima and a practice that can change</summary>
+<span class="story-label">NETWORK · MISSION + EXPLORATION · PLANNED FINALE</span>
+		<p>A final named sequence brings the network into view. Saima asks the capital to keep both the measured result and the unanswered remainder visible. A shared rite becomes a promise to check the next pulse together, from one body to the wider world.</p>
+		<figure><img src="screenshots/mobile-journal.png" alt="Current web port quest journal displayed on a phone" loading="lazy"><figcaption>Current build: mobile journal. The capital sequence and complete main-story arc are planned.</figcaption></figure>
+		<div class="story-actions"><a href="play.html?location=oasis">Preview the capital</a><a href="play.html?new=1">Begin from the start</a></div>
+	</details>
+
+	<p class="story-note">Location links are preview shortcuts into the existing world and keep your saved progress. “Begin a new game” starts from the beginning. The first three chapters are playable. The capital chapters are planned.</p>
+</details>
+</section>
+<details class="reference-tree" id="world-systems" open>
+	<summary>World systems</summary>
 	<div class="tree-children">
 <details class="tree-branch" id="content-catalog">
 	<summary>Characters, Conversations &amp; Quests</summary>
@@ -315,58 +362,6 @@
 </details>
 	</div>
 </details>
-</section>
-<section id="homepage-map" aria-labelledby="map-title">
-<h2 id="map-title">Map</h2>
-<p id="map-help">Drag to pan; scroll or pinch to zoom. Use + / − and arrow keys with the map focused. Select a marker or search the location list for details. All locations are revealed in this preview.</p>
-<div class="map-toolbar"><button id="atlas-out" type="button" aria-label="Zoom out">−</button><button id="atlas-in" type="button" aria-label="Zoom in">+</button><button id="atlas-reset" type="button">Whole world</button><button id="atlas-story" type="button">Story area</button><output id="atlas-zoom" aria-label="Map zoom"></output></div>
-<fieldset id="atlas-filters"><legend>Show locations</legend></fieldset>
-<canvas id="atlas" width="1000" height="1000" tabindex="0" aria-label="Interactive world map" aria-describedby="map-help">Use the location list below to explore the map.</canvas>
-<p id="atlas-status" role="status">Loading world map…</p>
-<div id="atlas-detail" aria-live="polite">Select a location to see its details.</div>
-<label for="atlas-search">Find a location</label> <input id="atlas-search" type="search" placeholder="Name, type, or coordinates">
-<div id="atlas-list" aria-label="Map locations"></div>
-<noscript><p>Enable JavaScript to use the interactive map.</p></noscript>
-</section>
-<section class="story-walkthrough" id="story-walkthrough" aria-labelledby="walkthrough-title">
-	<h2 id="walkthrough-title">Main Story</h2>
-<details class="reference-tree" open><summary>A light worth keeping</summary>
-	<p>Begin with one repair. Follow its consequences from a household to a town and then to the Measured Oasis. Each new place joins a story task with exploration; returning to a familiar place lets its people tell you what changed.</p>
-
-	<details class="story-panel tree-branch" id="story-step-1"><summary>Orro, Marn, and the first light</summary>
-<span class="story-label">PERSON · MISSION + EXPLORATION · PLAYABLE</span>
-		<p>Orro can tell whether a shrine carries a pulse. He cannot wake it while worrying about every result. Meet him on the road, touch the shrine, and bring what happened to Marn in Wammigmig. The single act is observable; pausing to attend to it is a small ritual.</p>
-		<figure><img src="screenshots/marn-dialogue.png" alt="Current web port conversation with Marn in Wammigmig" loading="lazy"><figcaption>Current build: Marn’s conversation. The shorter Orro → shrine → Marn chapter is playable.</figcaption></figure>
-		<div class="story-actions"><a href="play.html?new=1">Begin a new game</a><a href="play.html?location=shrine">Preview the shrine</a></div>
-	</details>
-	<details class="story-panel tree-branch" id="story-step-2"><summary>Pella and the cave component</summary>
-<span class="story-label">HOUSEHOLD · MISSION + EXPLORATION · PLAYABLE</span>
-		<p>Pella knows which homes go dark. A part hidden in a nearby cave could help their relay, if someone brings it back. The route into the cave is new ground; the return through Wammigmig gives the journey a person to answer to. Side passages remain yours to discover.</p>
-		<figure><img src="screenshots/cave.png" alt="Existing explorable cave in the web port" loading="lazy"><figcaption>Current build: cave scenery. Pella’s marked cave item quest is playable.</figcaption></figure>
-		<div class="story-actions"><a href="play.html?location=cave">Preview the cave entrance</a><a href="play.html?location=wammigmig">Visit Wammigmig</a></div>
-	</details>
-	<details class="story-panel tree-branch" id="story-step-3"><summary>Talla and the three branches</summary>
-<span class="story-label">TOWN · MISSION + EXPLORATION · PLAYABLE</span>
-		<p>In Wamwammigtraawsho, exchange, homes, and the labyrinth each depend on a branch of the grid. Talla asks you to wake all three. The switches make it easy to see what works; the people of the town give each branch a reason to matter.</p>
-		<figure><img src="screenshots/town.png" alt="Baked settlement buildings and streets in the web port" loading="lazy"><figcaption>Current build: an example generated town. The three-branch town chapter is playable.</figcaption></figure>
-		<div class="story-actions"><a href="play.html?location=major">Preview the major town</a></div>
-	</details>
-	<details class="story-panel tree-branch" id="story-step-4"><summary>Varo and Nemi: a careful unknown</summary>
-<span class="story-label">TOWN → NETWORK · MISSION + EXPLORATION · PLANNED QUEST</span>
-		<p>At the Measured Oasis, Varo asks what the numbers actually support. Nemi notices a pattern worth testing. A sum can be checked without declaring that every meaningful experience has already been counted. Optional conversations take you beyond the marked route.</p>
-		<figure><img src="docs/interaction-evidence/maze-generator-active.png" alt="Current web port illuminated circuit and maze generator" loading="lazy"><figcaption>Current build: a maze generator. The Oasis sum and the Varo–Nemi handoff are planned.</figcaption></figure>
-		<div class="story-actions"><a href="play.html?location=oasis">Preview the Measured Oasis</a></div>
-	</details>
-	<details class="story-panel tree-branch" id="story-step-5"><summary>Saima and a practice that can change</summary>
-<span class="story-label">NETWORK · MISSION + EXPLORATION · PLANNED FINALE</span>
-		<p>A final named sequence brings the network into view. Saima asks the capital to keep both the measured result and the unanswered remainder visible. A shared rite becomes a promise to check the next pulse together, from one body to the wider world.</p>
-		<figure><img src="screenshots/mobile-journal.png" alt="Current web port quest journal displayed on a phone" loading="lazy"><figcaption>Current build: mobile journal. The capital sequence and complete main-story arc are planned.</figcaption></figure>
-		<div class="story-actions"><a href="play.html?location=oasis">Preview the capital</a><a href="play.html?new=1">Begin from the start</a></div>
-	</details>
-
-	<p class="story-note">Location links are preview shortcuts into the existing world and keep your saved progress. “Begin a new game” starts from the beginning. The first three chapters are playable. The capital chapters are planned.</p>
-</details>
-</section>
 </main>
 <script type="module" src="jCRPG-engine/js/content_catalog.js"></script>
 <script type="module" src="jCRPG-engine/js/summary_page.js"></script>

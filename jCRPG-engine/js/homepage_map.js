@@ -47,13 +47,23 @@ async function loadMap() {
     raster.data.set([...color, 255], (y * terrain.side + x) * 4);
   }
   terrainCtx.putImageData(raster, 0, 0);
-  const enabled = new Set(markers.map(m => m.kind));
+  const kinds = new Set(markers.map(m => m.kind));
+  const dotKinds = new Set(['shrine', 'cave']);
+  const enabled = new Set([...kinds].filter(kind => !dotKinds.has(kind)));
   let query = '', selected = null;
-  const visible = () => markers.filter(m => enabled.has(m.kind) && `${m.name} ${styles[m.kind].label} ${m.note || ''} ${Math.round(m.x)}, ${Math.round(m.z)}`.toLowerCase().includes(query));
+  const matches = m => `${m.name} ${styles[m.kind].label} ${m.note || ''} ${Math.round(m.x)}, ${Math.round(m.z)}`.toLowerCase().includes(query);
+  const visible = () => markers.filter(m => enabled.has(m.kind) && matches(m));
   function draw() {
     const width = canvas.width, corner = view.project(0, size);
     ctx.clearRect(0, 0, width, width); ctx.imageSmoothingEnabled = false;
     ctx.drawImage(atlas, corner.x * width, corner.y * width, size / view.span * width, size / view.span * width);
+    // Draw disabled cave/shrine locations beneath the full markers.
+    for (const marker of markers.filter(m => dotKinds.has(m.kind) && !enabled.has(m.kind) && matches(m))) {
+      const point = view.project(marker.x, marker.z);
+      if (point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1) continue;
+      ctx.fillStyle = styles[marker.kind].color;
+      ctx.beginPath(); ctx.arc(point.x * width, point.y * width, 2, 0, Math.PI * 2); ctx.fill();
+    }
     for (const marker of visible()) {
       const point = view.project(marker.x, marker.z);
       if (point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1) continue;
@@ -67,8 +77,8 @@ async function loadMap() {
         ctx.strokeText(marker.name, x + 14, y); ctx.fillStyle = '#fff'; ctx.fillText(marker.name, x + 14, y);
       }
     }
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#101917'; ctx.lineWidth = 4; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'left';
-    ctx.strokeText('N ↑', 18, 28); ctx.fillText('N ↑', 18, 28);
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#101917'; ctx.lineWidth = 4; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'right';
+    ctx.strokeText('N ↑', width - 18, width - 24); ctx.fillText('N ↑', width - 18, width - 24);
     byId('atlas-zoom').textContent = `${view.zoom.toFixed(1)}×`;
   }
   function select(marker, center = false) {
@@ -90,12 +100,12 @@ async function loadMap() {
       button.addEventListener('click', () => select(marker, true)); fragment.append(button);
     }
     byId('atlas-list').replaceChildren(fragment);
-    byId('atlas-status').textContent = `${items.length} of ${markers.length} locations shown${items.length ? '.' : '. Try another search or enable more location types.'}`;
+    byId('atlas-status').textContent = `${items.length} of ${markers.length} locations enabled${items.length ? '.' : '. Try another search or enable more location types.'}`;
     draw();
   }
-  for (const kind of enabled) {
+  for (const kind of kinds) {
     const label = document.createElement('label'), input = document.createElement('input');
-    input.type = 'checkbox'; input.checked = true;
+    input.type = 'checkbox'; input.checked = enabled.has(kind);
     input.addEventListener('change', () => { if (input.checked) enabled.add(kind); else enabled.delete(kind); refresh(); });
     const text = document.createElement('span'); text.textContent = `${styles[kind].symbol} ${styles[kind].label}`; text.style.color = styles[kind].color;
     label.append(input, text); byId('atlas-filters').append(label);
