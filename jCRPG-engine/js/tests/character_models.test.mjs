@@ -68,6 +68,7 @@ test('every world actor resolves by culture, with stable variants and named over
   assert.ok(data.cultureModels[actor.cultureId],actor.cultureId);
   const model=modelForActor(data,actor.id,actor);
   assert.equal(model.id,data.actorModels[actor.id]??data.cultureModels[actor.cultureId]);
+  assert.equal(model.variant.id,actor.missionIds?.length?'uncovered':'standard',actor.id);
   assert.deepEqual(model,modelForActor(JSON.parse(JSON.stringify(data)),actor.id,actor));
   variants.add(model.id+':'+model.variant.id);
  }
@@ -77,9 +78,8 @@ test('every world actor resolves by culture, with stable variants and named over
 test('concurrent chunks and accessory variants share one model load, geometry and material',async()=>{
  let resolveModel,loads=0;
  const {view,chunk,slot}=fixture(()=>{loads++;return new Promise(resolve=>{resolveModel=resolve;});});
- const ids=['actor:wammigmig:pella'];
- for(let i=0;i<100;i++)if(modelForActor(data,'resident:'+i,{cultureId:'boarman'}).variant.id==='uncovered'){ids.push('resident:'+i);break;}
- view.stream.interactionCatalog={actors:Object.fromEntries(ids.map(id=>[id,{cultureId:'boarman'}]))};
+ const ids=['actor:wammigmig:pella','resident:mission-giver'];
+ view.stream.interactionCatalog={actors:Object.fromEntries(ids.map((id,index)=>[id,{cultureId:'boarman',missionIds:index?['mission:example']:[]}]))};
  chunk.data.instances.values().next().value.nodes=ids.map(node);
  const second={...chunk,x:26},secondSlot={revision:-1,ticket:0,group:new THREE.Group(),batches:new Map()};view.slots.push(secondSlot);
  const firstWork=view.prepare(slot,chunk,++slot.ticket),secondWork=view.prepare(secondSlot,second,++secondSlot.ticket);

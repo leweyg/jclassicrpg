@@ -8,10 +8,9 @@ export function modelForActor(data, actorId, actor = null) {
  const id = override ?? data.cultureModels?.[actor?.cultureId] ?? data.defaultModel;
  const model = data.models?.find(model => model.id === id);
  if (!model) return null;
- // Stable across streaming, reloads and saves, without storing per-actor edits.
- let hash = 2166136261;
- for (const character of actorId) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619) >>> 0;
- const variant = model.variants?.[override ? 0 : hash % model.variants.length];
+ // Mission givers stay recognizable, including after their missions are complete.
+ const variantId = actor?.missionIds?.length ? 'uncovered' : 'standard';
+ const variant = model.variants?.find(variant => variant.id === variantId) ?? model.variants?.[0];
  return {...model, variant, scale: (model.scale ?? [1, 1, 1]).map((axis, index) =>
   axis * (data.modelScale ?? 1) * (index === 1 ? 1 : (data.modelSideScale ?? 1)))};
 }

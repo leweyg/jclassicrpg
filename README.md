@@ -89,8 +89,10 @@ to individual NPCs. Failed downloads retain the original proxies.
 
 Each model's `variants` list can hide named accessory meshes using `hiddenMeshes`.
 The supplied variants remove the Barbarian's bear hat, Mage's hat, or Knight's
-helmet and visor. NPC IDs select a stable variant across reloads and revisits;
-named model overrides retain the standard appearance. Add or adjust variants in
+helmet and visor. Actors with assigned missions use the uncovered variant;
+actors without missions wear their hats or helmets, including named characters.
+This follows authored mission assignments, so completing a mission does not
+change the character's appearance. Add or adjust variants in
 this single JSON file. Variants share the cached model's geometry, materials and
 textures; simultaneous chunk loads share one pending download and pose bake per
 model. Only instance buffers and accessory selection differ between variants.
