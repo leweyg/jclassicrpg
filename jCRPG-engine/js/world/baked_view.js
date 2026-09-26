@@ -1,16 +1,29 @@
 import * as THREE from '../threejs/three.module.js';
 import {CaveMarkers} from './cave_markers.js';
 import {loadObjModel} from '../obj_mtl_loader.js';
+import {charactersRef} from '../game_static_core.js';
+import {modelForActor,loadCharacterModel} from '../character_models.js';
 /** Shared immutable source assets; only instance buffers belong to slots. */
 export class BakedView {
- constructor(scene,stream,wake){this.scene=scene;this.stream=stream;this.wake=wake;this.assets=new Map();this.slots=stream.chunks.map(()=>({revision:-1,ticket:0,group:new THREE.Group(),batches:new Map()}));this.dummy=new THREE.Object3D();this.routeArrows=new Map();this.realm='surface';this.debug=false;this.caveMarkers=new CaveMarkers(scene);this.stats={assetFailures:[],instances:0};
+ constructor(scene,stream,wake,{loadCharacters=()=>charactersRef.load(),loadCharacter=loadCharacterModel}={}){this.scene=scene;this.stream=stream;this.wake=wake;this.assets=new Map();this.slots=stream.chunks.map(()=>({revision:-1,ticket:0,group:new THREE.Group(),batches:new Map()}));this.dummy=new THREE.Object3D();this.routeArrows=new Map();this.realm='surface';this.debug=false;this.caveMarkers=new CaveMarkers(scene);this.stats={assetFailures:[],instances:0};
+  this.loadCharacter=loadCharacter;this.characterAssets=new Map();this.characterData=loadCharacters().catch(error=>{this.stats.assetFailures.push(`characters.json: ${error.message}`);return {};});
   this.fallbackGeometry=new THREE.BoxGeometry(1,1,.1);this.fallbackGeometry.translate(0,.5,0);this.fallbackMaterial=new THREE.MeshStandardMaterial({color:0x92795a,side:THREE.DoubleSide});for(const s of this.slots)scene.add(s.group);
  }
  async asset(source){if(!this.assets.has(source)){const url=new URL(source),at=url.href.lastIndexOf('/');this.assets.set(source,loadObjModel(url.href.slice(0,at),url.href.slice(at+1),{yUp:true}).catch(error=>{this.stats.assetFailures.push(`${source}: ${error.message}`);const g=new THREE.Group();g.add(new THREE.Mesh(this.fallbackGeometry,this.fallbackMaterial));return g;}));}return this.assets.get(source);}
+ async characterAsset(definition){
+  if(!this.characterAssets.has(definition.id))this.characterAssets.set(definition.id,this.loadCharacter(definition).catch(error=>{this.stats.assetFailures.push(`${definition.source}: ${error.message}`);return null;}));
+  return this.characterAssets.get(definition.id);
+ }
  sync(){for(let i=0;i<this.slots.length;i++){const c=this.stream.chunks[i],s=this.slots[i];if(!c.ready||!c.data||s.revision===c.revision)continue;s.revision=c.revision;this.prepare(s,c,++s.ticket);}}
  async prepare(s,c,ticket){
-  const revision=c.revision,data=c.data,groups=[...data.instances.entries()];
-  const loaded=await Promise.all(groups.map(async([key,g])=>[key,g,await this.asset(g.source)]));
+  const revision=c.revision,data=c.data,characters=await this.characterData,groups=new Map();
+  if(s.ticket!==ticket||!c.ready||c.revision!==revision||c.data!==data)return;
+  for(const [key,g]of data.instances)for(const node of g.nodes){
+   const definition=modelForActor(characters,node.actorId),batchKey=key+'|'+(definition?.id??'default');
+   if(!groups.has(batchKey))groups.set(batchKey,{...g,definition,nodes:[]});
+   groups.get(batchKey).nodes.push(node);
+  }
+  const loaded=await Promise.all([...groups].map(async([key,g])=>[key,g,(g.definition&&await this.characterAsset(g.definition))||await this.asset(g.source)]));
   if(s.ticket!==ticket||!c.ready||c.revision!==revision||c.data!==data)return;
   const used=new Set();
   for(const [key,g,model]of loaded){let part=0;model.traverse(child=>{if(!child.isMesh)return;const batchKey=key+'|'+part++;used.add(batchKey);let b=s.batches.get(batchKey);
@@ -46,5 +59,5 @@ export class BakedView {
   }
   for(const [id,arrow]of this.routeArrows)if(!used.has(id)){this.scene.remove(arrow);arrow.dispose();this.routeArrows.delete(id);}
  }
- dispose(){this.caveMarkers.dispose();for(const arrow of this.routeArrows.values()){this.scene.remove(arrow);arrow.dispose();}this.routeArrows.clear();for(const s of this.slots){s.ticket++;this.scene.remove(s.group);for(const b of s.batches.values())b.mesh.dispose();}this.fallbackGeometry.dispose();this.fallbackMaterial.dispose();}
+ dispose(){this.caveMarkers.dispose();for(const arrow of this.routeArrows.values()){this.scene.remove(arrow);arrow.dispose();}this.routeArrows.clear();for(const s of this.slots){s.ticket++;this.scene.remove(s.group);for(const b of s.batches.values())b.mesh.dispose();}for(const pending of this.characterAssets.values())pending.then(model=>{const materials=new Set(),textures=new Set();model?.traverse(child=>{if(!child.isMesh)return;child.geometry.dispose();for(const material of Array.isArray(child.material)?child.material:[child.material])materials.add(material);});for(const material of materials){for(const value of Object.values(material))if(value?.isTexture)textures.add(value);material.dispose();}for(const texture of textures)texture.dispose();});this.characterAssets.clear();this.fallbackGeometry.dispose();this.fallbackMaterial.dispose();}
 }

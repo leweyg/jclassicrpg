@@ -65,7 +65,7 @@ test('sky is a closed cube with aligned geometry and calibrated face UVs', () =>
 
 test('render scheduler sleeps when idle, wakes for input, and stops on cancellation', () => {
 	const oldDocument = globalThis.document, oldRAF = globalThis.requestAnimationFrame, oldCancel = globalThis.cancelAnimationFrame;
-	const pending = new Map(); let next = 0, renders = 0;
+	const pending = new Map(), deltas = []; let next = 0, renders = 0;
 	globalThis.document = { hidden: false };
 	globalThis.requestAnimationFrame = callback => { pending.set(++next, callback); return next; };
 	globalThis.cancelAnimationFrame = id => pending.delete(id);
@@ -73,7 +73,7 @@ test('render scheduler sleeps when idle, wakes for input, and stops on cancellat
 		const r = Object.create(SceneRenderer.prototype);
 		Object.assign(r, { _running: false, _inputEnabled: true, _movePointer: null, _pointers: new Map(), _frameId: null,
 			_lastFrameTime: null, _joystickEl: { style: {} }, renderer: { render() { renders++; } },
-			_applyLook() {}, _updateMovement() {}, onViewChange: null });
+			_applyLook() {}, _updateMovement(dt) { deltas.push(dt); }, onViewChange: null });
 		r._boundFrame = now => r._renderFrame(now);
 		const tick = now => { const [id, callback] = pending.entries().next().value; pending.delete(id); callback(now); };
 		r.start(); assert.equal(pending.size, 1); tick(0);
@@ -82,6 +82,8 @@ test('render scheduler sleeps when idle, wakes for input, and stops on cancellat
 		assert.equal(pending.size, 0);
 		r._movePointer = { startX: 0, curX: 10, startY: 0, curY: 0 };
 		r.requestRender(); tick(32); assert.equal(pending.size, 1);
+		assert.equal(deltas.at(-1), 0); // Waking from idle cannot jump ahead.
+		tick(60032); assert.equal(deltas.at(-1), 0.1); // Long frame gaps stay capped.
 		r.cancelInput(); assert.equal(pending.size, 0); assert.equal(r._lastFrameTime, null);
 		r.setInputEnabled(false); r.requestRender(); tick(48); assert.equal(pending.size, 0);
 		document.hidden = true; r.requestRender(); assert.equal(pending.size, 0);

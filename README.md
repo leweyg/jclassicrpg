@@ -78,6 +78,16 @@ Run the headless checks with `node --test jCRPG-engine/js/tests/*.test.mjs`
 revisits, terrain seams, world wrapping, camera-relative swipe direction, map
 markers (including unknown types), sky orientation and idle frame scheduling.
 
+Character visuals are defined in `jCRPG-engine/json/characters.json`: `models`
+holds shared GLB sources, scales and poses, and `actorModels` assigns stable actor
+IDs to model IDs. The runtime replaces the assigned actors' baked proxies without
+rebuilding the world; unassigned actors and failed downloads retain their proxies.
+The supplied KeyKit Barbarian, Mage and Knight GLBs contain embedded textures and
+rigs but no animation clips. Their relaxed Idle pose is baked once into cached,
+instanced meshes. A matching clip, if supplied, contributes its initial pose.
+Characters do not schedule frames or timers: the play page sleeps at rest, and
+movement updates retain their 100 ms maximum delta after long frame gaps.
+
 Cave debug landmarks: gold arches and floor rings mark exits to the surface;
 blue beacons mark people, violet marks puzzle controls, and green marks evidence
 readings. These markers only appear in loaded caves and are occluded by walls.
