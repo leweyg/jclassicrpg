@@ -1,6 +1,7 @@
 {
   "description": "Default playable races and professions from org.jcrpg.game.CharacterCreationRules (used when no custom rule set is supplied), plus the example saved characters shipped with the engine for the first scenario.",
   "modelScale": 0.43,
+  "modelSideScale": 0.75,
   "models": [
     {
       "id": "keykit:barbarian",

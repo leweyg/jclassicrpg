@@ -6,7 +6,8 @@ export function modelForActor(data, actorId) {
  const id = data.actorModels?.[actorId];
  const model = data.models?.find(model => model.id === id);
  if (!model) return null;
- return {...model, scale: (model.scale ?? [1, 1, 1]).map(axis => axis * (data.modelScale ?? 1))};
+ return {...model, scale: (model.scale ?? [1, 1, 1]).map((axis, index) =>
+  axis * (data.modelScale ?? 1) * (index === 1 ? 1 : (data.modelSideScale ?? 1)))};
 }
 
 /** The KeyKit exports contain a T-pose rig, but no animation clips. */
