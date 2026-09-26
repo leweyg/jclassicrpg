@@ -23,3 +23,13 @@ test('conversation cuts restore exploration position and lens without moving the
  renderer.endConversation();assert.deepEqual(camera.position.toArray(),[12,40.72,20]);assert.equal(camera.fov,62);assert.equal(camera.near,.1);assert.equal(renderer._conversation,null);
  assert.equal(requests,3);renderer.endConversation();assert.equal(requests,3);
 });
+
+test('close-up preserves player yaw and pitch while centering the character',()=>{
+ const camera=new THREE.PerspectiveCamera(62,390/844,.1,500);
+ camera.rotation.set(-.12,1.1,0,'YXZ');const orientation=camera.quaternion.clone();
+ const bounds=new THREE.Box3(new THREE.Vector3(2,40,4),new THREE.Vector3(2.6,41,4.5));
+ frameConversation(camera,bounds);
+ assert.ok(camera.quaternion.angleTo(orientation)<1e-7);
+ const chest=bounds.getCenter(new THREE.Vector3());chest.y=40.56;chest.project(camera);
+ assert.ok(Math.abs(chest.x)<1e-6&&Math.abs(chest.y)<1e-6);
+});

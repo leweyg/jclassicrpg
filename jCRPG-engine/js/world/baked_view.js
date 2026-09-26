@@ -32,14 +32,34 @@ export class BakedView {
   });}
   // Release slot-owned instance buffers; leave shared geometries and materials.
   for(const [key,b]of s.batches)if(!used.has(key)){s.group.remove(b.mesh);b.mesh.dispose();s.batches.delete(key);}
-  s.group.position.set(c.x*32,0,c.z*32);this.appearanceDirty=true;this.wake?.();
+  s.group.position.set(c.x*32,0,c.z*32);this.applyActorFacing(s);this.appearanceDirty=true;this.wake?.();
+ }
+ faceActor(actorId,forward){
+  const yaw=forward?Math.atan2(-forward.x,-forward.z):0;
+  if(this.conversationFacing?.actorId===actorId&&this.conversationFacing.yaw===yaw)return;
+  if(this.conversationFacing)for(const slot of this.slots)this.applyActorFacing(slot,true);
+  this.conversationFacing=actorId?{actorId,yaw}:null;
+  if(this.conversationFacing)for(const slot of this.slots)this.applyActorFacing(slot);
+ }
+ applyActorFacing(slot,restore=false){
+  if(!this.conversationFacing)return;
+  const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
+  for(const batch of slot.batches.values()){
+   let changed=false;
+   for(let i=0;i<(batch.nodes?.length??0);i++)if(batch.nodes[i].actorId===this.conversationFacing.actorId){
+    matrix.fromArray(batch.nodes[i].matrix);
+    if(!restore){matrix.decompose(position,rotation,scale);rotation.setFromAxisAngle(new THREE.Vector3(0,1,0),this.conversationFacing.yaw);matrix.compose(position,rotation,scale);}
+    batch.mesh.setMatrixAt(i,matrix);changed=true;
+   }
+   if(changed){batch.mesh.instanceMatrix.needsUpdate=true;batch.mesh.computeBoundingSphere();}
+  }
  }
  actorFraming(actorId){
   const bounds=new THREE.Box3(),matrix=new THREE.Matrix4(),part=new THREE.Box3(),facing=new THREE.Vector3(0,0,1);
   for(const slot of this.slots)for(const batch of slot.batches.values()){
    if(batch.realm!==this.realm)continue;
-   for(const node of batch.nodes??[])if(node.actorId===actorId){
-    matrix.fromArray(node.matrix);matrix.elements[12]+=slot.group.position.x;matrix.elements[13]+=slot.group.position.y;matrix.elements[14]+=slot.group.position.z;
+   for(let i=0;i<(batch.nodes?.length??0);i++)if(batch.nodes[i].actorId===actorId){
+    batch.mesh.getMatrixAt(i,matrix);matrix.elements[12]+=slot.group.position.x;matrix.elements[13]+=slot.group.position.y;matrix.elements[14]+=slot.group.position.z;
     if(!batch.mesh.geometry.boundingBox)batch.mesh.geometry.computeBoundingBox();part.copy(batch.mesh.geometry.boundingBox).applyMatrix4(matrix);bounds.union(part);
     facing.set(0,0,1).transformDirection(matrix);
    }

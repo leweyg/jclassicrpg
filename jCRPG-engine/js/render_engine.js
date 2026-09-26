@@ -317,8 +317,10 @@ export class SceneRenderer {
 
 	_applyLook() {
 		if (this._conversation) {
+			this.camera.quaternion.copy(this._conversation.quaternion);
+			this.worldView?.bakedView?.faceActor(this._conversation.actor.id, this.camera.getWorldDirection(new THREE.Vector3()));
 			const framing = this.worldView?.bakedView?.actorFraming(this._conversation.actor.id);
-			if (framing) { frameConversation(this.camera, framing.bounds, framing.facing); return; }
+			if (framing) { frameConversation(this.camera, framing.bounds); return; }
 		}
 		const dir = this._lookTarget.set(
 			Math.sin(this._yaw) * Math.cos(this._pitch),
@@ -329,7 +331,7 @@ export class SceneRenderer {
 	}
 
 	beginConversation(actor) {
-		if (!this._conversation) this._conversation = { position: this.camera.position.clone(), fov: this.camera.fov, near: this.camera.near };
+		if (!this._conversation) this._conversation = { position: this.camera.position.clone(), quaternion: this.camera.quaternion.clone(), fov: this.camera.fov, near: this.camera.near };
 		this._conversation.actor = actor;
 		if (this._attentionRing) this._attentionRing.visible = false;
 		this.requestRender();
@@ -339,6 +341,7 @@ export class SceneRenderer {
 		if (!this._conversation) return;
 		const saved = this._conversation;
 		this._conversation = null;
+		this.worldView?.bakedView?.faceActor(null);
 		if (this._attentionRing) this._attentionRing.visible = !!this.highlightedAction;
 		this.camera.position.copy(saved.position);
 		this.camera.fov = saved.fov; this.camera.near = saved.near;

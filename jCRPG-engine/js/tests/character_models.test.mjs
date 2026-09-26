@@ -97,3 +97,21 @@ test('concurrent chunks and accessory variants share one model load, geometry an
  assert.deepEqual([...slot.batches.values()].map(b=>b.mesh),original);
  view.dispose();
 });
+
+test('only the speaking NPC turns; cached meshes and world records stay unchanged',async()=>{
+ const {view,chunk,slot}=fixture();await view.prepare(slot,chunk,++slot.ticket);
+ const originals=JSON.stringify([...chunk.data.instances.values()]);
+ const actorId='actor:wammigmig:pella';view.faceActor(actorId,new THREE.Vector3(-1,0,0));
+ const matrix=new THREE.Matrix4();
+ for(const batch of slot.batches.values()){
+  batch.mesh.getMatrixAt(0,matrix);
+  const forward=new THREE.Vector3(0,0,1).transformDirection(matrix);
+  assert.ok(forward.distanceTo(new THREE.Vector3(batch.nodes[0].actorId===actorId?1:0,0,batch.nodes[0].actorId===actorId?0:1))<1e-6);
+ }
+ await view.prepare(slot,chunk,++slot.ticket); // A late chunk/model refresh retains the cut-in facing.
+ const speaker=[...slot.batches.values()].find(b=>b.nodes[0].actorId===actorId);
+ speaker.mesh.getMatrixAt(0,matrix);assert.ok(new THREE.Vector3(0,0,1).transformDirection(matrix).x>.99);
+ view.faceActor(null);
+ for(const batch of slot.batches.values()){batch.mesh.getMatrixAt(0,matrix);assert.deepEqual(matrix.toArray(),batch.nodes[0].matrix);}
+ assert.equal(JSON.stringify([...chunk.data.instances.values()]),originals);view.dispose();
+});
