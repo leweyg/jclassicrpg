@@ -17,6 +17,7 @@ test('all ten assignments resolve to supplied GLBs and unknown actors retain the
  assert.equal(Object.keys(data.actorModels).length,10);
  for(const [actorId,id] of Object.entries(data.actorModels)){
   const definition=modelForActor(data,actorId);assert.equal(definition.id,id);
+  assert.deepEqual(definition.scale,[data.modelScale,data.modelScale,data.modelScale]);
   const bytes=fs.readFileSync(new URL(definition.source,root));assert.equal(bytes.readUInt32LE(0),0x46546c67);
  }
  assert.equal(modelForActor(data,'unknown'),null);

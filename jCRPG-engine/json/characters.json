@@ -1,37 +1,23 @@
 {
   "description": "Default playable races and professions from org.jcrpg.game.CharacterCreationRules (used when no custom rule set is supplied), plus the example saved characters shipped with the engine for the first scenario.",
+  "modelScale": 0.43,
   "models": [
     {
       "id": "keykit:barbarian",
       "source": "media/models/humanoid/human/keykitv1/Barbarian.glb",
       "asset": "characters/Barbarian.glb",
-      "scale": [
-        1,
-        1,
-        1
-      ],
       "pose": "Idle"
     },
     {
       "id": "keykit:mage",
       "source": "media/models/humanoid/human/keykitv1/Mage.glb",
       "asset": "characters/Mage.glb",
-      "scale": [
-        1,
-        1,
-        1
-      ],
       "pose": "Idle"
     },
     {
       "id": "keykit:knight",
       "source": "media/models/humanoid/human/keykitv1/Knight.glb",
       "asset": "characters/Knight.glb",
-      "scale": [
-        1,
-        1,
-        1
-      ],
       "pose": "Idle"
     }
   ],

@@ -4,7 +4,9 @@ import { GLTFLoader } from './threejs/loaders/GLTFLoader.js';
 /** Actor IDs stay independent of filenames and of the baked world pack. */
 export function modelForActor(data, actorId) {
  const id = data.actorModels?.[actorId];
- return data.models?.find(model => model.id === id) ?? null;
+ const model = data.models?.find(model => model.id === id);
+ if (!model) return null;
+ return {...model, scale: (model.scale ?? [1, 1, 1]).map(axis => axis * (data.modelScale ?? 1))};
 }
 
 /** The KeyKit exports contain a T-pose rig, but no animation clips. */

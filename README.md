@@ -79,7 +79,8 @@ revisits, terrain seams, world wrapping, camera-relative swipe direction, map
 markers (including unknown types), sky orientation and idle frame scheduling.
 
 Character visuals are defined in `jCRPG-engine/json/characters.json`: `models`
-holds shared GLB sources, scales and poses, and `actorModels` assigns stable actor
+holds shared GLB sources and poses, `modelScale` controls all character sizes
+(with optional per-model scale multipliers), and `actorModels` assigns stable actor
 IDs to model IDs. The runtime replaces the assigned actors' baked proxies without
 rebuilding the world; unassigned actors and failed downloads retain their proxies.
 The supplied KeyKit Barbarian, Mage and Knight GLBs contain embedded textures and
