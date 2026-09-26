@@ -148,6 +148,7 @@ export class InteractionUI {
     }
 
     open(title, kind = '') {
+        if (kind !== 'dialogue') this.renderer.endConversation?.();
         this.title.textContent = title;
         this.body.replaceChildren();
         this.dialog.dataset.kind = kind;
@@ -174,6 +175,7 @@ export class InteractionUI {
     }
 
     close() {
+        this.renderer.endConversation?.();
         this.state.interactions.panel = null;
         this.primaryButton = null;
         this.backdropButtons.clear();
@@ -229,6 +231,7 @@ export class InteractionUI {
     showDialogue(dialogue) {
         const engine = this.state.interactions;
         this.open(dialogue.actor.name, 'dialogue');
+        this.renderer.beginConversation?.(dialogue.actor);
         const speech = this.text('p', '');
         speech.className = 'dialogue-speech';
         this.text('span', '"', speech);

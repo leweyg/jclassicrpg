@@ -34,6 +34,18 @@ export class BakedView {
   for(const [key,b]of s.batches)if(!used.has(key)){s.group.remove(b.mesh);b.mesh.dispose();s.batches.delete(key);}
   s.group.position.set(c.x*32,0,c.z*32);this.appearanceDirty=true;this.wake?.();
  }
+ actorFraming(actorId){
+  const bounds=new THREE.Box3(),matrix=new THREE.Matrix4(),part=new THREE.Box3(),facing=new THREE.Vector3(0,0,1);
+  for(const slot of this.slots)for(const batch of slot.batches.values()){
+   if(batch.realm!==this.realm)continue;
+   for(const node of batch.nodes??[])if(node.actorId===actorId){
+    matrix.fromArray(node.matrix);matrix.elements[12]+=slot.group.position.x;matrix.elements[13]+=slot.group.position.y;matrix.elements[14]+=slot.group.position.z;
+    if(!batch.mesh.geometry.boundingBox)batch.mesh.geometry.computeBoundingBox();part.copy(batch.mesh.geometry.boundingBox).applyMatrix4(matrix);bounds.union(part);
+    facing.set(0,0,1).transformDirection(matrix);
+   }
+  }
+  return bounds.isEmpty()?null:{bounds,facing};
+ }
  setRealm(realm,save=null){this.caveMarkers.sync(this.stream.chunks,realm);if(!this.appearanceDirty&&this.realm===realm&&this.appearanceSave===save&&this.deltaRevision===(save?.deltaRevision??0))return;this.appearanceDirty=false;this.appearanceSave=save;this.deltaRevision=save?.deltaRevision??0;this.realm=realm;this.syncRouteArrows(save);this.stats.instances=0;for(const s of this.slots)for(const b of s.batches.values()){
    b.mesh.visible=b.realm===realm;if(b.mesh.visible)this.stats.instances+=b.mesh.count;
    // Instance color marks persistent looted containers without destroying assets.

@@ -15,6 +15,7 @@ import * as THREE from "./threejs/three.module.js";
 import { WorldView } from "./world_view.js";
 import { VISIBLE_RADIUS } from "./map_model.js";
 import { createSky } from "./sky.js";
+import { frameConversation } from './conversation_camera.js';
 
 // A little darker than the skybox mountains, so distant silhouettes blend into blue.
 const SURFACE_FOG_COLOR = 0x1f2f49;
@@ -315,12 +316,35 @@ export class SceneRenderer {
 	}
 
 	_applyLook() {
+		if (this._conversation) {
+			const framing = this.worldView?.bakedView?.actorFraming(this._conversation.actor.id);
+			if (framing) { frameConversation(this.camera, framing.bounds, framing.facing); return; }
+		}
 		const dir = this._lookTarget.set(
 			Math.sin(this._yaw) * Math.cos(this._pitch),
 			Math.sin(this._pitch),
 			Math.cos(this._yaw) * Math.cos(this._pitch)
 		);
 		this.camera.lookAt(dir.add(this.camera.position));
+	}
+
+	beginConversation(actor) {
+		if (!this._conversation) this._conversation = { position: this.camera.position.clone(), fov: this.camera.fov, near: this.camera.near };
+		this._conversation.actor = actor;
+		if (this._attentionRing) this._attentionRing.visible = false;
+		this.requestRender();
+	}
+
+	endConversation() {
+		if (!this._conversation) return;
+		const saved = this._conversation;
+		this._conversation = null;
+		if (this._attentionRing) this._attentionRing.visible = !!this.highlightedAction;
+		this.camera.position.copy(saved.position);
+		this.camera.fov = saved.fov; this.camera.near = saved.near;
+		this.camera.updateProjectionMatrix();
+		this._applyLook();
+		this.requestRender();
 	}
 
 	async loadSky() {
@@ -465,7 +489,7 @@ export class SceneRenderer {
             const mesh=new THREE.Mesh(new THREE.TorusGeometry(.48,.035,6,32),new THREE.MeshBasicMaterial({color:0xffdf83,transparent:true,opacity:.85,depthTest:false}));
             mesh.rotation.x=Math.PI/2;mesh.renderOrder=5;this.scene.add(mesh);this._attentionRing=mesh;
         }
-        this._attentionRing.visible=!!action;
+        this._attentionRing.visible=!!action && !this._conversation;
         if(action)this._attentionRing.position.set(action.position[0],action.position[1]+.08,action.position[2]);
         if(changed)this.requestRender();
     }
