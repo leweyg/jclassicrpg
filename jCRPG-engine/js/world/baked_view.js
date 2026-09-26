@@ -19,14 +19,14 @@ export class BakedView {
   const revision=c.revision,data=c.data,characters=await this.characterData,groups=new Map();
   if(s.ticket!==ticket||!c.ready||c.revision!==revision||c.data!==data)return;
   for(const [key,g]of data.instances)for(const node of g.nodes){
-   const definition=modelForActor(characters,node.actorId),batchKey=key+'|'+(definition?.id??'default');
+   const definition=modelForActor(characters,node.actorId,this.stream.interactionCatalog?.actors?.[node.actorId]),batchKey=key+'|'+(definition?.id??'default')+'|'+(definition?.variant?.id??'standard');
    if(!groups.has(batchKey))groups.set(batchKey,{...g,definition,nodes:[]});
    groups.get(batchKey).nodes.push(node);
   }
   const loaded=await Promise.all([...groups].map(async([key,g])=>[key,g,(g.definition&&await this.characterAsset(g.definition))||await this.asset(g.source)]));
   if(s.ticket!==ticket||!c.ready||c.revision!==revision||c.data!==data)return;
   const used=new Set();
-  for(const [key,g,model]of loaded){let part=0;model.traverse(child=>{if(!child.isMesh)return;const batchKey=key+'|'+part++;used.add(batchKey);let b=s.batches.get(batchKey);
+  for(const [key,g,model]of loaded){let part=0;model.traverse(child=>{if(!child.isMesh||g.definition?.variant?.hiddenMeshes?.includes(child.name))return;const batchKey=key+'|'+part++;used.add(batchKey);let b=s.batches.get(batchKey);
     if(!b||b.capacity<g.nodes.length){if(b){s.group.remove(b.mesh);b.mesh.dispose();}const capacity=Math.max(16,2**Math.ceil(Math.log2(Math.max(1,g.nodes.length))));const mesh=new THREE.InstancedMesh(child.geometry,child.material,capacity);mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);mesh.receiveShadow=true;mesh.castShadow=false;s.group.add(mesh);b={mesh,capacity,realm:g.realm,roof:g.roof,ceiling:g.ceiling};s.batches.set(batchKey,b);}
     let index=0;for(const n of g.nodes){this.dummy.matrix.fromArray(n.matrix);b.mesh.setMatrixAt(index++,this.dummy.matrix);}b.mesh.count=index;b.mesh.instanceMatrix.needsUpdate=true;b.mesh.computeBoundingSphere();b.mesh.visible=b.realm===this.realm;b.nodes=g.nodes;
   });}

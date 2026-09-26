@@ -2,11 +2,17 @@ import * as THREE from './threejs/three.module.js';
 import { GLTFLoader } from './threejs/loaders/GLTFLoader.js';
 
 /** Actor IDs stay independent of filenames and of the baked world pack. */
-export function modelForActor(data, actorId) {
- const id = data.actorModels?.[actorId];
+export function modelForActor(data, actorId, actor = null) {
+ if (!actorId) return null; // Scenery must never receive the character fallback.
+ const override = data.actorModels?.[actorId];
+ const id = override ?? data.cultureModels?.[actor?.cultureId] ?? data.defaultModel;
  const model = data.models?.find(model => model.id === id);
  if (!model) return null;
- return {...model, scale: (model.scale ?? [1, 1, 1]).map((axis, index) =>
+ // Stable across streaming, reloads and saves, without storing per-actor edits.
+ let hash = 2166136261;
+ for (const character of actorId) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619) >>> 0;
+ const variant = model.variants?.[override ? 0 : hash % model.variants.length];
+ return {...model, variant, scale: (model.scale ?? [1, 1, 1]).map((axis, index) =>
   axis * (data.modelScale ?? 1) * (index === 1 ? 1 : (data.modelSideScale ?? 1)))};
 }
 

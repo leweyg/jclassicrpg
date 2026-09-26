@@ -81,9 +81,19 @@ markers (including unknown types), sky orientation and idle frame scheduling.
 Character visuals are defined in `jCRPG-engine/json/characters.json`: `models`
 holds shared GLB sources and poses, `modelSideScale` multiplies X/Z without changing
 height, `modelScale` controls all character sizes
-(with optional per-model scale multipliers), and `actorModels` assigns stable actor
-IDs to model IDs. The runtime replaces the assigned actors' baked proxies without
-rebuilding the world; unassigned actors and failed downloads retain their proxies.
+(with optional per-model scale multipliers). `cultureModels` assigns defaults for
+all six NPC cultures; `actorModels` supplies named exceptions and `defaultModel`
+covers future actor types. The runtime reads each actor's existing culture from
+the interaction catalog, so changing defaults requires no world rebuild or edits
+to individual NPCs. Failed downloads retain the original proxies.
+
+Each model's `variants` list can hide named accessory meshes using `hiddenMeshes`.
+The supplied variants remove the Barbarian's bear hat, Mage's hat, or Knight's
+helmet and visor. NPC IDs select a stable variant across reloads and revisits;
+named model overrides retain the standard appearance. Add or adjust variants in
+this single JSON file. Variants share the cached model's geometry, materials and
+textures; simultaneous chunk loads share one pending download and pose bake per
+model. Only instance buffers and accessory selection differ between variants.
 The supplied KeyKit Barbarian, Mage and Knight GLBs contain embedded textures and
 rigs but no animation clips. Their relaxed Idle pose is baked once into cached,
 instanced meshes. A matching clip, if supplied, contributes its initial pose.

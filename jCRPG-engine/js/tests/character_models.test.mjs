@@ -13,14 +13,18 @@ function fixture(loadCharacter=async()=>proxy()){
  const view=new BakedView(new THREE.Scene(),{chunks:[chunk]},()=>{}, {loadCharacters:async()=>data,loadCharacter});
  view.asset=async()=>proxy();return {view,chunk,slot:view.slots[0]};
 }
-test('all ten assignments resolve to supplied GLBs and unknown actors retain their default',()=>{
+test('all ten assignments resolve to supplied GLBs and unknown actors use the shared default',()=>{
  assert.equal(Object.keys(data.actorModels).length,10);
  for(const [actorId,id] of Object.entries(data.actorModels)){
   const definition=modelForActor(data,actorId);assert.equal(definition.id,id);
   assert.deepEqual(definition.scale,[data.modelScale*data.modelSideScale,data.modelScale,data.modelScale*data.modelSideScale]);
   const bytes=fs.readFileSync(new URL(definition.source,root));assert.equal(bytes.readUInt32LE(0),0x46546c67);
+  const gltf=JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());
+  const meshNames=new Set(gltf.nodes.filter(node=>node.mesh!==undefined).map(node=>node.name));
+  for(const variant of definition.variants)for(const name of variant.hiddenMeshes)assert.ok(meshNames.has(name),name);
  }
- assert.equal(modelForActor(data,'unknown'),null);
+ assert.equal(modelForActor(data,'unknown').id,data.defaultModel);
+ assert.equal(modelForActor(data,null),null);
 });
 test('posed meshes retain nested transforms, scale, textures and deformed vertices',()=>{
  const scene=new THREE.Group(),geometry=new THREE.BufferGeometry();
@@ -41,18 +45,55 @@ test('Idle lowers both arms in world space',()=>{
 });
 test('named actors replace only their proxies, share cached models, and obey realm visibility',async()=>{
  let loads=0;const {view,chunk,slot}=fixture(async()=>{loads++;return proxy();});
- await view.prepare(slot,chunk,++slot.ticket);assert.equal(slot.batches.size,3);assert.equal(loads,2);
+ await view.prepare(slot,chunk,++slot.ticket);assert.equal(slot.batches.size,3);assert.equal(loads,3);
  assert.ok([...slot.batches.keys()].some(key=>key.includes('keykit:mage')));
- await view.prepare(slot,chunk,++slot.ticket);assert.equal(loads,2);
+ await view.prepare(slot,chunk,++slot.ticket);assert.equal(loads,3);
  view.setRealm('cave');assert.ok([...slot.batches.values()].every(b=>!b.mesh.visible));
  view.setRealm('surface');assert.ok([...slot.batches.values()].every(b=>b.mesh.visible));view.dispose();
 });
 test('failed character loads preserve the existing proxy and report the failure',async()=>{
  const {view,chunk,slot}=fixture(async()=>{throw Error('missing GLB');});
- await view.prepare(slot,chunk,++slot.ticket);assert.equal(slot.batches.size,3);assert.equal(view.stats.assetFailures.length,2);view.dispose();
+ await view.prepare(slot,chunk,++slot.ticket);assert.equal(slot.batches.size,3);assert.equal(view.stats.assetFailures.length,3);view.dispose();
 });
 test('late character downloads cannot populate a recycled chunk slot',async()=>{
  const pending=[];const {view,chunk,slot}=fixture(()=>new Promise(resolve=>pending.push(resolve)));
  const work=view.prepare(slot,chunk,++slot.ticket);await new Promise(resolve=>setImmediate(resolve));
  chunk.revision++;for(const resolve of pending)resolve(proxy());await work;assert.equal(slot.batches.size,0);view.dispose();
+});
+
+test('every world actor resolves by culture, with stable variants and named overrides',()=>{
+ const actors=JSON.parse(fs.readFileSync(new URL('../../worlds/seed0/v2/interactions/actors.json',import.meta.url)));
+ const variants=new Set();
+ for(const actor of actors){
+  assert.ok(data.cultureModels[actor.cultureId],actor.cultureId);
+  const model=modelForActor(data,actor.id,actor);
+  assert.equal(model.id,data.actorModels[actor.id]??data.cultureModels[actor.cultureId]);
+  assert.deepEqual(model,modelForActor(JSON.parse(JSON.stringify(data)),actor.id,actor));
+  variants.add(model.id+':'+model.variant.id);
+ }
+ assert.equal(variants.size,6);
+});
+
+test('concurrent chunks and accessory variants share one model load, geometry and material',async()=>{
+ let resolveModel,loads=0;
+ const {view,chunk,slot}=fixture(()=>{loads++;return new Promise(resolve=>{resolveModel=resolve;});});
+ const ids=['actor:wammigmig:pella'];
+ for(let i=0;i<100;i++)if(modelForActor(data,'resident:'+i,{cultureId:'boarman'}).variant.id==='uncovered'){ids.push('resident:'+i);break;}
+ view.stream.interactionCatalog={actors:Object.fromEntries(ids.map(id=>[id,{cultureId:'boarman'}]))};
+ chunk.data.instances.values().next().value.nodes=ids.map(node);
+ const second={...chunk,x:26},secondSlot={revision:-1,ticket:0,group:new THREE.Group(),batches:new Map()};view.slots.push(secondSlot);
+ const firstWork=view.prepare(slot,chunk,++slot.ticket),secondWork=view.prepare(secondSlot,second,++secondSlot.ticket);
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(loads,1);
+ const model=proxy();model.children[0].name='Barbarian_Body';
+ const hat=new THREE.Mesh(new THREE.BoxGeometry(),model.children[0].material);hat.name='Barbarian_BearHat';model.add(hat);resolveModel(model);
+ await Promise.all([firstWork,secondWork]);
+ for(const s of [slot,secondSlot]){
+  assert.equal(s.batches.size,3); // Two bodies, one hat; the uncovered variant has no hat.
+  const bodies=[...s.batches.values()].filter(b=>b.mesh.geometry===model.children[0].geometry);
+  assert.equal(bodies.length,2);assert.ok(bodies.every(b=>b.mesh.material===model.children[0].material));
+ }
+ const original=[...slot.batches.values()].map(b=>b.mesh);
+ await view.prepare(slot,chunk,++slot.ticket);assert.equal(loads,1);
+ assert.deepEqual([...slot.batches.values()].map(b=>b.mesh),original);
+ view.dispose();
 });

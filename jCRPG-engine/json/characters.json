@@ -2,24 +2,45 @@
   "description": "Default playable races and professions from org.jcrpg.game.CharacterCreationRules (used when no custom rule set is supplied), plus the example saved characters shipped with the engine for the first scenario.",
   "modelScale": 0.43,
   "modelSideScale": 0.75,
+  "defaultModel": "keykit:knight",
+  "cultureModels": {
+    "human": "keykit:knight",
+    "boarman": "keykit:barbarian",
+    "antipion": "keykit:mage",
+    "yeti": "keykit:barbarian",
+    "kobold": "keykit:barbarian",
+    "greek": "keykit:mage"
+  },
   "models": [
     {
       "id": "keykit:barbarian",
       "source": "media/models/humanoid/human/keykitv1/Barbarian.glb",
       "asset": "characters/Barbarian.glb",
-      "pose": "Idle"
+      "pose": "Idle",
+      "variants": [
+        {"id": "standard", "hiddenMeshes": []},
+        {"id": "uncovered", "hiddenMeshes": ["Barbarian_BearHat"]}
+      ]
     },
     {
       "id": "keykit:mage",
       "source": "media/models/humanoid/human/keykitv1/Mage.glb",
       "asset": "characters/Mage.glb",
-      "pose": "Idle"
+      "pose": "Idle",
+      "variants": [
+        {"id": "standard", "hiddenMeshes": []},
+        {"id": "uncovered", "hiddenMeshes": ["Mage_Hat"]}
+      ]
     },
     {
       "id": "keykit:knight",
       "source": "media/models/humanoid/human/keykitv1/Knight.glb",
       "asset": "characters/Knight.glb",
-      "pose": "Idle"
+      "pose": "Idle",
+      "variants": [
+        {"id": "standard", "hiddenMeshes": []},
+        {"id": "uncovered", "hiddenMeshes": ["Knight_Helmet", "Knight_HelmetVisor"]}
+      ]
     }
   ],
   "actorModels": {
