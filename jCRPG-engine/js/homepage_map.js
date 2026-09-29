@@ -1,6 +1,7 @@
 import { MapViewport, bindMapGestures } from './map_viewport.js';
 import { MARKER_STYLES } from './map_model.js';
 import { PLAY_DESTINATIONS } from './play_destinations.js';
+import { CHUNK_SIZE, chunkFile } from './world/format.js';
 
 const byId = id => document.getElementById(id);
 const styles = { ...MARKER_STYLES, capital: { label: 'Capitals', color: '#ffdf87', symbol: '★' }, actor: { label: 'Characters', color: '#a3e9cb', symbol: '●' } };
@@ -91,7 +92,18 @@ async function loadMap() {
     const destination = marker.destination || `map:${marker.x},${marker.y},${marker.z},${marker.realm || 'surface'}`;
     link.href = `play.html?${new URLSearchParams({ location: destination })}`;
     link.className = 'map-travel'; link.textContent = 'Travel here';
-    byId('atlas-detail').append(link);
+    const editor = document.createElement('a');
+    const local = ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+    const editorBase = local ? 'http://localhost:5678' : 'https://leweyg.github.io';
+    const chunk = chunkFile(Math.floor(marker.x / CHUNK_SIZE), Math.floor(marker.z / CHUNK_SIZE));
+    // The local editor resolves file_path one directory closer than the hosted editor.
+    const filePath = `${local ? '../../' : '../../../'}jclassicrpg/jCRPG-engine/worlds/seed0/v1/chunks/${chunk}`;
+    editor.href = `${editorBase}/three_js_editor_small/editor/?file_path=${filePath}`;
+    editor.className = 'map-travel'; editor.textContent = '3D Editor';
+    editor.target = '_blank'; editor.rel = 'noopener';
+    const actions = document.createElement('div'); actions.className = 'map-actions';
+    actions.append(link, editor);
+    byId('atlas-detail').append(actions);
     if (center) { view.zoom = Math.max(view.zoom, 6); view.x = marker.x; view.z = marker.z; view.constrain(); }
     draw();
   }
