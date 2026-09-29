@@ -13,12 +13,27 @@ export function questGoal(engine,id,seen=new Set()) {
   if(done.length>=(o.required??o.targetIds.length))continue;
   for(const target of o.targetIds.filter(t=>!done.includes(t))){
    if(o.kind==='mission'){const next=questGoal(engine,target,seen);if(next)return next;}
-   const goal=engine.content.goals.find(g=>g.targetId===target);
+   const puzzle=o.kind==='puzzle'?engine.maps.puzzles[target]:null;
+   const component=puzzle?nextPuzzleComponent(puzzle,s.puzzles[target]):null;
+   const goal=engine.content.goals.find(g=>g.targetId===target&&(!component||g.id.endsWith(':'+component)))
+    ??engine.content.goals.find(g=>g.targetId===target);
    if(goal){if(goal.realm==='cave'&&goal.entrancePosition&&s.player?.realm!=='cave')return {...goal,id:goal.portalId,position:goal.entrancePosition,realm:'surface',name:'Enter the southern cave'};return {...goal,name:o.text};}
   }
   return actorGoal(m.turnInActorId,o.text+' — speak to');
  }
  return actorGoal(m.turnInActorId,'Return to');
+}
+
+export function nextPuzzleComponent(puzzle,state={values:[],observed:[],cursor:0}) {
+ if(state.completed)return null;
+ if(puzzle.mechanic==='all')return puzzle.componentIds.find((id,i)=>state.values[i]!==puzzle.demands[i]);
+ const unread=puzzle.componentIds.find(id=>!state.observed.includes(id));
+ if(unread)return unread;
+ if(puzzle.family!=='resonance'){
+  const unmatched=puzzle.componentIds.find((id,i)=>state.values[i]!==puzzle.demands[i]);
+  if(unmatched)return unmatched;
+ }
+ return puzzle.sequence[state.cursor??0]??puzzle.componentIds[0];
 }
 
 export function advanceNavigation(engine,before,after){

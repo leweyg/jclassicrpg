@@ -3,6 +3,10 @@ export function dialogueStart(definition, matches) {
     return definition.entries?.find(entry => matches(entry.when))?.nodeId ?? definition.start;
 }
 
+export function reviewMission(choice) {
+    return choice.next?.startsWith('hint:mission:') ? choice.next.slice(5) : null;
+}
+
 export function dialogueView(engine, matches) {
     const panel = engine.panel;
     if (panel?.kind !== 'dialogue') throw Error('No conversation is open');
@@ -19,10 +23,16 @@ export function dialogueView(engine, matches) {
             : balance === 'stable' ? actor.stableText : null;
         if (reaction) captions = [reaction];
     }
+    if (panel.reviewMissionId) {
+        const review = definition.nodes['hint:' + panel.reviewMissionId];
+        if (review) captions = review.captions ?? [review.text];
+    }
     const captionIndex = Math.min(panel.captionIndex ?? 0, captions.length - 1);
     const caption = captions[captionIndex];
     const canAdvance = captionIndex < captions.length - 1;
-    const choices = canAdvance ? [] : (node.choices ?? []).filter(choice => matches(choice.when));
+    const choices = canAdvance ? [] : (node.choices ?? []).filter(choice => matches(choice.when) && !reviewMission(choice))
+        .map(choice => panel.acceptedMissionId && !choice.next && !(choice.actions?.length)
+            ? {...choice, text: 'Got it.'} : choice);
     const hasAcceptedMission = (actor.missionIds ?? []).some(id =>
         ['active', 'ready-to-turn-in', 'completed'].includes(engine.missionState(id))
     );

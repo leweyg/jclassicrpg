@@ -15,6 +15,7 @@ import { loadFrozenWorld, wrap } from "./frozen_world.js";
 import { loadBakedStream } from "./world/baked_stream.js";
 import { loadInteractions } from './interactions/runtime.js';
 import { SaveDeltas } from "./world/save_deltas.js";
+import { caveArrivalYaw } from './interactions/cave_navigation.js';
 
 import { starterPartyRef, worldsRef, ChangeEvents } from "./game_static_core.js";
 
@@ -232,10 +233,14 @@ export class GameState {
         const action=this.exploration.nearby?.(this.party.position,this.realm,1.8,{facing,viewPosition,priority:a=>this.interactions?.priority(a)??a.priority});
         return this.interactions?.describe(action)??action;
     }
+    preloadDialogue(actorId) {
+        const actor=this.interactions?.maps.actors[actorId];
+        return actor ? Promise.resolve(this.interactions.loadRecord?.('dialogues',actor.dialogueId)) : Promise.resolve();
+    }
 	async interact(action=this.nearbyInteraction()) {
 		if (!action) return 'Nothing nearby to use.';
 		if (action.kind!=='portal') {
-            if(action.kind==='actor')await this.interactions.loadRecord?.('dialogues',this.interactions.maps.actors[action.targetId].dialogueId);
+            if(action.kind==='actor')await this.preloadDialogue(action.targetId);
             const result=this.interactions.interact(action);
             this.saveDeltas.persist(this.party.position,this.realm);
             return result.message??result.text??'Recorded.';
@@ -244,6 +249,7 @@ export class GameState {
 		const portal=action.portal, dest=portal[action.side==='from'?'to':'from'];
 		const realm=portal.kind==='cave'?(this.realm==='cave'?'surface':'cave'):this.realm;
 		await this.teleport(dest[0],dest[2],dest[1],realm);
+		if(portal.kind==='cave')this.arrivalYaw=caveArrivalYaw(this.exploration,portal,realm==='cave');
 		this.saveDeltas.data.discoveredLocations[portal.id]=true;
 		this.saveDeltas.persist(this.party.position,this.realm);
 		return portal.kind==='cave'?(realm==='cave'?'Entered the cave.':'Returned to the surface.'):'Changed floor.';

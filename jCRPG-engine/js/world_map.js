@@ -68,7 +68,6 @@ export class WorldMap {
             });
         }
 		const miniButton = document.getElementById('hud-minimap');
-		miniButton.querySelector('span').textContent = `Map · ${MINIMAP_RADIUS}-unit radius`;
 		miniButton.title = `Nearby map: ${MINIMAP_RADIUS}-unit radius, twice the visible area`;
 		miniButton.addEventListener('click', () => this.open());
 		document.getElementById('map-close').addEventListener('click', () => this.close());
@@ -311,7 +310,6 @@ export class WorldMap {
         if(this._minimapRealm!==this.state.realm){
             this._minimapRealm=this.state.realm;force=true;
             const cave=this.state.realm==='cave',button=document.getElementById('hud-minimap');
-            button.querySelector('span').textContent=cave?'Map · Cave · 3× zoom':`Map · ${MINIMAP_RADIUS}-unit radius`;
             button.title=cave?`Nearby cave map: 3× zoom, ${(MINIMAP_RADIUS/3).toFixed(1)}-unit radius`:`Nearby map: ${MINIMAP_RADIUS}-unit radius, twice the visible area`;
         }
         const nav=navigationWaypoint(this.state);
@@ -339,7 +337,6 @@ export class WorldMap {
         if(radius!==this._miniRadius){this._miniRadius=radius;force=true;}
         if(radius!==target)this.renderer.requestRender();
         const miniButton=document.getElementById('hud-minimap');
-        miniButton.querySelector('span').textContent=`Map · ${this.state.realm==='cave'?'Cave · ':''}${radius.toFixed(1)}-unit radius`;
         miniButton.title=`Nearby map: ${radius.toFixed(1)}-unit radius${settings.enabled&&nav?' · goal zoom':''}`;
 		const p = this.state.party.position, yaw = this.renderer._yaw;
 		if (!force && p.x === this._lastX && p.z === this._lastZ && yaw === this._lastYaw) return;

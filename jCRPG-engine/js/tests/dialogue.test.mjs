@@ -52,19 +52,20 @@ test('authored captions gate choices without committing transactions, and entry 
     assert.equal(engine.panel.nodeId, 'accepted');
     assert.equal(engine.dialogue().captionIndex, 0);
     assert.ok(engine.dialogue().canAdvance);
-    choose(engine, 'Until next time.');
+    choose(engine, 'Got it.');
     assert.equal(engine.panel, null);
     talk(engine);
     assert.equal(engine.panel.nodeId, 'progress');
     const progress = readToChoices(engine);
     assert.equal(progress.choices[progress.defaultChoiceIndex].text, 'Until next time.');
-    choose(engine, 'Review: A Fair Share of Light');
+    assert.ok(!progress.choices.some(choice => choice.text.startsWith('Review:')));
+    assert.equal(engine.save.data.navMissionId, missionId);
     assert.match(readToChoices(engine).text, /responsibility/);
 });
 
 test('opening slice completes through dialogue, preserves rewards once, and retains handoff on reload', () => {
     const engine = fixture(); talk(engine); choose(engine, 'Accept: A Fair Share of Light');
-    choose(engine, 'Until next time.');
+    choose(engine, 'Got it.');
     const mission = engine.maps.missions[missionId];
     for (const objective of mission.objectives) for (const id of objective.targetIds) {
         if (objective.kind === 'shrine') engine.transact([{op:'shrine',id}]);
@@ -131,7 +132,7 @@ test('Pella defaults to farewell after returning from readings instead of repeat
         if (accepted) {
             talk(engine);
             choose(engine, 'Accept: A Fair Share of Light');
-            choose(engine, 'Until next time.');
+            choose(engine, 'Got it.');
         }
         talk(engine, 'Pella Sharekeeper');
         let dialogue = readToChoices(engine);

@@ -15,7 +15,11 @@ function fixture(t) {
             this.listeners = {};
             this.textContent = '';
         }
-        append(child) { this.children.push(child); }
+        append(child) {
+            if (child.parentElement) child.parentElement.children = child.parentElement.children.filter(item => item !== child);
+            this.children.push(child); child.parentElement = this;
+        }
+        appendChild(child) { this.append(child); return child; }
         replaceChildren() { this.children = []; }
         setAttribute(name, value) { this[name] = value; }
         contains(child) { return this === child || this.children.some(c => c.contains(child)); }
@@ -339,4 +343,43 @@ test('item-use result shows unquoted text and Continue restores game controls', 
     assert.equal(engine.panel,null);
     assert.equal(ui.dialog.open,false);
     assert.ok(calls.includes('resume'));
+});
+
+test('journal places the selected side mission above the main story without duplication',t=>{
+ const {ui,engine,save}=fixture(t);
+ const current={id:'selected',title:'Selected side mission',kind:'side',state:'active'};
+ engine.journal=()=>[{id:'main',title:'Main mission',kind:'main',state:'active'},current,{id:'other',title:'Other mission',kind:'side',state:'active'}];
+ engine.content.stories=[{title:'Story',chapters:[]}];engine.currentStoryChapter=()=>({title:'Chapter'});engine.mainNavigationGoal=()=>null;
+ save.data.navMissionId=current.id;ui.openJournal();
+ assert.equal(ui.body.children[0].textContent,'◆ Current mission');
+ const buttons=ui.body.querySelectorAll('button');assert.match(buttons[0].textContent,/Selected side mission/);assert.match(buttons[1].textContent,/Main mission/);
+ assert.equal(buttons.filter(b=>b.textContent.includes('Selected side mission')).length,1);
+});
+
+test('tracked main mission has both markers and replaces the main-story sections',t=>{
+ const {ui,engine,save}=fixture(t);
+ engine.journal=()=>[{id:'main',title:'Main mission',kind:'main',state:'active'},{id:'side',title:'Side mission',kind:'side',state:'active'}];
+ engine.content.stories=[{title:'Story',chapters:[]}];
+ save.data.navMissionId='main';ui.openJournal();
+ assert.equal(ui.body.children[0].textContent,'◆ ★ Current mission');
+ assert.ok(!ui.body.querySelectorAll('h3').some(heading=>heading.textContent.includes('Main story')));
+ assert.equal(ui.body.querySelectorAll('button').filter(button=>button.textContent.includes('Main mission')).length,1);
+});
+
+test('each journal section puts its completed disclosure after available quests and mini quests use a checkbox',t=>{
+ const {ui,engine,save}=fixture(t);
+ save.data.actors.guide={talked:true};
+ engine.journal=()=>['main','side','mini'].flatMap(kind=>[
+  {id:kind+'-done',title:kind+' done',kind,state:'completed'},
+  {id:kind+'-available',title:kind+' available',kind,state:'available',giverActorId:'guide'},
+ ]);
+ ui.openJournal();
+ const children=ui.body.children;
+ for(const kind of ['main','side','mini']){
+  const available=children.findIndex(child=>child.textContent===kind+' available · available');
+  assert.ok(available>=0);
+  assert.equal(children[available+1].tagName,'DETAILS');
+  assert.equal(children[available+1].querySelector('button').textContent,kind+' done · completed');
+ }
+ assert.ok(ui.body.querySelectorAll('h3').some(heading=>heading.textContent==='☐ Mini quests'));
 });

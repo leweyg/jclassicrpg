@@ -1,4 +1,4 @@
-import {dialogueStart,dialogueView,validateDialogue} from './dialogue.js';
+import {dialogueStart,dialogueView,validateDialogue,reviewMission} from './dialogue.js';
 import {grantInventoryItem,inventoryCount,itemQuantity,stackSignature} from './inventory.js';
 import {validateContent,INTERACTION_VERSION} from './format.js';
 import {initialPuzzle,puzzleStep,puzzleHint} from './puzzles.js';
@@ -139,6 +139,10 @@ export class InteractionRuntime {
   this.transact([{op:'talk',id:anchor.targetId}],token);
   this.panel={kind:'dialogue',actorId:anchor.targetId,nodeId:dialogueStart(this.maps.dialogues[this.maps.actors[anchor.targetId].dialogueId],condition=>predicate(condition,this.save.data,this)),captionIndex:0,returnedToGreeting:returning};
   if(returning)this.panel.captionIndex=this.dialogue().captionCount-1;
+  const definition=this.maps.dialogues[this.maps.actors[anchor.targetId].dialogueId];
+  const reviews=(definition.nodes[this.panel.nodeId].choices??[]).map(reviewMission).filter(id=>id&&this.missionState(id)==='active');
+  const review=reviews.find(id=>id===this.save.data.navMissionId)??reviews[0];
+  if(returning&&review){this.panel.reviewMissionId=review;this.panel.captionIndex=0;this.setNavigationGoal(review);}
   return this.dialogue();
  }
  if(anchor.kind==='container'){const result=this.transact([{op:'open',id:anchor.targetId}],token);this.panel={kind:'container',id:anchor.targetId};return result;}
@@ -173,7 +177,10 @@ export class InteractionRuntime {
   if (!choice) throw Error('Choice no longer available');
   const result = this.transact(choice.actions ?? [], token);
   if (result.duplicate) return result;
+  const accepted=choice.actions?.find(action=>action.op==='accept')?.id;
+  if(accepted)this.panel.acceptedMissionId=accepted;
   if (choice.next) {
+   delete this.panel.reviewMissionId;
    const definition = this.maps.dialogues[dialogue.actor.dialogueId];
    if (choice.next === definition.start) this.panel.returnedToGreeting = true;
    this.panel.nodeId = choice.next === definition.start
@@ -184,7 +191,10 @@ export class InteractionRuntime {
     this.panel.captionIndex = this.dialogue().captionCount - 1;
    }
   } else {
-   this.panel = null;
+   if(accepted){
+    this.panel.reviewMissionId=accepted;
+    this.panel.captionIndex=0;
+   }else this.panel = null;
   }
   return result;
  }

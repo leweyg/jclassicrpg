@@ -363,19 +363,29 @@ export class InteractionUI {
         const engine = this.state.interactions;
         const save = this.state.saveDeltas.data;
         const story = engine.content.stories?.[0];
-        if (story) {
+        const journal = engine.journal();
+        const current = journal.find(mission => mission.id === save.navMissionId);
+        const currentIsMain = current?.kind === 'main';
+        if (current) {
+            this.text('h3', currentIsMain ? '◆ ★ Current mission' : '◆ Current mission');
+            const button = this.button(current.title + ' · ' + current.state.replaceAll('-', ' '), () => this.openQuest(current.id), {primary:true});
+            button.className = 'quest-row';
+        }
+        if (story && !currentIsMain) {
             this.text('h3', '★ Main story · ' + story.title);
             const chapter = engine.currentStoryChapter();
             this.text('p', chapter ? chapter.title : story.nextChapterFallback);
             this.text('p', story.chapters.map(c => (c.missionId && engine.missionState(c.missionId) === 'completed' ? '✓ ' : '') + c.title + (c.status === 'planned' ? ' (planned)' : '')).join(' → '));
             if (engine.mainNavigationGoal()) {
                 this.text('p', 'Next: ' + engine.mainNavigationGoal().name);
-                this.button('Continue main story', () => { engine.continueMainStory(); this.persist(); this.openJournal(); }, {primary:true});
+                this.button('Continue main story', () => { engine.continueMainStory(); this.persist(); this.openJournal(); }, {primary:!current});
             }
         }
-        let count = 0;
-        for (const [kind, label] of [['main','★ Main story'],['side','◇ Side quests'],['mini','• Mini quests']]) {
-            const entries = engine.journal().filter(m => (m.kind ?? 'side') === kind && (m.state !== 'available' || save.actors[m.giverActorId]?.talked));
+        let count = current ? 1 : 0;
+        for (const [kind, label] of [['main','★ Main story'],['side','◇ Side quests'],['mini','☐ Mini quests']]) {
+            if (kind === 'main' && currentIsMain) continue;
+            const entries = journal.filter(m => m.id !== current?.id && (m.kind ?? 'side') === kind && (m.state !== 'available' || save.actors[m.giverActorId]?.talked))
+                .sort((a, b) => Number(a.state === 'completed') - Number(b.state === 'completed'));
             if (!entries.length) continue;
             this.text('h3', label);
             let completed;

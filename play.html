@@ -117,7 +117,6 @@
 		color: #fff0cf;
 	}
 	#minimap-canvas { display: block; width: 100%; aspect-ratio: 1; }
-	#hud-minimap span { display: block; padding: 3px; font-size: 0.65rem; }
 	button:focus-visible, input:focus-visible { outline: 2px solid #ffdc89; outline-offset: 2px; }
 	#world-map-dialog {
 		box-sizing: border-box;
@@ -332,7 +331,6 @@ body:has(#interaction-panel[data-kind="dialogue"][open]) .hud { visibility:hidde
 <button id="hud-log" class="hud" type="button" aria-label="Open journal" aria-haspopup="dialog" title="Open journal"></button>
 <button id="hud-minimap" class="hud" type="button" aria-label="Open world map" aria-haspopup="dialog" title="Nearby map: 116-unit radius, twice the visible area">
 	<canvas id="minimap-canvas" width="256" height="256" aria-hidden="true"></canvas>
-	<span>Map · 116-unit radius</span>
 </button>
 <div id="hud-nav" class="hud">
 	<div id="hud-location" aria-live="off"></div>

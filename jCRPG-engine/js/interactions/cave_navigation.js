@@ -3,6 +3,25 @@ import {CELL, FACE, wallBit} from '../world/format.js';
 
 const components = new WeakMap();
 
+/** Choose a reproducible passage heading from the portal, never the approach angle. */
+export function caveArrivalYaw(stream, portal, entering) {
+ const explicit=entering?portal.entryYaw:portal.exitYaw;
+ if(Number.isFinite(explicit))return explicit;
+ const [x,y,z]=portal.to;
+ let best=-1, direction=FACE[0];
+ for(const [dx,dz] of FACE){
+  let distance=0;
+  for(let step=1;step<=16;step++){
+   const previous=(step-1)/4,next=step/4;
+   if(!stream.canMove(x+dx*previous,y,z+dz*previous,x+dx*next,z+dz*next,'cave'))break;
+   distance=next;
+  }
+  if(distance>best){best=distance;direction=[dx,dz];}
+ }
+ const sign=entering?1:-1;
+ return Math.atan2(direction[0]*sign,direction[1]*sign);
+}
+
 /** A temporary map waypoint; the saved quest/location selection stays intact. */
 export function navigationWaypoint(state) {
  const goal = state?.interactions?.navigationGoal() ?? null;

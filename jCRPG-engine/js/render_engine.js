@@ -488,6 +488,7 @@ export class SceneRenderer {
     highlightInteraction(action) {
         const changed=this.highlightedAction?.id!==action?.id;
         this.highlightedAction=action;
+        if(changed&&action?.kind==='actor')this.gameState.preloadDialogue?.(action.targetId).catch(()=>{});
         if(!this._attentionRing){
             const mesh=new THREE.Mesh(new THREE.TorusGeometry(.48,.035,6,32),new THREE.MeshBasicMaterial({color:0xffdf83,transparent:true,opacity:.85,depthTest:false}));
             mesh.rotation.x=Math.PI/2;mesh.renderOrder=5;this.scene.add(mesh);this._attentionRing=mesh;
@@ -513,8 +514,19 @@ export class SceneRenderer {
 		this._interacting=true;
         const action=this.nearbyInteraction();
         this.cancelInput();
-		try { await this.attentionPulse(action);const message=await this.gameState.interact(action);this.onStatus?.(message);this.onInteractionPanel?.();this.worldView.sync();this._syncCamera();this.requestRender(); }
-		catch(error) { this.onStatus?.(error.message); }
+		try {
+            if(action?.kind==='actor'){
+                this.setInputEnabled(false);
+                this.beginConversation(this.gameState.interactions.maps.actors[action.targetId]);
+            }else await this.attentionPulse(action);
+            const message=await this.gameState.interact(action);
+            if(action?.kind==='portal'&&action.portal.kind==='cave'){
+                this._yaw=this.gameState.arrivalYaw;
+                this._pitch=-0.08;
+            }
+            this.onStatus?.(message);this.onInteractionPanel?.();this.worldView.sync();this._syncCamera();this.requestRender();
+        }
+		catch(error) { this.endConversation();this.setInputEnabled(true);this.onStatus?.(error.message); }
 		finally { this._interacting=false; }
 	}
 
