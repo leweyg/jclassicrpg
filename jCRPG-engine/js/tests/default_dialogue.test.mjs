@@ -34,7 +34,8 @@ test('shared dialogue templates reproduce every instance and load each template 
  const manifest=JSON.parse(fs.readFileSync(new URL('interactions/manifest.json',base)));
  const authored=JSON.parse(fs.readFileSync(new URL('interactions/dialogues.json',base)));
  const references=Object.entries(manifest.records.dialogues).filter(([,d])=>d.template);
- assert.ok(references.length>=55,'witnesses and maze keepers should share templates');
+ assert.ok(references.length>=45,'generic witnesses and maze keepers should share templates');
+ assert.ok(!references.some(([id])=>id.startsWith('dialogue:actor:antipion:witness:')),'Saima’s witnesses have individual testimony');
  const requests=[];
  const engine=await loadInteractions(base,new SaveDeltas(),async url=>{requests.push(url.href);return new Response(fs.readFileSync(url));});
  const count=requests.length;

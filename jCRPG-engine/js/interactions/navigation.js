@@ -1,3 +1,4 @@
+import {puzzleAvailability,subsetSolution} from './puzzles.js';
 /** Resolve the next unfinished step without changing quest state. */
 export function questGoal(engine,id,seen=new Set()) {
  const m=engine.maps.missions[id],s=engine.save.data;
@@ -14,10 +15,12 @@ export function questGoal(engine,id,seen=new Set()) {
   for(const target of o.targetIds.filter(t=>!done.includes(t))){
    if(o.kind==='mission'){const next=questGoal(engine,target,seen);if(next)return next;}
    const puzzle=o.kind==='puzzle'?engine.maps.puzzles[target]:null;
+   if(puzzle&&!puzzleAvailability(puzzle,s).available)continue;
+   if(puzzle?.clueActorId&&!s.flags[puzzle.clueFlag])return actorGoal(puzzle.clueActorId,'Hear the order from');
    const component=puzzle?nextPuzzleComponent(puzzle,s.puzzles[target]):null;
    const goal=engine.content.goals.find(g=>g.targetId===target&&(!component||g.id.endsWith(':'+component)))
     ??engine.content.goals.find(g=>g.targetId===target);
-   if(goal){if(goal.realm==='cave'&&goal.entrancePosition&&s.player?.realm!=='cave')return {...goal,id:goal.portalId,position:goal.entrancePosition,realm:'surface',name:'Enter the southern cave'};return {...goal,name:o.text};}
+   if(goal){if(goal.realm==='cave'&&goal.entrancePosition&&s.player?.realm!=='cave')return {...goal,id:goal.portalId,position:goal.entrancePosition,realm:'surface',name:goal.entranceName??'Enter the southern cave'};return {...goal,name:o.text};}
   }
   return actorGoal(m.turnInActorId,o.text+' — speak to');
  }
@@ -26,6 +29,8 @@ export function questGoal(engine,id,seen=new Set()) {
 
 export function nextPuzzleComponent(puzzle,state={values:[],observed:[],cursor:0}) {
  if(state.completed)return null;
+ if(puzzle.mechanic==='sequence')return puzzle.sequence[state.cursor??0];
+ if(puzzle.mechanic==='subset'){const solution=subsetSolution(puzzle);return puzzle.componentIds.find((id,i)=>!!state.values[i]!==solution.includes(id));}
  if(puzzle.mechanic==='all')return puzzle.componentIds.find((id,i)=>state.values[i]!==puzzle.demands[i]);
  const unread=puzzle.componentIds.find(id=>!state.observed.includes(id));
  if(unread)return unread;

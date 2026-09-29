@@ -1,3 +1,4 @@
+import {puzzleHint,initialPuzzle} from './puzzles.js';
 /** Caption progression is transient; only explicit choices commit gameplay actions. */
 export function dialogueStart(definition, matches) {
     return definition.entries?.find(entry => matches(entry.when))?.nodeId ?? definition.start;
@@ -15,7 +16,23 @@ export function dialogueView(engine, matches) {
     const node = definition.nodes[panel.nodeId];
     if (!node) throw Error('Unknown dialogue node');
 
-    let captions = node.captions ?? [node.text];
+    let captions = panel.repeat && node.repeatText ? [node.repeatText] : node.captions ?? [node.text];
+    const regionIds=definition.regionalMissionIds??[];
+    const completed=regionIds.filter(id=>engine.missionState(id)==='completed');
+    const next=regionIds.find(id=>engine.missionState(id)!=='completed');
+    const keeper=engine.maps.actors[engine.maps.missions[next]?.giverActorId];
+    const variables={completedCount:completed.length,nextMissionId:next,nextKeeperName:keeper?.name,nextTownName:engine.maps.settlements[keeper?.townId]?.name};
+    const format=text=>text.replace(/\{(completedCount|nextMissionId|nextKeeperName|nextTownName)\}/g,(_,key)=>variables[key]??'');
+    if(node.reportCaptions){const lines=node.reportCaptions.filter(c=>matches(c.when)).slice(-2).map(c=>c.text);captions=lines.length?lines:[node.text];}
+    const reviewId=node.reviewMissionId;
+    if(reviewId){
+        const mission=engine.maps.missions[reviewId];
+        const objective=mission.objectives.find(o=>engine.objectiveSources(o,engine.save.data).length<(o.required??o.targetIds.length));
+        captions=[objective?objective.text:node.readyText??'The work holds. Tell me what you observed.'];
+        if(objective?.kind==='puzzle'){const puzzle=engine.maps.puzzles[objective.targetIds[0]];captions.push(puzzleHint(puzzle,engine.save.data.puzzles[puzzle.id]??initialPuzzle(puzzle)));}
+    }
+    if(node.puzzleHintId){const p=engine.maps.puzzles[node.puzzleHintId];captions=[puzzleHint(p,engine.save.data.puzzles[p.id]??initialPuzzle(p))];}
+
     // Legacy reactions belong to greetings, never to hints or subsequent nodes.
     if (!definition.entries && panel.nodeId === definition.start) {
         const balance = engine.save.data.settlements[actor.townId]?.balanceState;
@@ -23,16 +40,16 @@ export function dialogueView(engine, matches) {
             : balance === 'stable' ? actor.stableText : null;
         if (reaction) captions = [reaction];
     }
-    if (panel.reviewMissionId) {
+    if (panel.reviewMissionId && !definition.authoredStates) {
         const review = definition.nodes['hint:' + panel.reviewMissionId];
         if (review) captions = review.captions ?? [review.text];
     }
     const captionIndex = Math.min(panel.captionIndex ?? 0, captions.length - 1);
     const caption = captions[captionIndex];
     const canAdvance = captionIndex < captions.length - 1;
-    const choices = canAdvance ? [] : (node.choices ?? []).filter(choice => matches(choice.when) && !reviewMission(choice))
-        .map(choice => panel.acceptedMissionId && !choice.next && !(choice.actions?.length)
-            ? {...choice, text: 'Got it.'} : choice);
+    const choices = canAdvance ? [] : (node.choices ?? []).filter(choice => matches(choice.when) && (!reviewMission(choice)||definition.authoredStates))
+        .map(choice => !definition.authoredStates && panel.acceptedMissionId && !choice.next && !(choice.actions?.length)
+            ? {...choice, text: 'Got it.'} : {...choice,text:format(choice.text),...(choice.trackMissionId?{trackMissionId:format(choice.trackMissionId)}:{})});
     const hasAcceptedMission = (actor.missionIds ?? []).some(id =>
         ['active', 'ready-to-turn-in', 'completed'].includes(engine.missionState(id))
     );
@@ -48,7 +65,7 @@ export function dialogueView(engine, matches) {
         : 0;
     return {
         actor,
-        text: typeof caption === 'string' ? caption : caption.text,
+        text: format(typeof caption === 'string' ? caption : caption.text),
         knowledge: (typeof caption === 'object' ? caption.knowledge : null)
             ?? node.knowledge ?? 'testimony',
         captionIndex,

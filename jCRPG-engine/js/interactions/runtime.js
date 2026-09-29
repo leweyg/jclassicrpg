@@ -1,7 +1,7 @@
 import {dialogueStart,dialogueView,validateDialogue,reviewMission} from './dialogue.js';
 import {grantInventoryItem,inventoryCount,itemQuantity,stackSignature} from './inventory.js';
 import {validateContent,INTERACTION_VERSION} from './format.js';
-import {initialPuzzle,puzzleStep,puzzleHint} from './puzzles.js';
+import {initialPuzzle,puzzleStep,puzzleHint,puzzleAvailability} from './puzzles.js';
 import {validateSave} from '../world/save_deltas.js';
 import {questGoal,advanceNavigation} from './navigation.js';
 
@@ -25,12 +25,22 @@ export function predicate(p,s,engine,depth=0){
 }
 export class InteractionRuntime {
  constructor(content,save){this.content=content;this.maps=validateContent(content);this.save=save;this.panel=null;this.initialize();}
- initialize(){const s=validateSave(this.save.data);this.migrateStory(s);this.validateState(s);if(!s.flags.initialInventory){for(const item of this.content.initialInventory)this.grant(s,item);s.flags.initialInventory=true;}this.refresh(s);this.save.data=s;if(!s.navMissionId&&!s.navLocation)s.navMissionId=this.currentStoryChapter()?.missionId??null;}
+ initialize(){const s=validateSave(this.save.data);this.migrateStory(s);this.migratePuzzles(s);this.validateState(s);if(!s.flags.initialInventory){for(const item of this.content.initialInventory)this.grant(s,item);s.flags.initialInventory=true;}this.refresh(s);this.save.data=s;if(!s.navMissionId&&!s.navLocation)s.navMissionId=this.currentStoryChapter()?.missionId??null;}
  migrateStory(s){
  for(const migration of this.content.storyMigrations??[]){if(s.flags[migration.id])continue;
   if(s.missions[migration.legacyMissionId]?.state==='completed')for(const id of migration.completedMissionIds)s.missions[id]??={state:'completed',objectiveSources:{}};
   s.flags[migration.id]=true;
  }
+ }
+ migratePuzzles(s){
+ if(!s.flags['saima-dialogue-v2']){for(let i=0;i<4;i++){const id='actor:antipion:witness:'+i;if(s.actors[id]?.talked)s.flags['witness-heard:'+id]=true;}s.flags['saima-dialogue-v2']=true;}
+ for(const p of this.content.puzzles){const old=s.puzzles[p.id];if(!p.stateVersion||!old||old.version===p.stateVersion)continue;
+  // Historical repairs and rewards survive; only unfinished incompatible controls reset.
+  s.puzzles[p.id]=initialPuzzle(p);
+  if(old.completed){Object.assign(s.puzzles[p.id],{completed:true,values:[...p.demands],observed:[...p.componentIds],cursor:p.mechanic==='sequence'?p.sequence.length:0});s.flags['historical-repair:'+p.id]=true;}
+ }
+ const fitting=this.maps.fittings['fitting:antipion:wisdom:listener'];
+ if(fitting&&s.puzzles['puzzle:antipion:regional:3']?.completed)s.flags[fitting.id]=true;
  }
  currentStoryChapter(s=this.save.data){const story=this.content.stories?.[0];return story?.chapters.find(c=>c.missionId&&s.missions[c.missionId]?.state!=='completed')??null;}
  mainNavigationGoal(){return questGoal(this,this.currentStoryChapter()?.missionId);}
@@ -56,7 +66,7 @@ export class InteractionRuntime {
  grant(s,item){grantInventoryItem(s.inventory,item);}
  missionState(id,s=this.save.data){const m=this.maps.missions[id];if(!m)throw Error('Unknown mission '+id);return s.missions[id]?.state??((m.requires??[]).every(dep=>s.missions[dep]?.state==='completed')?'available':'locked');}
  objectiveSources(o,s){
- return o.targetIds.filter(id=>({shrine:()=>s.shrines[id]?.activated,puzzle:()=>s.puzzles[id]?.completed,evidence:()=>s.evidence[id],commitment:()=>s.commitments[id]!==undefined,actor:()=>s.actors[id]?.talked,mission:()=>s.missions[id]?.state==='completed',item:()=>Object.values(s.inventory.items).some(item=>item.sourceIds.includes(id)),fitting:()=>s.flags[id]===true})[o.kind]());
+ return o.targetIds.filter(id=>({shrine:()=>s.shrines[id]?.activated,puzzle:()=>s.puzzles[id]?.completed,evidence:()=>s.evidence[id],commitment:()=>s.commitments[id]!==undefined,actor:()=>s.actors[id]?.talked,mission:()=>s.missions[id]?.state==='completed',item:()=>Object.values(s.inventory.items).some(item=>item.sourceIds.includes(id))||(this.content.fittings??[]).some(f=>f.itemId===id&&s.flags[f.id]),fitting:()=>s.flags[id]===true})[o.kind]());
  }
  refresh(s){
  for(const m of this.content.missions)if(m.startMode==='automatic'&&this.missionState(m.id,s)==='available')s.missions[m.id]={state:'active',objectiveSources:{}};
@@ -80,7 +90,11 @@ export class InteractionRuntime {
  if(!a||typeof a.op!=='string')throw Error('Invalid action');
  const get=(group,id)=>{const value=this.maps[group][id];if(!value)throw Error('Unknown '+group+': '+id);return value;};
  switch(a.op){
- case 'fit':{const f=get('fittings',a.id);if(s.flags[f.id])break;if(!['active','ready-to-turn-in'].includes(this.missionState(f.missionId,s)))throw Error('The fitting is not ready');if(!Object.values(s.inventory.items).some(item=>item.sourceIds.includes(f.itemId)))throw Error('Bring the listening coil from the southern cave first.');s.flags[f.id]=true;messages.push('The coil settles into the socket. The road relay answers.');break;}
+ case 'fit':{const f=get('fittings',a.id);if(s.flags[f.id])break;if(!['active','ready-to-turn-in'].includes(this.missionState(f.missionId,s)))throw Error('The fitting is not ready');
+  const entry=Object.entries(s.inventory.items).find(([,item])=>item.sourceIds.includes(f.itemId));
+  if(!entry)throw Error(f.missingText??'Bring the listening coil from the southern cave first.');
+  if(f.consume){const [key,item]=entry;if(item.sourceIds.length!==1||item.quantity!==1)throw Error('The fitting requires its unique element');delete s.inventory.items[key];s.inventory.order=s.inventory.order.filter(id=>id!==key);}
+  s.flags[f.id]=true;messages.push(f.successText??'The coil settles into the socket. The road relay answers.');for(const effect of f.onComplete??[])this.apply(s,effect,messages);break;}
  case 'text':messages.push(a.text);break;
  case 'flag':if(['__proto__','constructor','prototype'].includes(a.id))throw Error('Invalid flag');s.flags[a.id]=a.value;break;
  case 'evidence':s.evidence[a.id]=true;messages.push(a.text??'Observation recorded as fact.');break;
@@ -92,9 +106,9 @@ export class InteractionRuntime {
  case 'route':{const def=get('routes',a.id);s.shrineRoutes[a.id]??={state:'active',destinationTownId:def.destinationTownId,activatedShrineIds:[],litFrontierShrineIds:[]};messages.push('Route lit toward '+def.destinationName+'.');break;}
  case 'settlement':{get('settlements',a.id);const old=s.settlements[a.id];s.settlements[a.id]={balanceState:old?.balanceState==='integrated'?'integrated':a.state??'stable',poweredTargetIds:a.targets??old?.poweredTargetIds??[]};break;}
  case 'generator':s.mazeGenerators[a.id]={state:'active',rationalState:'valid',resonanceState:'valid'};break;
- case 'puzzle':{const p=get('puzzles',a.id),old=s.puzzles[a.id];s.puzzles[a.id]=puzzleStep(p,old,a.input);messages.push(puzzleHint(p,s.puzzles[a.id]));if(!old?.completed&&s.puzzles[a.id].completed)for(const effect of p.onComplete??[])this.apply(s,effect,messages);break;}
+ case 'puzzle':{const p=get('puzzles',a.id),old=s.puzzles[a.id],gate=puzzleAvailability(p,s);if(!gate.available)throw Error(gate.message);s.puzzles[a.id]=puzzleStep(p,old,a.input);const state=s.puzzles[a.id];messages.push(!old?.completed&&state.completed&&p.successText?p.successText:p.mechanic==='sequence'?(state.cursor?`${p.labels[p.componentIds.indexOf(a.input)]} answers. ${state.cursor}/${p.sequence.length} measures hold.`:'The pattern falls quiet. The accounts remain; begin again at Ground.'):puzzleHint(p,state));if(!old?.completed&&s.puzzles[a.id].completed)for(const effect of p.onComplete??[])this.apply(s,effect,messages);break;}
  case 'open':get('containers',a.id);s.containers[a.id]??={takenItemIds:[]};Object.assign(s.containers[a.id],{inspected:true,opened:true});s.openedContainers[a.id]=true;break;
- case 'take':{const c=get('containers',a.id),state=s.containers[a.id];if(!state?.opened)throw Error('Open the container first');const ids=a.itemIds??c.items.map(i=>i.id);if(new Set(ids).size!==ids.length)throw Error('Duplicate transfer');for(const id of ids){const item=c.items.find(i=>i.id===id);if(!item)throw Error('Unknown container item');if(state.takenItemIds.includes(id))continue;this.grant(s,item);state.takenItemIds.push(id);}state.looted=state.takenItemIds.length===c.items.length;messages.push('Items transferred to the party inventory.');break;}
+ case 'take':{const c=get('containers',a.id),state=s.containers[a.id];if(!state?.opened)throw Error('Open the container first');const ids=a.itemIds??c.items.map(i=>i.id);if(new Set(ids).size!==ids.length)throw Error('Duplicate transfer');for(const id of ids){const item=c.items.find(i=>i.id===id);if(!item)throw Error('Unknown container item');if(state.takenItemIds.includes(id))continue;this.grant(s,item);state.takenItemIds.push(id);}state.looted=state.takenItemIds.length===c.items.length;messages.push(c.acquisitionText??'Items transferred to the party inventory.');break;}
  default:throw Error('Unknown action '+a.op);
  }
  }
@@ -119,7 +133,9 @@ export class InteractionRuntime {
   }
   if(anchor.kind==='puzzle'){
    const p=this.maps.puzzles[anchor.targetId];if(!p)return null;
+   const gate=puzzleAvailability(p,this.save.data);if(!gate.available)return {name:gate.label,summary:gate.message};
    const index=p.componentIds.indexOf(anchor.componentId);
+   if(p.mechanic||p.stateVersion)return {name:index<0?'Circuit reset stone':p.labels[index],summary:puzzleHint(p,this.save.data.puzzles[p.id]??initialPuzzle(p))};
    return {name:index<0?'Circuit reset stone':p.labels[index],summary:index<0?'A reset stone for this circuit. Interact to reset its conductors.':p.description??p.fact};
   }
   const summary=anchor.description??anchor.fact;
@@ -127,19 +143,24 @@ export class InteractionRuntime {
  }
  describe(anchor){
   if(!anchor)return null;
-  if(anchor.kind==='puzzle'&&this.maps.puzzles[anchor.targetId].mechanic==='all')return {...anchor,label:'Toggle '+this.maps.puzzles[anchor.targetId].labels[this.maps.puzzles[anchor.targetId].componentIds.indexOf(anchor.componentId)]};
-  if(anchor.kind==='puzzle'){const p=this.maps.puzzles[anchor.targetId],s=this.save.data.puzzles[p.id]??initialPuzzle(p),i=p.componentIds.indexOf(anchor.componentId);if(i>=0){const verb=s.completed?'Stable':!s.observed.includes(anchor.componentId)?'Inspect':p.family==='resonance'||s.values.every((n,j)=>n===p.demands[j])?'Pulse':'Set';return {...anchor,label:`${verb} ${p.labels[i]} · ${s.values[i]}/${p.demands[i]}`};}}
+  if(anchor.kind==='puzzle'){
+   const p=this.maps.puzzles[anchor.targetId],s=this.save.data.puzzles[p.id]??initialPuzzle(p),gate=puzzleAvailability(p,this.save.data),i=p.componentIds.indexOf(anchor.componentId);
+   if(!gate.available)return {...anchor,label:gate.label};
+   if(i>=0){const verb=s.completed?'Stable':p.mechanic==='sequence'?'Pulse':p.mechanic==='all'?'Awaken':p.mechanic==='subset'?'Toggle':!s.observed.includes(anchor.componentId)?'Inspect':p.family==='resonance'||s.values.every((n,j)=>n===p.demands[j])?'Pulse':'Set';return {...anchor,label:`${verb} ${p.labels[i]}${p.mechanic==='subset'?` · ${p.demands[i]} units`:p.mechanic?'':` · ${s.values[i]}/${p.demands[i]}`}`};}
+  }
   if(anchor.kind==='actor'){const actor=this.maps.actors[anchor.targetId],ready=actor.missionIds.find(id=>this.missionState(id)==='ready-to-turn-in');if(ready)return {...anchor,label:'Report to '+actor.name};}
   if(anchor.kind==='shrine'&&this.save.data.shrines[anchor.targetId])return {...anchor,label:'Rest / recall relay pattern'};
   return anchor;
  }
  interact(anchor,token){
+ if(anchor.kind==='puzzle'){const gate=puzzleAvailability(this.maps.puzzles[anchor.targetId],this.save.data);if(!gate.available)return {message:gate.message,locked:true};}
  if(anchor.kind==='actor'){
   const returning=!!this.save.data.actors[anchor.targetId]?.talked;
   this.transact([{op:'talk',id:anchor.targetId}],token);
   this.panel={kind:'dialogue',actorId:anchor.targetId,nodeId:dialogueStart(this.maps.dialogues[this.maps.actors[anchor.targetId].dialogueId],condition=>predicate(condition,this.save.data,this)),captionIndex:0,returnedToGreeting:returning};
-  if(returning)this.panel.captionIndex=this.dialogue().captionCount-1;
   const definition=this.maps.dialogues[this.maps.actors[anchor.targetId].dialogueId];
+  if(definition.authoredStates){const key='dialogue-seen:'+definition.id+':'+this.panel.nodeId;this.panel.repeat=!!this.save.data.flags[key];this.transact([{op:'flag',id:key,value:true}]);return this.dialogue();}
+  if(returning)this.panel.captionIndex=this.dialogue().captionCount-1;
   const reviews=(definition.nodes[this.panel.nodeId].choices??[]).map(reviewMission).filter(id=>id&&this.missionState(id)==='active');
   const review=reviews.find(id=>id===this.save.data.navMissionId)??reviews[0];
   if(returning&&review){this.panel.reviewMissionId=review;this.panel.captionIndex=0;this.setNavigationGoal(review);}
@@ -179,6 +200,9 @@ export class InteractionRuntime {
   if (result.duplicate) return result;
   const accepted=choice.actions?.find(action=>action.op==='accept')?.id;
   if(accepted)this.panel.acceptedMissionId=accepted;
+  if(choice.trackMissionId)this.setNavigationGoal(choice.trackMissionId);
+  if(choice.continueMain)this.continueMainStory();
+  if(choice.navigateActorId){const actor=this.maps.actors[choice.navigateActorId];this.setNavigationLocation({id:actor.id,name:'Speak to '+actor.name,x:actor.position[0],y:actor.position[1],z:actor.position[2],realm:actor.realm});}
   if (choice.next) {
    delete this.panel.reviewMissionId;
    const definition = this.maps.dialogues[dialogue.actor.dialogueId];
@@ -187,11 +211,14 @@ export class InteractionRuntime {
     ? dialogueStart(definition, condition => predicate(condition, this.save.data, this))
     : choice.next;
    this.panel.captionIndex = 0;
-   if (choice.next === definition.start) {
+   if(definition.authoredStates){const key='dialogue-seen:'+definition.id+':'+this.panel.nodeId;this.panel.repeat=!!this.save.data.flags[key];this.transact([{op:'flag',id:key,value:true}]);}
+   else this.panel.repeat = choice.next === definition.start;
+   if (choice.next === definition.start && !definition.authoredStates) {
     this.panel.captionIndex = this.dialogue().captionCount - 1;
    }
   } else {
    if(accepted){
+    if(this.maps.dialogues[dialogue.actor.dialogueId].authoredStates){this.panel.nodeId='hint:'+accepted;this.panel.repeat=false;}
     this.panel.reviewMissionId=accepted;
     this.panel.captionIndex=0;
    }else this.panel = null;

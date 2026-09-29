@@ -11,3 +11,11 @@ export const LAYERS=['body','speech','mind','wisdom'];
 export const START_TOWN='town:populationBoarmanTribe#381';
 export const START_SHRINE='shrine:shrine 19 22:782:903';
 export const START_MISSION='mission:wammigmig:fair-share';
+
+/** Stable regional IDs are independent of the display names. */
+export const SAIMA_REGIONS = [
+ {layer:'body',keeper:'Iva Ground-Listener',witness:'Ketu-of-the-Spring',speaker:'iva',visitor:'ketu'},
+ {layer:'speech',keeper:'Mira Clear-Word',witness:'Seli of the Night Path',speaker:'mira',visitor:'seli'},
+ {layer:'mind',keeper:'Varis Pattern-Keeper',witness:'Aro of the Snowline',speaker:'varis',visitor:'aro'},
+ {layer:'wisdom',keeper:'Tavi Open-Hand',witness:'Naru Deep-Ear',speaker:'tavi',visitor:'naru'},
+];

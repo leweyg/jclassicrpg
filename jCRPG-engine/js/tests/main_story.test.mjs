@@ -39,25 +39,27 @@ test('story validation rejects cycles, missing successors and optional prerequis
 function converse(e, actorId, label) {
  e.interact({kind:'actor',targetId:actorId});
  while(e.dialogue().canAdvance)e.advanceDialogue();
- const index=e.dialogue().choices.findIndex(c=>c.text===label);
+ const index=e.dialogue().choices.findIndex(c=>typeof label==='function'?label(c):c.text===label);
  assert.ok(index>=0,'Missing conversation choice: '+label);
  return e.choose(index);
 }
 function completeOasisTask(e,id) {
  const m=e.maps.missions[id];
- converse(e,m.giverActorId,'Accept: '+m.title);
+ converse(e,m.giverActorId,c=>c.actions?.some(a=>a.op==='accept'&&a.id===id));
  for(const o of m.objectives)for(const target of o.targetIds){
   if(o.kind==='puzzle')for(const input of solvePuzzle(e.maps.puzzles[target]).inputs)e.interact({kind:'puzzle',targetId:target,input});
   if(o.kind==='evidence')e.interact({kind:'evidence',targetId:target});
-  if(o.kind==='actor')e.interact({kind:'actor',targetId:target});
+  if(o.kind==='actor'){converse(e,target,c=>c.actions?.some(a=>a.op==='flag'&&a.id==='witness-heard:'+target));}
+  if(o.kind==='item'){const container=e.content.containers.find(c=>c.items.some(i=>i.id===target));act(e,{op:'open',id:container.id},{op:'take',id:container.id});}
+  if(o.kind==='fitting')e.interact({kind:'fitting',targetId:target});
   if(o.kind==='commitment'){
    e.interact({kind:'actor',targetId:m.giverActorId});while(e.dialogue().canAdvance)e.advanceDialogue();
    const index=e.dialogue().choices.findIndex(c=>c.actions?.some(a=>a.op==='commitment'&&a.id===target));
    assert.ok(index>=0,'Missing commitment '+target);e.choose(index);
   }
  }
- assert.equal(e.missionState(id),'ready-to-turn-in');
- converse(e,m.turnInActorId,'Report: '+m.title);
+ if(e.missionState(id)!=='completed'){assert.equal(e.missionState(id),'ready-to-turn-in');
+ converse(e,m.turnInActorId,c=>c.actions?.some(a=>a.op==='turnIn'&&a.id===id));}
 }
 test('old end-of-opening save continues through Saima and all regional missions via dialogue',()=>{
  let e=create();
@@ -70,17 +72,17 @@ test('old end-of-opening save continues through Saima and all regional missions 
  assert.equal(e.navigationGoal().targetId,saima);
  completeOasisTask(e,'mission:antipion:balance');e=reload(e);
  assert.equal(e.missionState(MAIN_IDS[3]),'ready-to-turn-in');
- converse(e,saima,'Report: What the numbers mean');e=reload(e);
+ converse(e,saima,'Record the local result');e=reload(e);
  assert.equal(e.currentStoryChapter().missionId,MAIN_IDS[4]);
  for(const layer of ['body','speech','mind','wisdom']){
   const id='mission:antipion:'+layer;
   assert.equal(e.mainNavigationGoal().id,e.maps.missions[id].giverActorId);
   completeOasisTask(e,id);e=reload(e);
  }
- assert.equal(e.mainNavigationGoal().id,saima);
+ assert.equal(e.mainNavigationGoal().id,'actor:antipion:principal:2');
  completeOasisTask(e,'mission:antipion:bliss');e=reload(e);
  assert.equal(e.missionState(MAIN_IDS[4]),'ready-to-turn-in');
- const result=converse(e,saima,'Report: An order worth keeping');
+ const result=converse(e,saima,'Record our shared practice');
  assert.match(result.message,/Concordance journey is complete/);
  e=reload(e);assert.equal(e.currentStoryChapter(),null);assert.equal(e.mainNavigationGoal(),null);
  assert.equal(e.save.data.flags['story:concordance:complete'],true);
@@ -92,8 +94,10 @@ test('previously completed Saima missions count toward the newly connected chapt
  old.actors['actor:antipion:principal:0']={talked:true};old.navMissionId=null;
  e.save.import(JSON.stringify(old));e.initialize();
  assert.equal(e.missionState(MAIN_IDS[3]),'ready-to-turn-in');
- converse(e,'actor:antipion:principal:0','Report: What the numbers mean');
+ converse(e,'actor:antipion:principal:0','Record the local result');
+ assert.equal(e.missionState(MAIN_IDS[4]),'active');
+ const final=e.maps.puzzles['puzzle:antipion:final-sequence'];for(const input of final.solution)act(e,{op:'puzzle',id:final.id,input});
  assert.equal(e.missionState(MAIN_IDS[4]),'ready-to-turn-in');
- converse(e,'actor:antipion:principal:0','Report: An order worth keeping');
+ converse(e,'actor:antipion:principal:0','Record our shared practice');
  assert.equal(e.currentStoryChapter(),null);
 });

@@ -1,0 +1,57 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {InteractionRuntime,loadInteractions} from '../interactions/runtime.js';
+import {SaveDeltas} from '../world/save_deltas.js';
+import {initialPuzzle,puzzleStep,solvePuzzle} from '../interactions/puzzles.js';
+const base=new URL('../../worlds/seed0/v2/',import.meta.url);
+const read=file=>JSON.parse(fs.readFileSync(new URL(file,base)));
+const manifest=read('interactions/manifest.json');
+const content=Object.fromEntries(Object.entries(manifest.catalogs).map(([k,v])=>[k,read(v.url)]));
+const create=()=>new InteractionRuntime(content,new SaveDeltas());
+const saima='actor:antipion:principal:0',finalId='puzzle:antipion:final-sequence';
+test('streamed Saima record contains authored states and exposes the local task',async()=>{
+ const requests=[];
+ const e=await loadInteractions(base,new SaveDeltas(),async url=>{requests.push(url.pathname);return new Response(fs.readFileSync(url));});
+ assert.ok(!requests.some(p=>p.includes('/dialogues-')));
+ await e.loadRecord('dialogues','dialogue:'+saima);
+ assert.equal(requests.filter(p=>p.includes('/dialogues-')).length,1);
+ e.interact({kind:'actor',targetId:saima});assert.equal(e.dialogue().captionCount,3);
+ while(e.dialogue().canAdvance)e.advanceDialogue();
+ const index=e.dialogue().choices.findIndex(c=>c.text==='I’ll read the conductors');assert.ok(index>=0);e.choose(index);
+ assert.equal(e.missionState('mission:antipion:balance'),'active');assert.ok(e.navigationGoal());
+ while(e.dialogue().canAdvance)e.advanceDialogue();
+ assert.ok(e.dialogue().choices.some(c=>c.text==='Maybe later'));
+});
+test('final device rejects direct transactions until four reports, then resets only its attempt',()=>{
+ const e=create(),p=e.maps.puzzles[finalId],action={op:'puzzle',id:p.id,input:p.componentIds[0]},anchor={kind:'puzzle',targetId:p.id,componentId:action.input};
+ const before=e.save.export();assert.throws(()=>e.transact([action]),/regional accounts/);assert.equal(e.save.export(),before);
+ assert.equal(e.interact(anchor).locked,true);assert.equal(e.save.export(),before);assert.match(e.intuition(anchor).summary,/0\/4/);
+ for(const id of p.unlockWhen.completedMissionIds)e.save.data.missions[id]={state:'ready-to-turn-in',objectiveSources:{}};
+ assert.throws(()=>e.transact([action]),/regional accounts/);
+ for(const id of p.unlockWhen.completedMissionIds)e.save.data.missions[id].state='completed';
+ const copy=new SaveDeltas();copy.import(e.save.export());const resumed=new InteractionRuntime(content,copy);
+ resumed.transact([action]);assert.equal(resumed.save.data.puzzles[p.id].cursor,1);
+ resumed.transact([{...action,input:p.componentIds[3]}]);assert.equal(resumed.save.data.puzzles[p.id].cursor,0);
+ for(const input of p.sequence)resumed.transact([{...action,input}]);
+ assert.ok(resumed.save.data.puzzles[p.id].completed);
+ for(const id of p.unlockWhen.completedMissionIds)assert.equal(resumed.missionState(id),'completed');
+});
+test('subset values are reversible and match the authored six-unit solution',()=>{
+ const p=content.puzzles.find(p=>p.id==='puzzle:antipion:regional:2');let s=initialPuzzle(p);
+ for(const input of p.componentIds)s=puzzleStep(p,s,input);
+ assert.equal(s.values.reduce((a,b)=>a+b),9);assert.equal(s.completed,false);
+ s=puzzleStep(p,s,p.componentIds[1]);assert.equal(s.completed,true);assert.deepEqual(s.values,[2,0,4]);
+ assert.deepEqual(solvePuzzle(p).inputs,[p.componentIds[0],p.componentIds[2]]);
+});
+test('legacy completed repairs survive shape migration without replaying rewards',()=>{
+ const e=create(),save=new SaveDeltas();const old=JSON.parse(e.save.export());
+ for(const id of ['puzzle:antipion:capital','puzzle:antipion:regional:0','puzzle:antipion:regional:1'])old.puzzles[id]={values:[1,2,3],observed:[],cursor:3,completed:true};
+ old.puzzles['puzzle:antipion:regional:2']={values:[1,2,0],observed:[],cursor:1,completed:false};
+ save.import(JSON.stringify(old));const migrated=new InteractionRuntime(content,save);
+ assert.equal(migrated.save.data.puzzles['puzzle:antipion:regional:0'].values.length,1);
+ assert.ok(migrated.save.data.puzzles['puzzle:antipion:capital'].completed);
+ assert.deepEqual(migrated.save.data.puzzles['puzzle:antipion:regional:2'].values,[0,0,0]);
+ assert.deepEqual(migrated.save.data.settlements,old.settlements);
+ assert.equal(migrated.save.data.puzzles[finalId],undefined);
+});
