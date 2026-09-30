@@ -515,6 +515,7 @@ export class SceneRenderer {
         const action=this.nearbyInteraction();
         this.cancelInput();
 		try {
+            if (!action && this.onEmptyInteraction?.()) return;
             if(action?.kind==='actor'){
                 this.setInputEnabled(false);
                 this.beginConversation(this.gameState.interactions.maps.actors[action.targetId]);

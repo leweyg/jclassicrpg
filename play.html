@@ -78,10 +78,6 @@
 		text-transform: uppercase;
 		text-align: center;
 	}
-	#hud-profession {
-		color: #7fb0ff;
-		font-size: clamp(0.55rem, 1.8vw, 0.75rem);
-	}
 	#hud-log > span + span { margin-top: 0.45rem; }
 	#hud-log {
 		pointer-events: auto;
@@ -326,7 +322,6 @@ body:has(#interaction-panel[data-kind="dialogue"][open]) .hud { visibility:hidde
 <button id="hud-portrait-card" class="hud" type="button" aria-label="Open game menu" title="Open game menu" aria-haspopup="dialog" aria-controls="game-menu" aria-expanded="false" disabled>
 	<img id="hud-portrait" alt="Active character portrait">
 	<span id="hud-name">—</span>
-	<span id="hud-profession">—</span>
 </button>
 <button id="hud-log" class="hud" type="button" aria-label="Open journal" aria-haspopup="dialog" title="Open journal"></button>
 <button id="hud-minimap" class="hud" type="button" aria-label="Open world map" aria-haspopup="dialog" title="Nearby map: 116-unit radius, twice the visible area">

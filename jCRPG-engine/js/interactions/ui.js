@@ -358,6 +358,13 @@ export class InteractionUI {
         this.focus();
     }
 
+    openStory(story) {
+        this.open(story.title, 'story');
+        for (const paragraph of story.paragraphs) this.text('p', paragraph);
+        this.button('Begin the journey', () => this.close(), {primary:true});
+        this.focus();
+    }
+
     openJournal() {
         this.open('Journal', 'journal');
         const engine = this.state.interactions;

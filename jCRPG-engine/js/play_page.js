@@ -1,3 +1,4 @@
+import {loadOpeningStory, OpeningStoryOffer} from './opening_story.js';
 import {bindHudLayout} from './hud_layout.js';
 import { InteractionUI } from './interactions/ui.js';
 /*
@@ -26,10 +27,8 @@ function renderHud(gameState) {
 
 	const portraitImg = document.getElementById("hud-portrait");
 	const nameEl = document.getElementById("hud-name");
-	const profEl = document.getElementById("hud-profession");
 	if (portraitImg) portraitImg.src = `media/portraits/${member.pictureRoot}/${member.genderType === 2 ? "female" : "male"}/${member.pictureId}`;
 	if (nameEl) nameEl.textContent = member.foreName;
-	if (profEl) profEl.textContent = member.profession;
 }
 
 function appendLog(text) {
@@ -89,6 +88,15 @@ async function main() {
 		if (sim.gameState.exploration.chunks.some(chunk => !chunk.ready && chunk.error)) retryButton.hidden = false;
 		const worldMap = new WorldMap(sim.gameState, renderer);
 		const interactionsUI = new InteractionUI(sim.gameState,renderer,appendLog);
+        const openingStory = await loadOpeningStory();
+        const storyOffer = new OpeningStoryOffer(() => sim.gameState.saveDeltas.data.flags, startingNewGame);
+        renderer.onEmptyInteraction = () => {
+            if (!storyOffer.available()) return false;
+            storyOffer.dismiss();
+            interactionsUI.openStory(openingStory);
+            interactionsUI.persist();
+            return true;
+        };
 		interactionsUI.onShowQuestMap=(goal,mission)=>worldMap.showQuestGoal(goal,mission);
         interactionsUI.onTravelQuest = async goal => {
             await sim.gameState.teleport(goal.position[0], goal.position[2], goal.position[1], goal.realm ?? 'surface');
@@ -180,10 +188,12 @@ async function main() {
 			const action=renderer.nearbyInteraction();
 			const button=document.getElementById('world-interact');
 			renderer.highlightInteraction(action);
-			button.hidden=!action;button.disabled=!action;
+			if (action && storyOffer.dismiss()) interactionsUI.persist();
+            const readStory = !action && storyOffer.available();
+            button.hidden=!action&&!readStory;button.disabled=button.hidden;
 			const actor=action?.kind==='actor'?sim.gameState.interactions.maps.actors[action.targetId]:null;
-			button.textContent=actor?`Interact with ${actor.name}`:'Interact';
-			button.title=action ? `${action.label} [E]` : 'Interact [E]';
+			button.textContent=readStory?'Read Story':actor?.name ?? action?.prompt?.replace(/^Interact with\s+/i,'') ?? action?.label?.replace(/^Interact with\s+/i,'') ?? 'Interact';
+			button.title=button.textContent+' [E]';
 			const intuition=document.getElementById('world-intuition');
 			const info=sim.gameState.interactions.intuition(action);
 			intuition.hidden=!info?.summary;intuition.disabled=!info?.summary;

@@ -247,11 +247,16 @@
  #atlas-list { max-height: 260px; overflow-y: auto; display: grid; gap: 0.4rem; margin-top: 0.75rem; }
  #atlas-list button { text-align: left; }
  #atlas-search { box-sizing: border-box; max-width: 100%; }
+@media (max-width: 700px) {
+ #homepage-map .map-frame { width: 100%; display: flex; flex-direction: column; }
+ #homepage-map .map-toolbar { position: static; order: 1; max-width: 100%; margin-top: 0.5rem; }
+}
 </style>
 </head>
 <body>
 <header>
 	<h1>The Spiral Grid - a Fantasy Role Playing Game</h1>
+	<p>By <a href="https://lewcid.com/lg/aboutme.html">Lewey Geselowitz</a></p>
 	<nav aria-label="Main navigation">
 		<a href="play.html">Continue</a>
 		<a href="play.html?new=1">New game</a>
@@ -277,28 +282,14 @@
 </section>
 <section id="summary" aria-label="Story of the game">
 	<h2 aria-labelledby="map-title">Story</h2>
-<p><i>Long ago, what the ancestors called the internet outgrew its screens and cables. 
-	Its sensors took root in forests and stone, its signals learned to communicate
-	through the rhythms of wind and energy, and its actuators carried nourishment
-	and brought light wherever living things could answer.
-	</i></p><p><i>
-		In time, this half-made, half-grown network
-	became known as the Spiral Grid: a web of enshrined sensors and buried conductors
-	through which every settlement participates in the life around it. 
-	Its logical instruments can measure what repeats, while careful intuition 
-	can sense what has not yet found a number; wisdom is found in learning the 
-	proper use and limits of each. 
-	</i></p><p><i>
-	Your journey begins beside a quiet roadside shrine, where restoring the 
-	current will require more than repairing machinery: you must discover how the 
-	Grid moves within you, meet each person upon their own path, and help many 
-	different lives share one world.</i></p>
+<div id="opening-story"></div>
+<div class="story-actions"><a href="play.html?new=1">Begin anew</a><a href="#story-walkthrough">Main story outline</a></div>
 </section>
 <section id="project" aria-label="About the project">
 	<h2 aria-labelledby="map-title">Project Development</h2>
 	<li>Web port and peaceful quests by 
 		<a href="https://lewcid.com/lg/aboutme.html">Lewey Geselowitz</a></li>
-	<li>Original game and procedural environments (<a href="https://jcrpg.blogspot.com/">homepage</a>) by <a href="https://www.blogger.com/profile/15941878855697739731">P-Z-I</a> and Co.</li>
+	<li>Original jClassicRPG game and procedural environments (<a href="https://jcrpg.blogspot.com/">homepage</a>) by <a href="https://www.blogger.com/profile/15941878855697739731">P-Z-I</a> and Co.</li>
 	<li>Current character models from <a href="https://kaylousberg.com/game-assets/characters-adventurers">Kay Loundslay's Adventuers Character Pack</a>.</li>
 <p>
 	
@@ -323,7 +314,7 @@
 <noscript><p>Enable JavaScript to use the interactive map.</p></noscript>
 </section>
 <section class="story-walkthrough" id="story-walkthrough" aria-labelledby="walkthrough-title">
-<h2 id="walkthrough-title">Main Story</h2>
+<h2 id="walkthrough-title">Main story outline</h2>
 <div id="story-content" aria-live="polite">Loading main story…</div>
 <noscript><p>Enable JavaScript to browse the main story, or <a href="play.html">play the game</a>.</p></noscript>
 </section>
@@ -359,7 +350,7 @@
 	<details class="system-card" id="quests">
 		<summary>Quests &amp; story</summary>
 		<p>No authored quest list, objectives or quest journal were found in the bundled scenario. Its event list contains one introduction with two story blocks: a welcome to open-ended exploration and a keyboard/mouse tutorial for the original Java game.</p>
-		<p class="content-status">Port status: the original introduction can be read here. The web port has an authored main story; chapters four and five are planned.</p>
+		<p class="content-status">Port status: the original introduction can be read here. The web port has five playable main-story quests.</p>
 		<div id="story-blocks"></div>
 		<p>Listed in <a href="scenario/jclassicrpg/events.xml">events.xml</a> and <a href="scenario/jclassicrpg/story/intro.xml">story/intro.xml</a>. Original playback: <a href="jCRPG-engine/src/main/java/org/jcrpg/game/scenario/Events.java">Events.java</a>; scenario flags: <a href="jCRPG-engine/src/main/java/org/jcrpg/game/scenario/ScenarioState.java">ScenarioState.java</a>.</p>
 	</details>
@@ -377,6 +368,8 @@
 	</div>
 </details>
 </main>
+<footer><p id="slice-summary">This game is currently a vertical slice: 5 story quests, 62 side quests, and 279 total characters (276 world characters and 3 party members), plus 1 mini quest.</p></footer>
+<script type="module" src="jCRPG-engine/js/homepage_story.js"></script>
 <script type="module" src="jCRPG-engine/js/content_catalog.js"></script>
 <script type="module" src="jCRPG-engine/js/summary_page.js"></script>
 <script type="module" src="jCRPG-engine/js/story_walkthrough.js"></script>
