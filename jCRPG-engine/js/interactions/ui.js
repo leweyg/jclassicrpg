@@ -362,7 +362,9 @@ export class InteractionUI {
         this.open(story.title, 'story');
         for (const paragraph of story.paragraphs) this.text('p', paragraph);
         this.button('Begin the journey', () => this.close(), {primary:true});
-        this.focus();
+        // Long opening prose must begin at its first paragraph, even on a phone.
+        this.closeButton.focus({preventScroll:true});
+        this.dialog.scrollTop = 0;
     }
 
     openJournal() {

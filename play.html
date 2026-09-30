@@ -126,13 +126,17 @@
 	}
 	#world-map-dialog[open] { display: flex; flex-direction: column; gap: 0.7rem; }
 	#world-map-dialog::backdrop { background: #000b; }
-	#map-place-dialog { box-sizing: border-box; width: min(430px, calc(100vw - 48px)); max-height: 75dvh; overflow: auto; padding: 1rem; background: #17201f; color: #eee5cd; border: 1px solid #b39050; border-radius: 9px; }
-	#map-place-dialog::backdrop { background: #0005; }
-	#map-place-dialog header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
-	#map-place-title { margin: 0; font-size: 1.1rem; }
-	#map-place-detail { white-space: pre-line; line-height: 1.5; }
-	.map-place-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-	#map-place-dialog button { min-height: 48px; padding: 0.6rem 1rem; font: inherit; color: inherit; background: #29372b; border: 1px solid #b39050; border-radius: 6px; cursor: pointer; touch-action: manipulation; }
+    #map-place-details { margin-top: 1rem; padding: 1rem; background: #202d29; border: 1px solid #b39050; border-radius: 9px; scroll-margin: 0.75rem; }
+    #map-place-title { margin: 0; font-size: 1.1rem; }
+    #map-place-detail { white-space: pre-line; line-height: 1.5; }
+    .map-place-actions { display: flex; gap: 0.5rem; }
+    #map-place-details button, #map-journal button { min-height: 48px; padding: 0.6rem 1rem; font: inherit; color: inherit; background: #29372b; border: 1px solid #b39050; border-radius: 6px; cursor: pointer; touch-action: manipulation; }
+    #map-place-status { font-size: 0.85rem; }
+    #map-journal { margin-top: 1rem; }
+    #map-journal h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+    #map-journal-entries { display: grid; gap: 0.5rem; }
+    #map-journal button { text-align: left; font-size: 0.85rem; }
+    #map-journal button span { display: block; margin-top: 0.3rem; color: #c5cbbd; }
 	.map-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 	.map-heading h2 { margin: 0; font-size: 1.25rem; }
 	#map-close { padding: 0.6rem 1rem; color: inherit; background: #343c35; border: 1px solid #967545; border-radius: 5px; cursor: pointer; }
@@ -146,7 +150,6 @@
 	.map-visual { min-width: 0; overflow: auto; }
 	.map-frame { max-width: min(100%, calc(100dvh - 245px)); margin: auto; }
 	#world-map-canvas { display: block; width: 100%; aspect-ratio: 1; cursor: grab; touch-action: none; border: 1px solid #71816b; box-sizing: border-box; }
-	#map-detail { margin: 0.5rem 0; font-size: 0.8rem; line-height: 1.4; min-height: 2.8em; }
 	.map-sidebar { display: flex; flex-direction: column; min-height: 0; gap: 0.5rem; }
 	#map-search { box-sizing: border-box; width: 100%; padding: 0.65rem; background: #0f1717; color: #eee5cd; border: 1px solid #71816b; font: inherit; border-radius: 4px; }
 	#map-location-count { font-size: 0.75rem; }
@@ -347,20 +350,19 @@ body:has(#interaction-panel[data-kind="dialogue"][open]) .hud { visibility:hidde
         <div id="map-filters" role="group" aria-label="Visible marker types"></div>
 		<p class="map-notes">Dashed markers are unimplemented locations with surface teleport destinations.</p>
 	</details>
-	<p class="map-notes">Start, Wammigmig and Awshowam are always known. Explore, accept missions, and read dialogue to reveal more places. The minimap follows your camera; N points north. Pinch or scroll to zoom this map; drag to pan.</p>
-	<p id="map-mission-note" class="map-notes"></p>
 	<div class="map-layout">
-		<div class="map-visual"><div class="map-frame"><canvas id="world-map-canvas" width="800" height="800" role="img" aria-label="Saved world terrain and locations. Use the location list to view details with a keyboard."></canvas></div><p id="map-detail">Select a marker for details and travel, or tap the map background to close.</p></div>
+		<div class="map-visual"><div class="map-frame"><canvas id="world-map-canvas" width="800" height="800" role="img" aria-label="Saved world terrain and locations. Use the location list to view details with a keyboard."></canvas></div>
+            <section id="map-place-details" aria-labelledby="map-place-title" hidden>
+                <h3 id="map-place-title" tabindex="-1"></h3>
+                <p id="map-place-detail"></p>
+                <div class="map-place-actions"><button id="map-place-travel" type="button">Travel</button><button id="map-place-nav" type="button">Waypoint</button></div>
+                <p id="map-place-status" role="status"></p>
+            </section>
+            <section id="map-journal" aria-labelledby="map-journal-title"><h3 id="map-journal-title">Journal</h3><div id="map-journal-entries"></div></section>
+        </div>
 		<div class="map-sidebar"><label for="map-search">Find a location</label><input id="map-search" type="search" placeholder="Name, type or coordinates" autocomplete="off"><div id="map-location-count"></div><div id="map-locations" aria-label="Map locations"></div></div>
 	</div>
-	<dialog id="map-place-dialog" aria-labelledby="map-place-title" aria-describedby="map-place-detail">
-		<header><h2 id="map-place-title"></h2><button id="map-place-close" type="button" autofocus>Close</button></header>
-		<p id="map-place-detail"></p>
-		<div class="map-place-actions">
-			<button id="map-place-travel" type="button">Travel here</button>
-			<button id="map-place-nav" type="button">Set as nav goal</button>
-		</div>
-	</dialog>
+
 </dialog>
 
 <!-- Frozen saved-world exploration; terrain and shared model assets stream through a fixed pool. -->

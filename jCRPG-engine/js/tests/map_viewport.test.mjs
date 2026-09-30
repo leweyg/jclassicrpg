@@ -23,7 +23,7 @@ test('zoom limits, cursor anchor, pan bounds and reopening reset',()=>{
  v.pan(100,-100);near(v.x,1600-v.span/2);near(v.z,v.span/2);
  v.zoomAt(1e-10);near(v.zoom,.5);near(v.project(0,1600).x,.75);near(v.project(1600,0).x,.25);
  v.reset();near(v.zoom,1);near(v.x,800);near(v.z,800);
- let resets=0;const map={dialog:{open:false,showModal(){this.open=true;}},renderer:{setInputEnabled(){}},viewport:v,mapGestures:{reset(){resets++;}},detail:{},update(){},_renderList(){}};
+ let resets=0;const map={dialog:{open:false,showModal(){this.open=true;}},renderer:{setInputEnabled(){}},viewport:v,mapGestures:{reset(){resets++;}},placeDetails:{},update(){},_renderList(){},_renderJournal(){}};
  v.zoomAt(3);WorldMap.prototype.open.call(map);near(v.zoom,1);assert.equal(resets,1);
 });
 function gestures(){

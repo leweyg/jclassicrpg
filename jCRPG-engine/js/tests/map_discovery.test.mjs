@@ -69,8 +69,9 @@ test('compiled mission and dialogue locations reveal through the real map and su
  const root=new URL('../../worlds/seed0/v2/',import.meta.url),read=f=>JSON.parse(fs.readFileSync(new URL(f,root)));
  const manifest=read('interactions/manifest.json'),content=Object.fromEntries(Object.entries(manifest.catalogs).map(([key,desc])=>[key,read(desc.url)]));
  const worldData=JSON.parse(fs.readFileSync(new URL('../../json/frozen_world.json',import.meta.url)));
- const oldDocument=globalThis.document,oldWindow=globalThis.window;
- const element=()=>({style:{},listeners:{},setAttribute(name,value){this[name]=value;},addEventListener(name,fn){this.listeners[name]=fn;},showModal(){this.open=true;},close(){this.open=false;},focus(){},append(){},querySelector:()=>element(),width:256});
+ const oldDocument=globalThis.document,oldWindow=globalThis.window,oldMatchMedia=globalThis.matchMedia;
+ globalThis.matchMedia=()=>({matches:true});
+ const element=()=>({style:{},listeners:{},setAttribute(name,value){this[name]=value;},addEventListener(name,fn){this.listeners[name]=fn;},showModal(){this.open=true;},close(){this.open=false;},focus(){},children:[],append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;},scrollIntoView(){this.scrolled=true;},querySelector:()=>element(),width:256});
  const elements=new Map();globalThis.document={createElement:element,getElementById:id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);}};globalThis.window={addEventListener(){}};
  class QuietMap extends WorldMap{_buildAtlas(){} _drawMini(){} _drawFull(){} _renderList(){}}
  try{
@@ -83,7 +84,6 @@ test('compiled mission and dialogue locations reveal through the real map and su
   const mission=content.missions.find(m=>m.id==='mission:wammigmig:fair-share');
   engine.transact([{op:'accept',id:mission.id}]);map.update();
   assert.match(elements.get('hud-minimap')['aria-label'],/Navigation goal:/);
-  assert.match(elements.get('map-mission-note').textContent,/Navigation:/);
   const targets=engine.markers();assert.ok(targets.length>1);for(const target of targets)assert.ok(map.markers.some(m=>m.id===target.id&&map._visible(m)),target.id);
   // The map does not need the active objective flag after the destination is learned.
   for(const target of targets)assert.equal(knownLocation({...target,objective:false},save.data),true);
@@ -95,15 +95,21 @@ test('compiled mission and dialogue locations reveal through the real map and su
   save.import(exported);map.update();assert.equal(map._visible(hiddenTown),true);
   let traveled=null;map._teleport=marker=>{traveled=marker;map.close();};
   map.showQuestGoal(engine.navigationGoal(),mission);
-  assert.equal(map.popup.open,true);assert.equal(map.dialog.open,true);assert.equal(traveled,null);
+  assert.equal(map.placeDetails.hidden,false);assert.equal(map.dialog.open,true);assert.equal(traveled,null);
   assert.match(elements.get('map-place-detail').textContent,/Fair Share/i);
-  elements.get('map-place-close').listeners.click();assert.equal(map.popup.open,false);assert.equal(map.dialog.open,true);
+  assert.equal(map.placeDetails.scrolled,true);
+  map.showQuestGoal(engine.navigationGoal(),{id:mission.id,title:mission.title});
+  assert.doesNotMatch(elements.get('map-place-detail').textContent,/undefined/);
+  const entries=elements.get('map-journal-entries').children;assert.equal(entries.length,2);
+  assert.match(entries[0].textContent,/Current mission: A Fair Share/);assert.match(entries[1].textContent,/Main story: The road remembers/);
+  const selected=save.data.navMissionId;entries[1].listeners.click();
+  assert.equal(map.selectedMarker.missionId,'mission:concordance:road');assert.equal(map.viewport.zoom,4);assert.equal(save.data.navMissionId,selected,'focusing does not change the waypoint');
   map.showPlace(town);assert.equal(traveled,null);
   elements.get('map-place-nav').listeners.click();
   assert.equal(engine.navigationGoal().id,town.id);assert.equal(save.data.navMissionId,null);
-  assert.equal(map.popup.open,false);assert.equal(map.dialog.open,true);assert.equal(traveled,null);
+  assert.equal(map.placeDetails.hidden,false);assert.equal(map.dialog.open,true);assert.equal(traveled,null);
   const savedGoal=engine.navigationGoal();save.import(save.export());assert.deepEqual(engine.navigationGoal(),savedGoal);
   map.showPlace(town);
   elements.get('map-place-travel').listeners.click();assert.equal(traveled.id,town.id);assert.equal(map.dialog.open,false);
- }finally{globalThis.document=oldDocument;globalThis.window=oldWindow;}
+ }finally{globalThis.document=oldDocument;globalThis.window=oldWindow;globalThis.matchMedia=oldMatchMedia;}
 });

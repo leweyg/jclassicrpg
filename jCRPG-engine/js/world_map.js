@@ -6,7 +6,7 @@ import { buildMapMarkers, MARKER_STYLES, MINIMAP_RADIUS, VISIBLE_RADIUS, wrapped
 import {knownLocation,rememberLocations,discoverVisited,cameraMapOffset} from './map_discovery.js';
 
 import {MapViewport,bindMapGestures} from './map_viewport.js';
-import {mapGoalPosition} from './interactions/navigation.js';
+import {mapGoalPosition, mapJournalEntries} from './interactions/navigation.js';
 import {MINIMAP_ZOOM_DEFAULTS,goalMapRadius,easeMapRadius} from './minimap_zoom.js';
 import {navigationWaypoint} from './interactions/cave_navigation.js';
 
@@ -46,10 +46,7 @@ export class WorldMap {
 		this.mapGestures=bindMapGestures(this.full,this.viewport,()=>this._drawFull());
 		this.dialog = document.getElementById('world-map-dialog');
 		this.list = document.getElementById('map-locations');
-		this.detail = document.getElementById('map-detail');
-		this.popup = document.getElementById('map-place-dialog');
-		document.getElementById('map-place-close').addEventListener('click',()=>this.popup.close());
-		this.popup.addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation();this.popup.close();});
+        this.placeDetails = document.getElementById('map-place-details');
 		document.getElementById('map-place-travel').addEventListener('click',()=>{if(this.selectedMarker)this._teleport(this.selectedMarker);});
 		document.getElementById('map-place-nav').addEventListener('click',()=>this.setSelectedNavigation());
 		this._lastX = NaN; this._lastZ = NaN; this._lastYaw = NaN;
@@ -85,10 +82,6 @@ export class WorldMap {
 			const marker = this._hit(event);
 			if (marker) this.showPlace(marker);
 			else this.close();
-		});
-		this.full.addEventListener('pointermove', event => {
-			const marker = this._hit(event);
-			this.detail.textContent = marker ? this._label(marker) : 'Select a marker for details and travel, or tap the map background to close.';
 		});
 		this.list.addEventListener('click', event => {
 			const button = event.target.closest('button[data-marker]');
@@ -141,23 +134,22 @@ export class WorldMap {
 			text.textContent = `${style.symbol} ${style.label}`; text.style.color = style.color;
 			label.append(input, text); filters.append(label);
 		}
-		if (!this.markers.some(m => m.kind === 'mission' || m.kind === 'puzzle')) {
-			document.getElementById('map-mission-note').textContent = 'Accept a mission to reveal its objectives. Shrine routes reveal the next relay as you awaken the network.';
-		}
+
 	}
 
 	open() {
 		if (this.dialog.open) return;
 		this.renderer.setInputEnabled(false);
 		this.viewport.reset();this.mapGestures.reset();
-		this.detail.textContent = 'Select a marker for details and travel, or tap the map background to close.';
+        this.placeDetails.hidden = true;
+        this.selectedMarker = null;
 		this.dialog.showModal();
-		this.update(true); this._renderList();
+		this.update(true); this._renderList(); this._renderJournal();
 	}
 
 	close() {
 		if (!this.dialog.open) return;
-		if(this.popup.open)this.popup.close();
+
 		this.dialog.close();
 		this.renderer.setInputEnabled(true);
 		this.renderer.requestRender();
@@ -165,10 +157,13 @@ export class WorldMap {
 
 	showPlace(marker) {
 		this.selectedMarker=marker;
+        this._drawFull();
 		document.getElementById('map-place-title').textContent=marker.name;
 		document.getElementById('map-place-detail').textContent=[this._label(marker),marker.description,marker.realm==='cave'?'Underground destination.':null].filter(Boolean).join('\n\n');
-		if(!this.popup.open)this.popup.showModal();
-		document.getElementById('map-place-close').focus();
+        this.placeDetails.hidden = false;
+        document.getElementById('map-place-status').textContent = '';
+        document.getElementById('map-place-title').focus({preventScroll:true});
+        this.placeDetails.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 	}
 
 	setSelectedNavigation(){
@@ -178,16 +173,17 @@ export class WorldMap {
 		if(missionId&&['available','active','ready-to-turn-in'].includes(engine.missionState(missionId)))engine.setNavigationGoal(missionId);
 		else engine.setNavigationLocation(marker);
 		this.state.saveDeltas.persist(this.state.party.position,this.state.realm);
-		this.popup.close();this.update(true);this.renderer.requestRender();
+        document.getElementById('map-place-status').textContent = 'Waypoint set: '+marker.name;
+        this.update(true);this.renderer.requestRender();
 	}
 
 	showQuestGoal(goal,mission) {
 		if(!goal)return;
 		this.open();
-		this.viewport.zoom=Math.min(4,this.viewport.maxZoom);
+		this.viewport.zoom=Math.min(Math.max(4,this.viewport.zoom),this.viewport.maxZoom);
 		this.viewport.x=goal.position[0];this.viewport.z=goal.position[2];this.viewport.constrain();
 		this._drawFull();
-		this.showPlace({id:goal.id,missionId:mission.id,name:goal.name,kind:'mission',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true,description:mission.title+'\n'+mission.summary});
+		this.showPlace({id:goal.id,missionId:mission.id,name:goal.name,kind:'mission',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true,description:[mission.title,mission.summary].filter(Boolean).join('\n')});
 	}
 
 	_teleport(marker) {
@@ -195,6 +191,22 @@ export class WorldMap {
 		if(marker.realm==='cave')this.state.teleport(marker.x,marker.z,marker.y,'cave').then(()=>{this.renderer._syncCamera();this.renderer.requestRender();}).catch(error=>this.renderer.onStatus?.(error.message));else this.renderer.teleportTo(marker.x, marker.z);
 		this.update(true);
 	}
+
+    _renderJournal() {
+        const root = document.getElementById('map-journal-entries');
+        const entries = mapJournalEntries(this.state.interactions);
+        root.replaceChildren();
+        for (const {mission, goal, label} of entries) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = label + ': ' + mission.title;
+            const next = document.createElement('span'); next.textContent = goal.name;
+            button.append(next);
+            button.addEventListener('click', () => this.showQuestGoal(goal, mission));
+            root.append(button);
+        }
+        if (!entries.length) root.textContent = 'No active mission. Speak to people nearby to find another quest.';
+    }
 
 	_renderList() {
 		const fragment = document.createDocumentFragment();
@@ -288,6 +300,10 @@ export class WorldMap {
 			const at=view.project(marker.x,marker.z);
 			if(at.x>=0&&at.x<=1&&at.y>=0&&at.y<=1)this._marker(ctx,marker,at.x*size,at.y*size,7);
 		}
+        if(this.selectedMarker){
+            const selected=view.project(this.selectedMarker.x,this.selectedMarker.z);
+            ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(selected.x*size,selected.y*size,14,0,Math.PI*2);ctx.stroke();
+        }
 		const at=view.project(p.x,p.z);
 		if(at.x>=0&&at.x<=1&&at.y>=0&&at.y<=1)this._player(ctx,at.x*size,at.y*size,10);
 		const goal=navigationWaypoint(this.state);
@@ -319,7 +335,6 @@ export class WorldMap {
         }
         const nav=navigationWaypoint(this.state);
         document.getElementById('hud-minimap').setAttribute('aria-label',nav?'Open world map. Navigation goal: '+nav.name:'Open world map');
-        document.getElementById('map-mission-note').textContent=nav?'◆ Navigation: '+nav.name+' · '+nav.realm+'. Gold arrows point toward offscreen goals.':'Select a quest in the journal to set a navigation goal.';
         const maze=mazeNavigation(this.state,this.state.interactions?.navigationGoal() ?? null);
         const exits=(maze?.exits ?? []).map(m=>({...m,x:m.position[0],y:m.position[1],z:m.position[2],implemented:true}));
         const navKey=JSON.stringify([this.state.realm,nav?.id,nav?.position,exits.map(m=>m.id)]);
@@ -333,7 +348,7 @@ export class WorldMap {
             const objectives=(this.state.interactions?.markers()??[]).map(m=>({...m,objective:true}));
             if(save&&rememberLocations(save,objectives.flatMap(m=>[m.id,m.id.replace(/^route:/,'')]))){save.persist(this.state.party.position,this.state.realm);this._interactionRevision=save.data.deltaRevision;}
             this.markers=[...new Map([...this.baseMarkers,...objectives,...exits].map(m=>[m.id,m])).values()];
-            if(this.dialog.open)this._renderList();
+            if(this.dialog.open){this._renderList();this._renderJournal();}
         }
         const settings=this.minimapZoom??MINIMAP_ZOOM_DEFAULTS;
         const target=goalMapRadius(this.state.party.position,nav,this.state.realm??'surface',this.world.sizeX,this.world.sizeZ,settings);

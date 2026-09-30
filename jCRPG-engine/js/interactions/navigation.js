@@ -59,3 +59,15 @@ export function mapGoalPosition(x,y,size,padding=20){
  const factor=Math.min(1,(half-padding)/Math.max(Math.abs(dx),Math.abs(dy),1));
  return {x:half+dx*factor,y:half+dy*factor,edge:factor<1,angle:Math.atan2(dy,dx)};
 }
+
+/** Compact map journal: the tracked quest and the next unfinished story chapter. */
+export function mapJournalEntries(engine) {
+ if (!engine) return [];
+ const mainId = engine.currentStoryChapter()?.missionId;
+ const currentId = engine.save.data.navMissionId;
+ const ids = [...new Set([currentId, mainId].filter(Boolean))];
+ return ids.flatMap(id => {
+  const mission = engine.maps.missions[id], goal = questGoal(engine,id);
+  return mission && goal ? [{mission,goal,label:id===currentId||!currentId?'Current mission':'Main story'}] : [];
+ });
+}

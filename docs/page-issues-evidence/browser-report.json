@@ -1,0 +1,22 @@
+{
+  "Homepage attribution and story links": true,
+  "Catalog-backed slice counts": true,
+  "Mobile homepage toolbar below map without overflow": true,
+  "New game offers Read Story and omits profession": true,
+  "Read Story opens shared paragraphs": true,
+  "Read Story dismissal survives reload": true,
+  "Nearby actor replaces story offer with their name": true,
+  "Map has compact journal and no descriptive overlays": true,
+  "Clicking map marker opens inline details": true,
+  "Tracked side quest and next story quest shown separately": true,
+  "Mission details support the lightweight catalog": true,
+  "Mission focus zooms without changing the waypoint": true,
+  "Travel and Waypoint visible in one row: phone": true,
+  "Travel and Waypoint visible in one row: landscape": true,
+  "Travel and Waypoint visible in one row: desktop": true,
+  "Waypoint button updates tracked mission": true,
+  "Travel button moves to the selected destination": true,
+  "Large map east-right and north-up match compass": true,
+  "No failed scene assets": true,
+  "No browser runtime exceptions": true
+}
