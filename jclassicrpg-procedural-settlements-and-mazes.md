@@ -1,4 +1,4 @@
-# jClassicRPG procedural settlements, buildings, mazes, and caves
+# The Spiral Grid RPG — procedural settlements, buildings, mazes, and caves
 
 Implementation notes for re-creating the Java systems in a web runtime while retaining deterministic compatibility with the bundled seed-0 save.
 

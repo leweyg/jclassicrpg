@@ -1,5 +1,6 @@
-# jclassicrpg
-very much in progress port of jClassicRPG (version jCRPG-engine-fix20100607 )
+# The Spiral Grid - a Fantasy Role Playing Game
+
+A work-in-progress browser RPG based on jClassicRPG (version `jCRPG-engine-fix20100607`).
 
 Play at: https://leweyg.github.io/jclassicrpg/play.html
 
