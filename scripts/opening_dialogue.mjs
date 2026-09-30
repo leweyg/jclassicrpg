@@ -10,16 +10,16 @@ export function authorOpeningDialogue(content) {
     const leave = {text: 'Until next time.'};
     const back = {text: 'Back', next: 'greeting'};
     const actor = name => content.actors.find(actor => actor.name === name);
-    const definition = name => content.dialogues.find(d => d.id === actor(name).dialogueId);
+    const definition = name => { const d=content.dialogues.find(d => d.id === actor(name).dialogueId); d.authoredStates=false; return d; };
 
     const marn = definition('Marn Even-Tally');
-    const originalChoices = marn.nodes.greeting.choices;
+    const originalChoices = marn.nodes['local-work']?.choices ?? marn.nodes.greeting.choices;
     const accept = originalChoices.find(c => c.actions?.some(a => a.op === 'accept' && a.id === mission));
     const report = originalChoices.find(c => c.actions?.some(a => a.op === 'turnIn' && a.id === mission));
     const commitments = originalChoices.filter(c => c.actions?.some(a => a.op === 'commitment'));
     const choices = [
-        {...accept, actions: [...accept.actions, {op:'flag', id:met, value:true}], next:'accepted'},
-        {...report, next:'handoff'},
+        {...accept, text:'Accept: A Fair Share of Light', actions: [...accept.actions, {op:'flag', id:met, value:true}], next:'accepted'},
+        {...report, text:'Report: A Fair Share of Light', next:'handoff'},
         ...commitments.map(choice => ({
             ...choice,
             when: {all: [choice.when, {not: state('completed')}]},

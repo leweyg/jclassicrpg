@@ -30,7 +30,7 @@ async function loadMap() {
     const actor = actorById.get(mission.giverActorId || mission.turnInActorId);
     if (actor) add('mission', mission.title, actor.position, { realm: actor.realm, note: `Speak to ${actor.name}` });
   }
-  for (const puzzle of puzzles) if (puzzle.position) add('puzzle', `${townNames.get(puzzle.townId) || 'World'} · Circuit`, puzzle.position, { realm: puzzle.realm });
+  for (const puzzle of puzzles) if (puzzle.position && !puzzle.unlockWhen?.completedMissionIds?.length) add('puzzle', `${townNames.get(puzzle.townId) || 'World'} · Circuit`, puzzle.position, { realm: puzzle.realm });
   for (const [destination, stop] of Object.entries(PLAY_DESTINATIONS)) add(destination === 'start' ? 'start' : 'main-story', stop.name, stop.position, { destination });
   for (const marker of markers) {
     marker.destination ??= Object.keys(PLAY_DESTINATIONS).find(key => PLAY_DESTINATIONS[key].settlementId === marker.id && marker.id);

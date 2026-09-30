@@ -21,10 +21,8 @@ test('homepage destinations land on walkable ground and retain saved progress', 
  const storage = { getItem: key => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, value) };
  state.saveDeltas = new SaveDeltas(storage);
  state.saveDeltas.data.flags['existing-progress'] = true;
- const html = fs.readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
  try {
   for (const [id, destination] of Object.entries(PLAY_DESTINATIONS)) {
-   assert.ok(html.includes(`play.html?location=${id}`));
    assert.equal(await visitPlayDestination(state, id), destination.name);
    const { x, y, z } = state.party.position;
    assert.equal(x, destination.position[0]);

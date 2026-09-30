@@ -33,14 +33,15 @@ export class InteractionRuntime {
  }
  }
  migratePuzzles(s){
- if(!s.flags['saima-dialogue-v2']){for(let i=0;i<4;i++){const id='actor:antipion:witness:'+i;if(s.actors[id]?.talked)s.flags['witness-heard:'+id]=true;}s.flags['saima-dialogue-v2']=true;}
+ const legacySaima=!s.flags['saima-dialogue-v2'];
+ if(legacySaima){for(let i=0;i<4;i++){const id='actor:antipion:witness:'+i;if(s.actors[id]?.talked)s.flags['witness-heard:'+id]=true;}s.flags['saima-dialogue-v2']=true;}
  for(const p of this.content.puzzles){const old=s.puzzles[p.id];if(!p.stateVersion||!old||old.version===p.stateVersion)continue;
   // Historical repairs and rewards survive; only unfinished incompatible controls reset.
   s.puzzles[p.id]=initialPuzzle(p);
   if(old.completed){Object.assign(s.puzzles[p.id],{completed:true,values:[...p.demands],observed:[...p.componentIds],cursor:p.mechanic==='sequence'?p.sequence.length:0});s.flags['historical-repair:'+p.id]=true;}
  }
  const fitting=this.maps.fittings['fitting:antipion:wisdom:listener'];
- if(fitting&&s.puzzles['puzzle:antipion:regional:3']?.completed)s.flags[fitting.id]=true;
+ if(legacySaima&&fitting&&s.puzzles['puzzle:antipion:regional:3']?.completed)s.flags[fitting.id]=true;
  }
  currentStoryChapter(s=this.save.data){const story=this.content.stories?.[0];return story?.chapters.find(c=>c.missionId&&s.missions[c.missionId]?.state!=='completed')??null;}
  mainNavigationGoal(){return questGoal(this,this.currentStoryChapter()?.missionId);}

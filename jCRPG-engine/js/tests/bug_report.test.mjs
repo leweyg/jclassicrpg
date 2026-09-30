@@ -12,17 +12,21 @@ const content=Object.fromEntries(Object.entries(read('interactions/manifest.json
 const create=()=>new InteractionRuntime(structuredClone(content),new SaveDeltas());
 const finish=e=>{while(e.dialogue().canAdvance)e.advanceDialogue();return e.dialogue();};
 
-test('acceptance acknowledges the mission; returning reviews it directly and selects its waypoint',()=>{
+test('local work acknowledges acceptance and changes a deliberate waypoint only on request',()=>{
  const e=create(),actor='actor:wammigmig:orro',mission='mission:orro:relay';
  e.interact({kind:'actor',targetId:actor});
+ e.choose(finish(e).choices.findIndex(c=>c.next==='local-work'));
  e.choose(finish(e).choices.findIndex(c=>c.actions?.some(a=>a.op==='accept'&&a.id===mission)));
- assert.ok(finish(e).choices.some(c=>c.text==='Got it.'));
- e.choose(e.dialogue().choices.findIndex(c=>c.text==='Got it.'));assert.equal(e.panel,null);
+ assert.match(finish(e).text,/relay/);
+ e.choose(e.dialogue().choices.findIndex(c=>c.text==='Until next time.'));assert.equal(e.panel,null);
  e.save.data.navMissionId=null;e.save.data.navLocation={id:'other',position:[0,40,0],name:'Other',realm:'surface'};
  e.interact({kind:'actor',targetId:actor});
+ assert.equal(e.save.data.navMissionId,null);assert.equal(e.save.data.navLocation.id,'other');
+ e.choose(finish(e).choices.findIndex(c=>c.next==='local-work'));
+ e.choose(finish(e).choices.findIndex(c=>c.next==='hint:'+mission));
+ assert.match(e.dialogue().text,/relay/);
+ e.choose(finish(e).choices.findIndex(c=>c.trackMissionId===mission));
  assert.equal(e.save.data.navMissionId,mission);assert.equal(e.save.data.navLocation,null);
- assert.match(e.dialogue().text,/Check the small relay/);
- assert.ok(!finish(e).choices.some(c=>c.text.startsWith('Review:')));
  assert.equal(e.navigationGoal().targetId,'evidence:orro:relay');
 });
 

@@ -55,3 +55,18 @@ test('legacy completed repairs survive shape migration without replaying rewards
  assert.deepEqual(migrated.save.data.settlements,old.settlements);
  assert.equal(migrated.save.data.puzzles[finalId],undefined);
 });
+test('the optional wisdom circuit cannot replace the listener fitting in a new save',()=>{
+ const e=create(),p=e.maps.puzzles['puzzle:antipion:regional:3'];
+ for(const input of solvePuzzle(p).inputs)e.transact([{op:'puzzle',id:p.id,input}]);
+ const copy=new SaveDeltas();copy.import(e.save.export());const resumed=new InteractionRuntime(content,copy);
+ assert.equal(resumed.save.data.flags['fitting:antipion:wisdom:listener'],undefined);
+ const old=JSON.parse(e.save.export());delete old.flags['saima-dialogue-v2'];copy.import(JSON.stringify(old));
+ const migrated=new InteractionRuntime(content,copy);assert.equal(migrated.save.data.flags['fitting:antipion:wisdom:listener'],true);
+});
+
+test('puzzle validation rejects unknown gates, unavailable references and impossible subsets',async()=>{
+ const {validateContent}=await import('../interactions/format.js');
+ for(const mutate of [p=>p.target=1,p=>p.unlockWhen={completedMissionIds:['missing']},p=>p.unlockWhen={typo:[]},p=>p.componentIds.push('extra')]){
+  const c=structuredClone(content);mutate(c.puzzles.find(p=>p.mechanic==='subset'));assert.throws(()=>validateContent(c));
+ }
+});

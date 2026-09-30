@@ -1,3 +1,4 @@
+import {puzzleAvailability} from './interactions/puzzles.js';
 import {Compass} from './compass.js';
 import {mazeNavigation} from './interactions/maze_navigation.js';
 import { buildMapMarkers, MARKER_STYLES, MINIMAP_RADIUS, VISIBLE_RADIUS, wrappedDelta } from './map_model.js';
@@ -30,7 +31,7 @@ export class WorldMap {
             for(const mission of content.missions){
                 const actor=gameState.interactions.maps.actors[mission.turnInActorId];
                 extra.set(mission.id,{id:mission.id,name:mission.title,kind:'mission',x:actor.position[0],y:actor.position[1],z:actor.position[2],realm:actor.realm,implemented:true,revealOnly:true});
-                for(const objective of mission.objectives)for(const goal of content.goals.filter(g=>objective.targetIds.includes(g.targetId)))extra.set(goal.id,{id:goal.id,name:objective.text,kind:'puzzle',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true,revealOnly:true});
+                for(const objective of mission.objectives)for(const goal of content.goals.filter(g=>objective.targetIds.includes(g.targetId)))extra.set(goal.id,{id:goal.id,name:objective.text,puzzleId:objective.kind==='puzzle'?goal.targetId:undefined,kind:'puzzle',x:goal.position[0],y:goal.position[1],z:goal.position[2],realm:goal.realm,implemented:true,revealOnly:true});
             }
             this.baseMarkers.push(...extra.values());
         }
@@ -103,6 +104,8 @@ export class WorldMap {
 	_kind(marker) { return MARKER_STYLES[marker.kind] ? marker.kind : 'other'; }
 	_visible(marker) {
 		if (marker.localExit) return true;
+        const puzzle=this.state.interactions?.maps.puzzles[marker.puzzleId];
+        if(puzzle&&!puzzleAvailability(puzzle,this.state.saveDeltas.data).available)return false;
 		return knownLocation(marker,this.state.saveDeltas?.data,this.showAll) && this.enabled.has(this._kind(marker)) && (!this.query ||
 			`${marker.name} ${marker.kind} ${Math.floor(marker.x)} ${Math.floor(marker.z)}`.toLowerCase().includes(this.query));
 	}

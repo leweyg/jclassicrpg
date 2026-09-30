@@ -218,6 +218,40 @@
           },
           "capacity": {
             "type": "number"
+          },
+          "mechanic": {
+            "type": "string",
+            "pattern": "^(all|subset|sequence)$"
+          },
+          "target": {
+            "type": "number"
+          },
+          "unlockWhen": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "completedMissionIds": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "talkedActorIds": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "evidenceIds": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

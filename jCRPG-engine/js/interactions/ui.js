@@ -420,6 +420,7 @@ export class InteractionUI {
 
         this.text('small', (mission.kind ?? 'side') + ' · ' + mission.state.replaceAll('-', ' '));
         this.text('p', mission.summary);
+        if(mission.regionalMissionIds){const count=mission.regionalMissionIds.filter(id=>engine.missionState(id)==='completed').length;this.text('p',`${count}/${mission.regionalMissionIds.length} regional reports submitted`);}
         for (const objective of mission.progress) {
             this.text(
                 'p',

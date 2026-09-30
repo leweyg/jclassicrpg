@@ -1,3 +1,4 @@
+import {solvePuzzle} from './puzzles.js';
 import {validateDialogue} from './dialogue.js';
 /** Data-only interaction contract, shared by compiler, solvers and browser. */
 export const INTERACTION_VERSION = 'interactions-v2';
@@ -34,6 +35,21 @@ export function validateContent(c) {
   if(seen.size!==story.chapterIds.length||seen.size!==story.chapters.length||story.chapterIds.some(id=>!seen.has(id)))throw Error('Unreachable story chapter');
  }
  const visiting=new Set(),done=new Set();function visit(id){if(visiting.has(id))throw Error('Mission dependency cycle');if(done.has(id))return;visiting.add(id);for(const dep of maps.missions[id].requires??[])visit(dep);visiting.delete(id);done.add(id);}for(const m of c.missions)visit(m.id);
+ for(const p of c.puzzles){
+  const count=p.componentIds?.length;
+  if(!count||count>8||new Set(p.componentIds).size!==count||p.labels?.length!==count||p.demands?.length!==count||p.labels.some(l=>typeof l!=='string'||!l.trim()))throw Error('Invalid puzzle components: '+p.id);
+  if(!['rational','resonance','balanced'].includes(p.family)||!['all','subset','sequence',undefined].includes(p.mechanic))throw Error('Unknown puzzle mechanic');
+  if(!Number.isSafeInteger(p.capacity)||p.capacity<1||p.capacity>100||p.demands.some(n=>!Number.isSafeInteger(n)||n<1||n>p.capacity))throw Error('Invalid puzzle quantities');
+  if(!Array.isArray(p.sequence)||p.sequence.length>32||p.sequence.some(id=>!p.componentIds.includes(id))||(p.mechanic==='sequence'&&!p.sequence.length))throw Error('Invalid puzzle sequence');
+  if(p.mechanic==='subset'&&(!Number.isSafeInteger(p.target)||p.target<1||p.target>p.capacity))throw Error('Invalid subset target');
+  const gate=p.unlockWhen??{};
+  for(const [key,ids]of Object.entries(gate)){
+   if(!['completedMissionIds','talkedActorIds','evidenceIds'].includes(key)||!Array.isArray(ids)||ids.length>64)throw Error('Invalid puzzle unlock contract');
+   for(const id of ids)if(key==='evidenceIds'){if(!c.goals.some(g=>g.kind==='evidence'&&g.targetId===id))throw Error('Missing unlock evidence');}else ref(key==='completedMissionIds'?'missions':'actors',id);
+  }
+  if(p.clueActorId){ref('actors',p.clueActorId);if(typeof p.clueFlag!=='string')throw Error('Missing clue flag');}
+  solvePuzzle(p);
+ }
  for(const d of c.dialogues)validateDialogue(d);
  for(const s of c.shrines)for(const n of s.neighbors){ref('shrines',n.id);if(!(n.cost>0))throw Error('Invalid shrine edge');}
  for(const r of c.routes){ref('settlements',r.destinationTownId);for(const id of r.shrineIds)ref('shrines',id);}

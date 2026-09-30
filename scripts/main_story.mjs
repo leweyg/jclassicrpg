@@ -1,3 +1,4 @@
+import {authorConcordanceDialogue} from './concordance_dialogue.mjs';
 /** Stable authored save contracts, including the Measured Oasis continuation. */
 export const STORY_ID='story:concordance:opening';
 export const MAIN_IDS=['mission:concordance:road','mission:concordance:current','mission:concordance:branches','mission:concordance:meaning','mission:concordance:order'];
@@ -82,5 +83,6 @@ export function authorMainStory({content,portals,reachable,anchor,safeNear,missi
  }
  content.shrines.find(s=>s.id==='shrine:shrine 19 22:782:903').cue='The road light holds. Marn in Wammigmig can confirm its pulse.';
  content.storyMigrations=[{id:'opening-v1',legacyMissionId:'mission:wammigmig:fair-share',completedMissionIds:[MAIN_IDS[0]],excludedItemTypes:['CopperCoil']}];
+ authorConcordanceDialogue(content);
  return {portal,cells,containerId,itemId,fittingId};
 }

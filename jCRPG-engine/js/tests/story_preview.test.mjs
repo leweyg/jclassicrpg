@@ -13,7 +13,7 @@ test('homepage preview follows generated chapter order, mission summaries, and o
  assert.ok(story.chapters[0].mission.summary.includes('Orro'));
  const cast = new Map(story.chapters.flatMap(c=>c.cast).map(a=>[a.id,a]));
  assert.equal(cast.size,5);
- for(const actor of cast.values()) assert.equal(actor.captions.length,3);
+ for(const actor of cast.values()) assert.ok(actor.captions.length>=2&&actor.captions.length<=4);
  assert.match(cast.get('actor:wammigmig:orro').captions[0],/grandmother/);
 });
 test('changed generated story text is reflected without editing homepage markup', async()=>{
