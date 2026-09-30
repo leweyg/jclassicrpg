@@ -17,11 +17,11 @@ test('minimap matches camera right/forward and turns clockwise on a left turn',(
  near(initial.x,0);assert.ok(left.x>0&&left.y<0,'old forward landmark moves clockwise to the right');
 });
 test('zoom limits, cursor anchor, pan bounds and reopening reset',()=>{
- const v=new MapViewport(1600,1600);near(v.zoom,1);near(v.project(0,1600).x,0);
+ const v=new MapViewport(1600,1600);near(v.zoom,1);near(v.project(0,1600).x,1);
  const anchor=v.worldAt(.6,.4);v.zoomAt(2,.6,.4);near(v.worldAt(.6,.4).x,anchor.x);near(v.worldAt(.6,.4).z,anchor.z);
  v.zoomAt(1e6);near(v.span,MINIMAP_RADIUS*2);
- v.pan(100,-100);near(v.x,v.span/2);near(v.z,v.span/2);
- v.zoomAt(1e-10);near(v.zoom,.5);near(v.project(0,1600).x,.25);near(v.project(1600,0).x,.75);
+ v.pan(100,-100);near(v.x,1600-v.span/2);near(v.z,v.span/2);
+ v.zoomAt(1e-10);near(v.zoom,.5);near(v.project(0,1600).x,.75);near(v.project(1600,0).x,.25);
  v.reset();near(v.zoom,1);near(v.x,800);near(v.z,800);
  let resets=0;const map={dialog:{open:false,showModal(){this.open=true;}},renderer:{setInputEnabled(){}},viewport:v,mapGestures:{reset(){resets++;}},detail:{},update(){},_renderList(){}};
  v.zoomAt(3);WorldMap.prototype.open.call(map);near(v.zoom,1);assert.equal(resets,1);
@@ -51,4 +51,15 @@ test('marker hit testing uses the zoomed and panned projection',()=>{
  const target={id:'target',x:750,z:900};const at=v.project(target.x,target.z);
  const map={viewport:v,full:{width:800,getBoundingClientRect:()=>({left:20,top:30,width:400,height:400})},markers:[target],_visible:()=>true};
  assert.equal(WorldMap.prototype._hit.call(map,{clientX:20+at.x*400,clientY:30+at.y*400}),target);
+});
+
+test('north-up maps agree with compass and minimap at all four cardinal headings',()=>{
+ const view=new MapViewport(1600,1600),center=view.project(800,800);
+ for(const [dx,dz,yaw]of [[0,10,0],[-10,0,-Math.PI/2],[0,-10,Math.PI],[10,0,Math.PI/2]]){
+  const target=view.project(800+dx,800+dz),mini=cameraMapOffset(dx,dz,0);
+  near((target.x-center.x)*view.span,mini.x);near((target.y-center.y)*view.span,mini.y);
+  const rotations=[];const ctx=new Proxy({rotate:r=>rotations.push(r)},{get:(o,k)=>o[k]??(()=>{})});
+  WorldMap.prototype._player.call({renderer:{_yaw:yaw}},ctx,0,0,10);
+  near(Math.sin(rotations[0]),Math.sign(mini.x));near(-Math.cos(rotations[0]),Math.sign(mini.y));
+ }
 });

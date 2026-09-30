@@ -231,7 +231,7 @@ export class WorldMap {
 		ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(style.symbol, x, y);
 	}
 
-	_player(ctx, x, y, size, yaw=this.renderer._yaw) {
+	_player(ctx, x, y, size, yaw=-this.renderer._yaw) {
 		ctx.save(); ctx.translate(x, y); ctx.rotate(yaw);
 		ctx.beginPath(); ctx.moveTo(0, -size); ctx.lineTo(size * 0.7, size); ctx.lineTo(0, size * 0.5); ctx.lineTo(-size * 0.7, size); ctx.closePath();
 		ctx.fillStyle = '#ff4949'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fill(); ctx.stroke(); ctx.restore();
@@ -280,8 +280,10 @@ export class WorldMap {
 		const ctx = this.full.getContext('2d'), size = this.full.width, p = this.state.party.position;
 		const view=this.viewport,span=view.span;
 		ctx.clearRect(0,0,size,size);ctx.fillStyle='#101917';ctx.fillRect(0,0,size,size);ctx.imageSmoothingEnabled=false;
-		const corner=view.project(0,this.world.sizeZ);
-		ctx.drawImage(this.atlas,corner.x*size,corner.y*size,this.world.sizeX/span*size,this.world.sizeZ/span*size);
+		const corner=view.project(this.world.sizeX,this.world.sizeZ);
+        // The atlas is shared with the camera-relative minimap; mirror only this north-up view.
+        ctx.save();ctx.translate(corner.x*size+this.world.sizeX/span*size,corner.y*size);ctx.scale(-1,1);
+        ctx.drawImage(this.atlas,0,0,this.world.sizeX/span*size,this.world.sizeZ/span*size);ctx.restore();
 		for (const marker of this.markers) if (this._visible(marker)) {
 			const at=view.project(marker.x,marker.z);
 			if(at.x>=0&&at.x<=1&&at.y>=0&&at.y<=1)this._marker(ctx,marker,at.x*size,at.y*size,7);

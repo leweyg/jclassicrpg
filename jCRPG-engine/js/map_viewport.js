@@ -1,14 +1,15 @@
 import {MINIMAP_RADIUS} from './map_model.js';
 
+// Compass convention: north is +Z; east is -X.
 export class MapViewport {
  constructor(width,height){this.width=width;this.height=height;this.minZoom=.5;this.maxZoom=width/(MINIMAP_RADIUS*2);this.reset();}
  reset(){this.zoom=1;this.x=this.width/2;this.z=this.height/2;}
  get span(){return this.width/this.zoom;}
  constrain(){const half=this.span/2;this.x=half>=this.width/2?this.width/2:Math.max(half,Math.min(this.width-half,this.x));this.z=half>=this.height/2?this.height/2:Math.max(half,Math.min(this.height-half,this.z));}
- worldAt(u,v){return {x:this.x+(u-.5)*this.span,z:this.z-(v-.5)*this.span};}
- project(x,z){return {x:.5+(x-this.x)/this.span,y:.5-(z-this.z)/this.span};}
- zoomAt(factor,u=.5,v=.5){const anchor=this.worldAt(u,v);this.zoom=Math.max(this.minZoom,Math.min(this.maxZoom,this.zoom*factor));this.x=anchor.x-(u-.5)*this.span;this.z=anchor.z+(v-.5)*this.span;this.constrain();}
- pan(du,dv){this.x-=du*this.span;this.z+=dv*this.span;this.constrain();}
+ worldAt(u,v){return {x:this.x-(u-.5)*this.span,z:this.z-(v-.5)*this.span};}
+ project(x,z){return {x:.5-(x-this.x)/this.span,y:.5-(z-this.z)/this.span};}
+ zoomAt(factor,u=.5,v=.5){const anchor=this.worldAt(u,v);this.zoom=Math.max(this.minZoom,Math.min(this.maxZoom,this.zoom*factor));this.x=anchor.x+(u-.5)*this.span;this.z=anchor.z+(v-.5)*this.span;this.constrain();}
+ pan(du,dv){this.x+=du*this.span;this.z+=dv*this.span;this.constrain();}
 }
 
 /** Pointer pinch/drag and wheel zoom, with gesture clicks suppressed. */

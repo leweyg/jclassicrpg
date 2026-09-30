@@ -43,9 +43,9 @@ async function loadMap() {
   const atlas = document.createElement('canvas');
   atlas.width = atlas.height = terrain.side;
   const terrainCtx = atlas.getContext('2d'), raster = terrainCtx.createImageData(terrain.side, terrain.side);
-  // The baked raster is stored south to north; canvas rows run north to south.
+  // North (+Z) is up and east (-X) is right, matching the game compass.
   for (let y = 0; y < terrain.side; y++) for (let x = 0; x < terrain.side; x++) {
-    const color = colors[terrain.types[(terrain.side - y - 1) * terrain.side + x]] || colors[0];
+    const color = colors[terrain.types[(terrain.side - y - 1) * terrain.side + terrain.side - x - 1]] || colors[0];
     raster.data.set([...color, 255], (y * terrain.side + x) * 4);
   }
   terrainCtx.putImageData(raster, 0, 0);
@@ -56,7 +56,7 @@ async function loadMap() {
   const matches = m => `${m.name} ${styles[m.kind].label} ${m.note || ''} ${Math.round(m.x)}, ${Math.round(m.z)}`.toLowerCase().includes(query);
   const visible = () => markers.filter(m => enabled.has(m.kind) && matches(m));
   function draw() {
-    const width = canvas.width, corner = view.project(0, size);
+    const width = canvas.width, corner = view.project(size, size);
     ctx.clearRect(0, 0, width, width); ctx.imageSmoothingEnabled = false;
     ctx.drawImage(atlas, corner.x * width, corner.y * width, size / view.span * width, size / view.span * width);
     // Draw disabled cave/shrine locations beneath the full markers.
