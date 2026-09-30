@@ -280,11 +280,12 @@ export class SceneRenderer {
 	}
 
 	_updateMovement(dt) {
-		const p = this._movePointer;
+		const p = this._movePointer, stick = this._moveVector();
 		if (p?.side === 'steer') {
-			this._yaw -= steeringAxis(p.curX - p.startX) * STEER_TURN_SPEED * dt;
+            // Ease to 35% turn speed at full forward deflection; turning in place stays responsive.
+            const steeringScale = 1 - 0.65 * Math.max(0, -stick.y);
+			this._yaw -= steeringAxis(p.curX - p.startX) * STEER_TURN_SPEED * steeringScale * dt;
 		}
-		const stick = this._moveVector();
 		if (!this.gameState || (stick.x === 0 && stick.y === 0)) return;
 		const speed = MOVE_SPEED * dt;
 		this._moveRelative(stick.x * speed, stick.y * speed * (p?.touch ? TOUCH_FORWARD_SPEED_MULTIPLIER : 1));
