@@ -38,7 +38,7 @@
 		color: var(--text);
 	}
 	header {
-		padding: 2rem 1.5rem 1rem;
+		padding: 2rem 1.5rem 0.5rem;
 		max-width: 960px;
 		margin: 0 auto;
 	}
@@ -47,6 +47,7 @@
 		font-size: 1.8rem;
 	}
 	header p {
+		margin: 0.5rem 0 0;
 		color: var(--muted);
 		line-height: 1.5;
 	}
@@ -203,6 +204,7 @@
 	.population-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
 	.population-list small { display: block; color: var(--muted); }
 	.story-text { white-space: pre-line; }
+	#opening-story { font-style: italic; }
 	.story-walkthrough { margin: 1.4rem 0 2rem; padding: 1.25rem; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
 	.story-walkthrough h2 { margin: 0 0 0.4rem; }
 	.story-walkthrough > p, .story-panel p { line-height: 1.6; }
@@ -214,7 +216,7 @@
 	.story-actions { display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center; }
 	.story-actions a { display: inline-flex; min-height: 48px; align-items: center; padding: 0 0.9rem; color: #10131a; background: var(--accent); border-radius: 6px; text-decoration: none; }
 	.story-actions a + a { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-	.screenshot-gallery { margin: 1.5rem 0 2rem; }
+	.screenshot-gallery { margin: 0 0 2rem; }
 	.screenshot-gallery p { color: var(--muted); line-height: 1.5; }
 	.screenshot-strip { display: flex; gap: 0.8rem; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x proximity; padding: 0.3rem 0.2rem 1rem; }
 	.screenshot-strip a { flex: 0 0 min(70vw, 230px); scroll-snap-align: start; display: grid; gap: 0.45rem; color: var(--accent); text-decoration: none; }
@@ -257,8 +259,6 @@
 <header>
 	<h1>The Spiral Grid - a Fantasy Role Playing Game</h1>
 	<p>By <a href="https://lewcid.com/lg/aboutme.html">Lewey Geselowitz</a> based on the <a href="https://jcrpg.blogspot.com/">jClassicRPG</a> world</p>
-
-
 </header>
 <main>
 <section class="screenshot-gallery" aria-label="Game screenshots">
