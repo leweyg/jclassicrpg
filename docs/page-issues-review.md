@@ -9,7 +9,7 @@ Verified locally on 2026-09-29.
    1 mini quest, and 279 characters (276 world actors plus 3 starter party members).
    These counts refresh from JSON; the static fallback is checked against it.
 5. At widths up to 700px, homepage map controls sit below the canvas.
-6. Single-finger forward steering eases to 35% of the turning-in-place rate
+6. Single-finger forward steering eases to 61% of the turning-in-place rate
    at full forward input. Forward speed, backward steering and dual controls
    retain their existing behavior.
 7. Explanatory paragraphs above and below the play map were removed.

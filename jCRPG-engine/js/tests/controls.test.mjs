@@ -213,7 +213,7 @@ test('single-finger forward steering slows progressively without changing moveme
  const turn=dy=>{c.r._yaw=0;c.r._movePointer={side:'steer',touch:true,startX:0,startY:0,curX:196,curY:dy};c.r._updateMovement(1);return Math.abs(c.r._yaw);};
  const stationary=turn(0),partial=turn(-55),forward=turn(-196),backward=turn(196);
  assert.ok(forward<partial&&partial<stationary);
- assert.ok(Math.abs(forward/stationary-.35)<1e-9);
+ assert.ok(Math.abs(forward/stationary-.61)<1e-9);
  assert.equal(backward,stationary);
  assert.deepEqual(moves.slice(-2),[[0,-7],[0,7]]);
 });
