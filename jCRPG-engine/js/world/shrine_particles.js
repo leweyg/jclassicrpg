@@ -1,10 +1,12 @@
 import * as THREE from '../threejs/three.module.js';
 
 export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
- loops: 3.5, height: 3.4, radius: .24, baseHeight: .35,
+ // Shrine OBJ: table top y=.463, chimney underside y=1.056.
+ loops: 3.5, height: .48, radius: .055, baseHeight: .52,
+ offset: [-.018, 0, .283],
  nearDistance: 30, farDistance: 380, maxShrines: 24, samples: 112,
  // World-space streak direction; zero gives round alpha-textured points.
- direction: [0, 1, 0], streakLength: .10, width: .035, turnRotation: .19,
+ direction: [0, 1, 0], streakLength: .025, width: .008, turnRotation: .19,
 });
 const smooth = (a,b,x) => {const t=THREE.MathUtils.clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const wrapDelta = x => THREE.MathUtils.euclideanModulo(x+800,1600)-800;
@@ -49,9 +51,12 @@ export class ShrineParticles {
    // instead of replacing scene objects or loading the shrine's chunk.
    for(let strand=0;strand<2;strand++)for(let i=0;i<o.samples;i++) {
     const sparse=i%8===0;if(!sparse&&near===0)continue;
-    const t=i/(o.samples-1),angle=t*Math.PI*2*o.loops+strand*Math.PI+turn*o.turnRotation*near;
+    // +angle moves +X toward +Z: clockwise when viewed from above (+Y).
+    // Distance changes opacity/detail, never the rotation speed or phase.
+    const phase=near>0 ? turn*o.turnRotation : 0;
+    const t=i/(o.samples-1),angle=t*Math.PI*2*o.loops+strand*Math.PI+phase;
     const radius=o.radius*(.72+.28*Math.sin(t*Math.PI));
-    const p=this.particles[count++];p.position.set(s.x+Math.cos(angle)*radius,s.y+o.baseHeight+t*o.height,s.z+Math.sin(angle)*radius);
+    const p=this.particles[count++];p.position.set(s.x+o.offset[0]+Math.cos(angle)*radius,s.y+o.offset[1]+o.baseHeight+t*o.height,s.z+o.offset[2]+Math.sin(angle)*radius);
     p.depth=this.view.copy(p.position).applyMatrix4(camera.matrixWorldInverse).z;
     p.alpha=alpha*(sparse?1:near)*(.65+.35*Math.sin(t*Math.PI));p.strand=strand;p.scale=1+(1-near)*Math.min(3,s.d/100);this.sorted.push(p);
    }

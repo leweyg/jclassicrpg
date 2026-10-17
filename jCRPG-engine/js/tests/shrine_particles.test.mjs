@@ -30,3 +30,15 @@ test('bounded batch and zero direction yield finite point quads',()=>{
  const f=fixture({maxShrines:1,direction:[0,0,0]});f.update();
  assert.ok(f.effect.geometry.drawRange.count<=112*2*6);assert.ok(f.effect.geometry.attributes.position.array.every(Number.isFinite));f.effect.dispose();
 });
+test('coil fits above the table and below the chimney, rotating clockwise only with turns',()=>{
+ const f=fixture();f.catalog.shrines={a:{position:[0,0,0]}};f.update();
+ const positions=f.effect.geometry.attributes.position;
+ for(let i=0;i<f.effect.sorted.length*4;i++)assert.ok(positions.getY(i)>.463&&positions.getY(i)<1.056);
+ const first=f.effect.particles[0],before=first.position.clone(),center=f.effect.options.offset;
+ f.update(1);
+ const after=first.position.clone();
+ // Viewed down +Y, +X -> +Z is clockwise (negative Three.js Y rotation).
+ assert.ok((before.x-center[0])*(after.z-center[2])-(before.z-center[2])*(after.x-center[0])>0);
+ f.player.z=25;f.update(1);assert.deepEqual(first.position,after,'approach changes fade, not rotation phase');
+ f.effect.dispose();
+});
