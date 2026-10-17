@@ -28,12 +28,12 @@ test('activation brightens coils and remote route trail, caves hide them, and po
 });
 test('bounded batch and zero direction yield finite point quads',()=>{
  const f=fixture({maxShrines:1,direction:[0,0,0]});f.update();
- assert.ok(f.effect.geometry.drawRange.count<=112*2*6);assert.ok(f.effect.geometry.attributes.position.array.every(Number.isFinite));f.effect.dispose();
+ assert.ok(f.effect.geometry.drawRange.count<=(112+160)*2*6);assert.ok(f.effect.geometry.attributes.position.array.every(Number.isFinite));f.effect.dispose();
 });
 test('coil fits above the table and below the chimney, rotating clockwise only with active time',()=>{
  const f=fixture();f.catalog.shrines={a:{position:[0,0,0]}};f.update();
  const positions=f.effect.geometry.attributes.position;
- for(let i=0;i<f.effect.sorted.length*4;i++)assert.ok(positions.getY(i)>.463&&positions.getY(i)<1.056);
+ for(let i=0;i<f.effect.sorted.length*4;i++)if(f.effect.sorted[Math.floor(i/4)].layer===0)assert.ok(positions.getY(i)>.463&&positions.getY(i)<1.056);
  const first=f.effect.particles[0],before=first.position.clone(),center=f.effect.options.offset;
  f.update(.25);
  const after=first.position.clone();
@@ -48,5 +48,21 @@ test('default rotation completes one clockwise revolution in eight active second
  f.update(2);const quarter=f.effect.particles[0].position;
  assert.ok(Math.abs(quarter.x)<1e-10&&quarter.z>0);
  f.update(8);assert.ok(f.effect.particles[0].position.distanceTo(start)<1e-10);
+ f.effect.dispose();
+});
+
+test('outer beacon reaches below ground and above roof, with finer tangent-aligned streaks',()=>{
+ const f=fixture();f.catalog.shrines={a:{position:[0,0,0]}};f.update();
+ const beacon=f.effect.sorted.filter(p=>p.layer===1);
+ assert.ok(Math.min(...beacon.map(p=>p.position.y))<0);
+ assert.ok(Math.max(...beacon.map(p=>p.position.y))>2);
+ assert.ok(beacon.every(p=>p.width<f.effect.options.width));
+ const p=f.effect.particles[30],next=f.effect.particles[31];
+ const tangent=next.position.clone().sub(p.position).normalize();
+ assert.ok(p.direction.dot(tangent)>.99,'streak follows the sampled curve');
+ const index=f.effect.sorted.indexOf(p),positions=f.effect.geometry.attributes.position;
+ const edge=new THREE.Vector3().fromBufferAttribute(positions,index*4+3).sub(new THREE.Vector3().fromBufferAttribute(positions,index*4));
+ const projected=f.effect.right.clone().multiplyScalar(p.direction.dot(f.effect.right)).addScaledVector(f.effect.up,p.direction.dot(f.effect.up));
+ assert.ok(edge.normalize().dot(projected.normalize())>.9999,'quad long axis follows projected tangent');
  f.effect.dispose();
 });
