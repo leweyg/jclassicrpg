@@ -51,12 +51,12 @@ test('default rotation completes one clockwise revolution in eight active second
  f.effect.dispose();
 });
 
-test('outer beacon reaches below ground and above roof, with finer tangent-aligned streaks',()=>{
+test('outer beacon reaches below ground and above roof, with wider tangent-aligned streaks',()=>{
  const f=fixture();f.catalog.shrines={a:{position:[0,0,0]}};f.update();
  const beacon=f.effect.sorted.filter(p=>p.layer===1);
  assert.ok(Math.min(...beacon.map(p=>p.position.y))<0);
  assert.ok(Math.max(...beacon.map(p=>p.position.y))>2);
- assert.ok(beacon.every(p=>p.width<f.effect.options.width));
+ assert.ok(beacon.every(p=>p.width>f.effect.options.width));
  const p=f.effect.particles[30],next=f.effect.particles[31];
  const tangent=next.position.clone().sub(p.position).normalize();
  assert.ok(p.direction.dot(tangent)>.99,'streak follows the sampled curve');
@@ -76,8 +76,8 @@ test('dormant shrines are readable nearby; activated destinations dominate guida
  const baseline=peak(p=>p.position.x>90);
  f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
  const active=peak(p=>p.position.x>90),dormant=peak(p=>p.position.x< -90);
- assert.ok(active>baseline*2.5);assert.ok(active>dormant*6);
- assert.ok(dormant>.1&&dormant<.15,'unactivated locations remain faint guidance');
+ assert.ok(active>baseline*2.5);assert.ok(active>dormant*2.9);
+ assert.ok(dormant>.28&&dormant<.32,'unactivated locations remain faint guidance');
  f.player.z=20;f.update();assert.ok(peak(p=>p.position.x>90)<active/2,'guidance fades when leaving the shrine');
  f.effect.dispose();
 });
@@ -86,6 +86,27 @@ test('distant outer streaks retain a thin visible screen-space width',()=>{
  const index=f.effect.sorted.findIndex(p=>p.layer===1),p=f.effect.sorted[index],a=f.effect.geometry.attributes.position;
  const width=new THREE.Vector3().fromBufferAttribute(a,index*4+1).distanceTo(new THREE.Vector3().fromBufferAttribute(a,index*4));
  const pixels=width*f.camera.projectionMatrix.elements[5]*800/(2*-p.depth);
- assert.ok(pixels>=1.49&&pixels<1.6);
+ assert.ok(pixels>=3.99&&pixels<4.1);
+ f.effect.dispose();
+});
+
+test('particles stay elongated but fuller, and distant landmarks grow without moving the altar coil',()=>{
+ const f=fixture();f.catalog.shrines={a:{position:[0,0,0]}};f.update();
+ const o=f.effect.options;
+ for(const shape of [o,o.beacon])assert.ok(1+shape.streakLength/shape.width>2&&1+shape.streakLength/shape.width<3.2);
+ const bounds=layer=>{const ps=f.effect.sorted.filter(p=>p.layer===layer);return {top:Math.max(...ps.map(p=>p.position.y)),bottom:Math.min(...ps.map(p=>p.position.y)),radius:Math.max(...ps.map(p=>Math.hypot(p.position.x,p.position.z)))}};
+ const inner=bounds(0),near=bounds(1);
+ f.player.z=240;f.update();const far=bounds(1);
+ assert.ok(far.top>near.top*6&&far.radius>near.radius*5.9);
+ assert.equal(far.bottom,near.bottom);assert.equal(bounds(0).bottom,inner.bottom);
+ assert.ok(f.effect.sorted.every(p=>p.dormancy===1));
+ f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
+ assert.ok(f.effect.sorted.every(p=>p.dormancy===0),'activated landmarks retain gold and blue rather than dormant blue-gray');
+ f.effect.dispose();
+});
+
+test('visible distant beacons take priority over nearer shrines behind the camera',()=>{
+ const f=fixture({maxShrines:1});f.catalog.shrines={behind:{position:[0,0,80]},ahead:{position:[0,0,-150]}};
+ f.update();assert.ok(f.effect.sorted.length>0);assert.ok(f.effect.sorted.every(p=>p.position.z< -140));
  f.effect.dispose();
 });

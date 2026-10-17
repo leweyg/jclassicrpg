@@ -6,11 +6,11 @@ export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
  offset: [0, 0, 0],
  nearDistance: 30, farDistance: 380,
  dormantNearOpacity: .48, activeNearOpacity: .95,
- dormantFarOpacity: .045, activeFarOpacity: .32,
- dormantGuidanceOpacity: .12, activeGuidanceOpacity: .9, beaconMinPixels: 1.5, maxShrines: 24, samples: 112,
+ dormantFarOpacity: .18, activeFarOpacity: .32,
+ dormantGuidanceOpacity: .3, activeGuidanceOpacity: .9, beaconMinPixels: 4, maxShrines: 24, samples: 112,
  // null follows each helix tangent; a vector overrides it, zero gives points.
- direction: null, streakLength: .025, width: .008, rotationHz: .125,
- beacon: Object.freeze({height: 6, baseHeight: -1.5, radius: .7, loops: 3.5, samples: 160, width: .006, streakLength: .08}),
+ direction: null, streakLength: .018, width: .014, rotationHz: .125,
+ beacon: Object.freeze({height: 6, baseHeight: -1.5, radius: .7, loops: 3.5, samples: 160, width: .028, streakLength: .04, farScale: 6, farScaleDistance: 120}),
 });
 const smooth = (a,b,x) => {const t=THREE.MathUtils.clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const wrapDelta = x => THREE.MathUtils.euclideanModulo(x+800,1600)-800;
@@ -31,7 +31,7 @@ export class ShrineParticles {
   this.texture=new THREE.DataTexture(data,size,size);this.texture.magFilter=THREE.LinearFilter;this.texture.minFilter=THREE.LinearFilter;this.texture.needsUpdate=true;
   this.material=new THREE.MeshBasicMaterial({map:this.texture,vertexColors:true,transparent:true,depthTest:false,depthWrite:false,fog:false,toneMapped:false,side:THREE.DoubleSide});
   this.mesh=new THREE.Mesh(this.geometry,this.material);this.mesh.name='shrine-helix-particles';this.mesh.frustumCulled=false;this.mesh.renderOrder=20;scene.add(this.mesh);this.scene=scene;
-  this.particles=Array.from({length:capacity},()=>({position:new THREE.Vector3(),direction:new THREE.Vector3(),layer:0,width:0,streakLength:0,depth:0,alpha:0,strand:0,scale:1}));
+  this.particles=Array.from({length:capacity},()=>({position:new THREE.Vector3(),direction:new THREE.Vector3(),layer:0,dormancy:0,width:0,streakLength:0,depth:0,alpha:0,strand:0,scale:1}));
   this.sorted=[];this.view=new THREE.Vector3();this.right=new THREE.Vector3();this.up=new THREE.Vector3();
  }
  update(catalog,save,player,camera,timeSeconds=0,realm='surface',viewportHeight=800) {
@@ -46,6 +46,18 @@ export class ShrineParticles {
    return {id,x:player.x+dx,y:s.position[1],z:player.z+dz,d:Math.hypot(dx,dz),active:!!save?.shrines?.[id]?.activated};
   }).filter(s=>s.d<o.farDistance).sort((a,b)=>a.d-b.d);
   const resonance=1-smooth(3,12,candidates.find(s=>s.active)?.d??Infinity);
+  // Spend the bounded batch on landmarks in the current view first, rather
+  // than letting nearby shrines behind the player crowd them out.
+  const frustum=new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));
+  const sphere=new THREE.Sphere();
+  for(const s of candidates){
+   const scale=THREE.MathUtils.lerp(1,o.beacon.farScale,smooth(o.nearDistance,o.beacon.farScaleDistance,s.d));
+   const height=o.beacon.height*scale;
+   sphere.center.set(s.x+o.offset[0],s.y+o.offset[1]+o.beacon.baseHeight+height/2,s.z+o.offset[2]);
+   sphere.radius=Math.hypot(height/2,o.beacon.radius*scale);
+   s.inView=frustum.intersectsSphere(sphere);
+  }
+  candidates.sort((a,b)=>Number(b.inView)-Number(a.inView)||a.d-b.d);
   this.sorted.length=0;let count=0;
   for(const s of candidates.slice(0,o.maxShrines)) {
    const near=1-smooth(o.nearDistance*.65,o.nearDistance,s.d);
@@ -60,20 +72,24 @@ export class ShrineParticles {
    // instead of replacing scene objects or loading the shrine's chunk.
    for(let layer=0;layer<2;layer++) {
     const shape=layer ? o.beacon : o;
+    // Grow only the landmark coil with distance; keep the altar-sized coil
+    // and the beacon's underground base anchored to their actual shrine.
+    const landmarkScale=layer ? THREE.MathUtils.lerp(1,shape.farScale,smooth(o.nearDistance,shape.farScaleDistance,s.d)) : 1;
+    const height=shape.height*landmarkScale,coilRadius=shape.radius*landmarkScale;
     for(let strand=0;strand<2;strand++)for(let i=0;i<shape.samples;i++) {
      const sparse=i%(layer ? 2 : 8)===0;if(!sparse&&near===0)continue;
      // +angle moves +X toward +Z: clockwise when viewed from above (+Y).
      const phase=near>0 ? (timeSeconds*o.rotationHz%1)*Math.PI*2 : 0;
      const t=i/(shape.samples-1),angle=t*Math.PI*2*shape.loops+strand*Math.PI+phase;
-     const radius=shape.radius*(.72+.28*Math.sin(t*Math.PI));
-     const p=this.particles[count++];p.position.set(s.x+o.offset[0]+Math.cos(angle)*radius,s.y+o.offset[1]+shape.baseHeight+t*shape.height,s.z+o.offset[2]+Math.sin(angle)*radius);
+     const radius=coilRadius*(.72+.28*Math.sin(t*Math.PI));
+     const p=this.particles[count++];p.position.set(s.x+o.offset[0]+Math.cos(angle)*radius,s.y+o.offset[1]+shape.baseHeight+t*height,s.z+o.offset[2]+Math.sin(angle)*radius);
      // Exact derivative of the tapered helix, projected into the camera below.
-     const dr=shape.radius*.28*Math.PI*Math.cos(t*Math.PI),da=Math.PI*2*shape.loops;
-     if(o.direction===null)p.direction.set(dr*Math.cos(angle)-radius*da*Math.sin(angle),shape.height,dr*Math.sin(angle)+radius*da*Math.cos(angle)).normalize();
+     const dr=coilRadius*.28*Math.PI*Math.cos(t*Math.PI),da=Math.PI*2*shape.loops;
+     if(o.direction===null)p.direction.set(dr*Math.cos(angle)-radius*da*Math.sin(angle),height,dr*Math.sin(angle)+radius*da*Math.cos(angle)).normalize();
      else p.direction.fromArray(o.direction);
      p.depth=this.view.copy(p.position).applyMatrix4(camera.matrixWorldInverse).z;
      p.alpha=alpha*(sparse?1:near)*(.65+.35*Math.sin(t*Math.PI));
-     p.strand=strand;p.layer=layer;p.width=shape.width;p.streakLength=shape.streakLength;
+     p.strand=strand;p.layer=layer;p.dormancy=s.active ? 0 : 1-near;p.width=shape.width;p.streakLength=shape.streakLength;
      p.scale=1+(1-near)*Math.min(layer ? 12 : 3,s.d/(layer ? 30 : 100));this.sorted.push(p);
     }
    }
@@ -81,9 +97,9 @@ export class ShrineParticles {
   this.sorted.sort((a,b)=>a.depth-b.depth);
   this.right.setFromMatrixColumn(camera.matrixWorld,0);this.up.setFromMatrixColumn(camera.matrixWorld,1);
   const along=new THREE.Vector3(),across=new THREE.Vector3();
-  const attrs=this.geometry.attributes,gold=new THREE.Color(0xffce73),blue=new THREE.Color(0x90e6ff);
+  const attrs=this.geometry.attributes,gold=new THREE.Color(0xffce73),blue=new THREE.Color(0x90e6ff),dormant=new THREE.Color(0x91a8c5),tint=new THREE.Color();
   for(let i=0;i<count;i++) {
-   const p=this.sorted[i],color=p.strand?blue:gold;
+   const p=this.sorted[i],color=tint.copy(p.strand?blue:gold).lerp(dormant,p.dormancy);
    const dx=p.direction.dot(this.right),dy=p.direction.dot(this.up),length=Math.hypot(dx,dy);
    if(length>1e-6){
     along.copy(this.right).multiplyScalar(dx/length).addScaledVector(this.up,dy/length);
