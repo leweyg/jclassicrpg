@@ -2,8 +2,8 @@ import * as THREE from '../threejs/three.module.js';
 
 export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
  // Shrine OBJ: table top y=.463, chimney underside y=1.056.
- loops: 3.5, height: .48, radius: .055, baseHeight: .52,
- offset: [-.018, 0, .283],
+ loops: 3.5, height: .48, radius: .409088 * .61, baseHeight: .52,
+ offset: [0, 0, 0],
  nearDistance: 30, farDistance: 380, maxShrines: 24, samples: 112,
  // World-space streak direction; zero gives round alpha-textured points.
  direction: [0, 1, 0], streakLength: .025, width: .008, turnRotation: .19,

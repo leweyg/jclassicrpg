@@ -40,6 +40,14 @@ export function bakeAssets(root,out){
   // Asset-specific raw pivots vary; retain Y-up faces, normalize a documented
   // bounding box once offline, never independently at runtime/editor import.
   const transformed=vs.map(v=>v.map((n,i)=>(n-mins[i])/(maxs[i]-mins[i]||1)*size[i]-(i===1?0:size[i]/2)));
+  // The shrine's table was authored off-center beneath its chimney. These
+  // heights isolate the complete table (top, apron and legs), not the hut.
+  if(name==='shrine'){
+   const table=transformed.filter(v=>v[1]>.09&&v[1]<.47);
+   const top=table.filter(v=>v[1]>.44);
+   const center=[0,2].map(axis=>(Math.min(...top.map(v=>v[axis]))+Math.max(...top.map(v=>v[axis])))/2);
+   for(const v of table){v[0]-=center[0];v[2]-=center[1];}
+  }
   // Some legacy book faces have no UVs. Project those faces onto their two
   // widest axes instead of sampling a single texel; retain every authored UV.
   if(name==='bookcase')for(const face of faces){
