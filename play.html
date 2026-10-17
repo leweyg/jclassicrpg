@@ -297,9 +297,14 @@ body:has(#interaction-panel[data-kind="dialogue"][open]) .hud { visibility:hidde
 #interaction-panel[data-kind="dialogue"] #interaction-body>button:focus::after,
 #interaction-panel[data-kind="dialogue"] #interaction-body:not(:has(>button:focus))>button[data-primary="true"]::after { visibility:visible; }
 
+#reading-mode { position:fixed; top:8px; right:8px; z-index:6; padding:8px; background:#172823; border-radius:8px; }
+#reading-close { min-width:44px; min-height:44px; margin-left:8px; font:24px system-ui; color:#fff0cf; background:#294a3b; border:1px solid #8ea78c; border-radius:6px; cursor:pointer; }
+#interaction-panel header button[aria-label="Exit reading mode"] { min-width:44px; min-height:44px; }
+#interaction-panel[data-kind="dialogue"] header button[aria-label="Exit reading mode"] { position:absolute; right:0; top:0; transform:translateY(-100%); }
 </style>
 </head>
 <body>
+<aside id="reading-mode" hidden>Reading mode <button id="reading-close" type="button" aria-label="Exit reading mode">×</button></aside>
 <canvas id="scene-canvas"></canvas>
 <canvas id="hud-compass" class="hud" role="img" aria-label="Compass"></canvas>
 <div id="load-status">Loading scene…</div>
@@ -310,6 +315,7 @@ body:has(#interaction-panel[data-kind="dialogue"][open]) .hud { visibility:hidde
 		<button id="world-journal" type="button">Journal</button>
 		<button id="map-open" type="button">Map</button>
 		<button id="world-inventory" type="button" >Inventory</button>
+		<button id="world-new" type="button">New game</button>
 		<a href="index.html">Homepage</a>
 		
 		<button id="world-retry" type="button" hidden class="dev_button" >Reconnected</button>

@@ -1,3 +1,4 @@
+import {startReadingMode} from './reading_mode.js';
 import {loadOpeningStory, OpeningStoryOffer} from './opening_story.js';
 import {bindHudLayout} from './hud_layout.js';
 import { InteractionUI } from './interactions/ui.js';
@@ -136,6 +137,13 @@ async function main() {
 		document.getElementById('world-intuition').addEventListener('click', () => interactionsUI.openIntuition(renderer.nearbyInteraction()));
 		const menu = document.getElementById('game-menu');
 		const menuButton = document.getElementById('hud-portrait-card');
+        document.getElementById('world-new').addEventListener('click', () => {
+            if (!window.confirm('Start a new game? Your current saved progress will be replaced.')) return;
+            const url = new URL(window.location.href);
+            url.searchParams.delete('location');
+            url.searchParams.set('new', '1');
+            window.location.assign(url);
+        });
 		const closeMenu = () => {
 			menu.close();
 			menuButton.setAttribute('aria-expanded', 'false');
@@ -202,6 +210,12 @@ async function main() {
 		updateLocation();
         worldMap.update();
 		renderer.start();
+        if (new URL(window.location.href).searchParams.get('read') === '1') {
+            storyOffer.dismiss();
+            interactionsUI.persist();
+            startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
+                travel: interactionsUI.onTravelQuest, story: openingStory, log: appendLog});
+        }
 		// No repeating HUD timers. Changes are driven by input/render events only.
 		window.addEventListener('pagehide', () => renderer.stop(), { once: true });
 		window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
