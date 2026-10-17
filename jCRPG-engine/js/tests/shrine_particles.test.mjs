@@ -5,15 +5,15 @@ import {ShrineParticles} from '../world/shrine_particles.js';
 function fixture(options){
  const scene=new THREE.Scene(),effect=new ShrineParticles(scene,options),camera=new THREE.PerspectiveCamera(62,1,.1,500);
  camera.position.set(0,2,8);camera.lookAt(0,2,0);
- const catalog={shrines:{a:{position:[0,0,0]},b:{position:[100,0,0]}}},save={deltaRevision:0,shrines:{},shrineRoutes:{}},player={x:0,y:0,z:8};
+ const catalog={shrines:{a:{position:[0,0,0]},b:{position:[100,0,0]}}},save={deltaRevision:0,shrines:{},shrineRoutes:{}},player={x:0,y:0,z:2};
  const update=(seconds=0,realm='surface')=>effect.update(catalog,save,player,camera,seconds,realm);
  return {scene,effect,camera,catalog,save,player,update};
 }
-test('active-time motion, static far markers, no redundant buffer updates, and depth ordering after rotation',()=>{
+test('active-time motion for near and far markers, no redundant buffer updates, and depth ordering after rotation',()=>{
  const f=fixture();f.update();const a=f.effect.geometry.attributes.position,version=a.version,initial=a.array.slice();
  const far=f.effect.particles.filter(p=>p.position.x>90).map(p=>p.position.toArray());
  f.update();assert.equal(a.version,version);assert.deepEqual(a.array,initial);
- f.update(.25);assert.notDeepEqual(a.array,initial);assert.deepEqual(f.effect.particles.filter(p=>p.position.x>90).map(p=>p.position.toArray()),far);
+ f.update(.25);assert.notDeepEqual(a.array,initial);assert.notDeepEqual(f.effect.particles.filter(p=>p.position.x>90).map(p=>p.position.toArray()),far);
  f.camera.position.set(4,3,-6);f.camera.lookAt(0,2,0);f.update(.25);
  const depths=f.effect.sorted.map(p=>p.depth);assert.deepEqual(depths,[...depths].sort((a,b)=>a-b));
  assert.equal(f.effect.material.depthTest,false);assert.equal(f.effect.material.depthWrite,false);assert.equal(f.effect.material.fog,false);
@@ -108,5 +108,17 @@ test('particles stay elongated but fuller, and distant landmarks grow without mo
 test('visible distant beacons take priority over nearer shrines behind the camera',()=>{
  const f=fixture({maxShrines:1});f.catalog.shrines={behind:{position:[0,0,80]},ahead:{position:[0,0,-150]}};
  f.update();assert.ok(f.effect.sorted.length>0);assert.ok(f.effect.sorted.every(p=>p.position.z< -140));
+ f.effect.dispose();
+});
+
+test('nearest shrine guides approach, while the network appears quickly only inside eight units',()=>{
+ const f=fixture();
+ const peak=predicate=>Math.max(...f.effect.sorted.filter(predicate).map(p=>p.alpha));
+ f.player.z=16;f.update();assert.ok(peak(p=>p.position.x<10)>.1,'nearest shrine is visible at starting distance');
+ assert.equal(peak(p=>p.position.x>90),0);
+ f.player.z=8.1;f.update();assert.equal(peak(p=>p.position.x>90),0,'no other beacons at screenshot distance');
+ f.player.z=6;f.update();const halfway=peak(p=>p.position.x>90);assert.ok(halfway>0);
+ f.player.z=4;f.update();assert.ok(peak(p=>p.position.x>90)>halfway*1.9);
+ f.player.z=28;f.update();assert.equal(peak(()=>true),0);
  f.effect.dispose();
 });

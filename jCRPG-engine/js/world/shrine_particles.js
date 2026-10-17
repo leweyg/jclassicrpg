@@ -5,6 +5,7 @@ export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
  loops: 3.5, height: .48, radius: .409088 * .61, baseHeight: .52,
  offset: [0, 0, 0],
  nearDistance: 30, farDistance: 380,
+ primaryFadeDistance: 28, guidanceStartDistance: 8, guidanceFullDistance: 4,
  dormantNearOpacity: .48, activeNearOpacity: .95,
  dormantFarOpacity: .18, activeFarOpacity: .32,
  dormantGuidanceOpacity: .3, activeGuidanceOpacity: .9, beaconMinPixels: 4, maxShrines: 24, samples: 112,
@@ -45,6 +46,10 @@ export class ShrineParticles {
    const dx=wrapDelta(s.position[0]-player.x),dz=wrapDelta(s.position[2]-player.z);
    return {id,x:player.x+dx,y:s.position[1],z:player.z+dz,d:Math.hypot(dx,dz),active:!!save?.shrines?.[id]?.activated};
   }).filter(s=>s.d<o.farDistance).sort((a,b)=>a.d-b.d);
+  const primary=candidates[0];
+  // Any nearby shrine can serve as a lookout. Keep the nearest landmark
+  // visible on approach, then reveal the network only in the last few steps.
+  const guidance=1-smooth(o.guidanceFullDistance,o.guidanceStartDistance,primary?.d??Infinity);
   const resonance=1-smooth(3,12,candidates.find(s=>s.active)?.d??Infinity);
   // Spend the bounded batch on landmarks in the current view first, rather
   // than letting nearby shrines behind the player crowd them out.
@@ -67,8 +72,9 @@ export class ShrineParticles {
    const distant=s.active
     ? THREE.MathUtils.lerp(o.activeFarOpacity,o.activeGuidanceOpacity,resonance)
     : THREE.MathUtils.lerp(o.dormantFarOpacity,o.dormantGuidanceOpacity,resonance)+(frontier.has(s.id) ? .035 : 0);
-   const alpha=fade*THREE.MathUtils.lerp(distant,s.active ? o.activeNearOpacity : o.dormantNearOpacity,near);
-   // Distant coils are a fixed, sparse silhouette. The transition fades detail
+   const reveal=s===primary ? 1-smooth(o.guidanceFullDistance,o.primaryFadeDistance,s.d) : guidance;
+   const alpha=reveal*fade*THREE.MathUtils.lerp(distant,s.active ? o.activeNearOpacity : o.dormantNearOpacity,near);
+   // Distant coils use a sparse, rotating silhouette. The transition fades detail
    // instead of replacing scene objects or loading the shrine's chunk.
    for(let layer=0;layer<2;layer++) {
     const shape=layer ? o.beacon : o;
@@ -79,7 +85,7 @@ export class ShrineParticles {
     for(let strand=0;strand<2;strand++)for(let i=0;i<shape.samples;i++) {
      const sparse=i%(layer ? 2 : 8)===0;if(!sparse&&near===0)continue;
      // +angle moves +X toward +Z: clockwise when viewed from above (+Y).
-     const phase=near>0 ? (timeSeconds*o.rotationHz%1)*Math.PI*2 : 0;
+     const phase=(timeSeconds*o.rotationHz%1)*Math.PI*2;
      const t=i/(shape.samples-1),angle=t*Math.PI*2*shape.loops+strand*Math.PI+phase;
      const radius=coilRadius*(.72+.28*Math.sin(t*Math.PI));
      const p=this.particles[count++];p.position.set(s.x+o.offset[0]+Math.cos(angle)*radius,s.y+o.offset[1]+shape.baseHeight+t*height,s.z+o.offset[2]+Math.sin(angle)*radius);
