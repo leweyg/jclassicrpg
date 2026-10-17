@@ -122,3 +122,16 @@ test('nearest shrine guides approach, while the network appears quickly only ins
  f.player.z=28;f.update();assert.equal(peak(()=>true),0);
  f.effect.dispose();
 });
+
+test('both coils fade symmetrically to zero alpha at their tips',()=>{
+ const f=fixture();f.catalog.shrines={a:{position:[0,0,0]}};f.update();
+ for(const layer of [0,1]){
+  const strand=f.effect.sorted.filter(p=>p.layer===layer&&p.strand===0).sort((a,b)=>a.position.y-b.position.y);
+  assert.equal(strand[0].alpha,0);assert.equal(strand.at(-1).alpha,0);
+  const middle=Math.floor(strand.length/2);
+  for(let i=1;i<middle;i++)assert.ok(strand[i].alpha>strand[i-1].alpha);
+  for(let i=0;i<strand.length;i++)assert.ok(Math.abs(strand[i].alpha-strand[strand.length-1-i].alpha)<1e-12);
+  assert.ok(strand[middle].alpha>f.effect.options.dormantNearOpacity*.99);
+ }
+ f.effect.dispose();
+});

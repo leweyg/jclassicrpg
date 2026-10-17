@@ -94,7 +94,9 @@ export class ShrineParticles {
      if(o.direction===null)p.direction.set(dr*Math.cos(angle)-radius*da*Math.sin(angle),height,dr*Math.sin(angle)+radius*da*Math.cos(angle)).normalize();
      else p.direction.fromArray(o.direction);
      p.depth=this.view.copy(p.position).applyMatrix4(camera.matrixWorldInverse).z;
-     p.alpha=alpha*(sparse?1:near)*(.65+.35*Math.sin(t*Math.PI));
+     // Symmetric height envelope: transparent tips, full alpha at the middle.
+     const heightAlpha=Math.sqrt(Math.max(0,1-Math.abs(2*t-1)));
+     p.alpha=alpha*(sparse?1:near)*heightAlpha;
      p.strand=strand;p.layer=layer;p.dormancy=s.active ? 0 : 1-near;p.width=shape.width;p.streakLength=shape.streakLength;
      p.scale=1+(1-near)*Math.min(layer ? 12 : 3,s.d/(layer ? 30 : 100));this.sorted.push(p);
     }
