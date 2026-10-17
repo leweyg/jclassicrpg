@@ -76,8 +76,8 @@ test('dormant shrines are readable nearby; activated destinations dominate guida
  const baseline=peak(p=>p.position.x>90);
  f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
  const active=peak(p=>p.position.x>90),dormant=peak(p=>p.position.x< -90);
- assert.ok(active>baseline*2.5);assert.ok(active>dormant*2.9);
- assert.ok(dormant>.28&&dormant<.32,'unactivated locations remain faint guidance');
+ assert.ok(active>baseline*2.5);assert.ok(active>dormant*2);
+ assert.ok(dormant>.43&&dormant<.46,'unactivated locations remain faint guidance');
  f.player.z=20;f.update();assert.ok(peak(p=>p.position.x>90)<active/2,'guidance fades when leaving the shrine');
  f.effect.dispose();
 });
@@ -133,5 +133,24 @@ test('both coils fade symmetrically to zero alpha at their tips',()=>{
   for(let i=0;i<strand.length;i++)assert.ok(Math.abs(strand[i].alpha-strand[strand.length-1-i].alpha)<1e-12);
   assert.ok(strand[middle].alpha>f.effect.options.dormantNearOpacity*.99);
  }
+ f.effect.dispose();
+});
+
+test('unactivated coils are neutral gray up close; activation widens and brightens other beacons 1.5x',()=>{
+ const f=fixture({dormantFarOpacity:.2,dormantGuidanceOpacity:.2});f.update();
+ const colors=f.effect.geometry.attributes.color;
+ for(let i=0;i<f.effect.sorted.length*4;i++){
+  assert.equal(colors.getX(i),colors.getY(i));assert.equal(colors.getY(i),colors.getZ(i));
+ }
+ const outer=()=>f.effect.sorted.filter(p=>p.layer===1&&p.position.x>90);
+ const radius=()=>Math.max(...outer().map(p=>Math.hypot(p.position.x-100,p.position.z)));
+ const brightness=()=>Math.max(...outer().map(p=>p.alpha));
+ const beforeRadius=radius(),beforeAlpha=brightness();
+ const localRadius=Math.max(...f.effect.sorted.filter(p=>p.layer===1&&p.position.x<10).map(p=>Math.hypot(p.position.x,p.position.z)));
+ f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
+ assert.ok(Math.abs(radius()/beforeRadius-1.5)<1e-10);
+ assert.ok(Math.abs(brightness()/beforeAlpha-1.5)<1e-10);
+ assert.equal(Math.max(...f.effect.sorted.filter(p=>p.layer===1&&p.position.x<10).map(p=>Math.hypot(p.position.x,p.position.z))),localRadius);
+ assert.ok(f.effect.sorted.filter(p=>p.position.x<10).every(p=>p.dormancy===0));
  f.effect.dispose();
 });

@@ -5,7 +5,7 @@ export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
  loops: 3.5, height: .48, radius: .409088 * .61, baseHeight: .52,
  offset: [0, 0, 0],
  nearDistance: 30, farDistance: 380,
- primaryFadeDistance: 28, guidanceStartDistance: 8, guidanceFullDistance: 4,
+ activatedNetworkBoost: 1.5, primaryFadeDistance: 28, guidanceStartDistance: 8, guidanceFullDistance: 4,
  dormantNearOpacity: .48, activeNearOpacity: .95,
  dormantFarOpacity: .18, activeFarOpacity: .32,
  dormantGuidanceOpacity: .3, activeGuidanceOpacity: .9, beaconMinPixels: 4, maxShrines: 24, samples: 112,
@@ -50,6 +50,7 @@ export class ShrineParticles {
   // Any nearby shrine can serve as a lookout. Keep the nearest landmark
   // visible on approach, then reveal the network only in the last few steps.
   const guidance=1-smooth(o.guidanceFullDistance,o.guidanceStartDistance,primary?.d??Infinity);
+  const networkBoost=THREE.MathUtils.lerp(1,o.activatedNetworkBoost,primary?.active ? guidance : 0);
   const resonance=1-smooth(3,12,candidates.find(s=>s.active)?.d??Infinity);
   // Spend the bounded batch on landmarks in the current view first, rather
   // than letting nearby shrines behind the player crowd them out.
@@ -59,7 +60,7 @@ export class ShrineParticles {
    const scale=THREE.MathUtils.lerp(1,o.beacon.farScale,smooth(o.nearDistance,o.beacon.farScaleDistance,s.d));
    const height=o.beacon.height*scale;
    sphere.center.set(s.x+o.offset[0],s.y+o.offset[1]+o.beacon.baseHeight+height/2,s.z+o.offset[2]);
-   sphere.radius=Math.hypot(height/2,o.beacon.radius*scale);
+   sphere.radius=Math.hypot(height/2,o.beacon.radius*scale*(s===primary ? 1 : networkBoost));
    s.inView=frustum.intersectsSphere(sphere);
   }
   candidates.sort((a,b)=>Number(b.inView)-Number(a.inView)||a.d-b.d);
@@ -81,7 +82,8 @@ export class ShrineParticles {
     // Grow only the landmark coil with distance; keep the altar-sized coil
     // and the beacon's underground base anchored to their actual shrine.
     const landmarkScale=layer ? THREE.MathUtils.lerp(1,shape.farScale,smooth(o.nearDistance,shape.farScaleDistance,s.d)) : 1;
-    const height=shape.height*landmarkScale,coilRadius=shape.radius*landmarkScale;
+    const boost=layer&&s!==primary ? networkBoost : 1;
+    const height=shape.height*landmarkScale,coilRadius=shape.radius*landmarkScale*boost;
     for(let strand=0;strand<2;strand++)for(let i=0;i<shape.samples;i++) {
      const sparse=i%(layer ? 2 : 8)===0;if(!sparse&&near===0)continue;
      // +angle moves +X toward +Z: clockwise when viewed from above (+Y).
@@ -96,8 +98,8 @@ export class ShrineParticles {
      p.depth=this.view.copy(p.position).applyMatrix4(camera.matrixWorldInverse).z;
      // Symmetric height envelope: transparent tips, full alpha at the middle.
      const heightAlpha=Math.sqrt(Math.max(0,1-Math.abs(2*t-1)));
-     p.alpha=alpha*(sparse?1:near)*heightAlpha;
-     p.strand=strand;p.layer=layer;p.dormancy=s.active ? 0 : 1-near;p.width=shape.width;p.streakLength=shape.streakLength;
+     p.alpha=Math.min(1,alpha*boost)*(sparse?1:near)*heightAlpha;
+     p.strand=strand;p.layer=layer;p.dormancy=s.active ? 0 : 1;p.width=shape.width;p.streakLength=shape.streakLength;
      p.scale=1+(1-near)*Math.min(layer ? 12 : 3,s.d/(layer ? 30 : 100));this.sorted.push(p);
     }
    }
@@ -105,7 +107,7 @@ export class ShrineParticles {
   this.sorted.sort((a,b)=>a.depth-b.depth);
   this.right.setFromMatrixColumn(camera.matrixWorld,0);this.up.setFromMatrixColumn(camera.matrixWorld,1);
   const along=new THREE.Vector3(),across=new THREE.Vector3();
-  const attrs=this.geometry.attributes,gold=new THREE.Color(0xffce73),blue=new THREE.Color(0x90e6ff),dormant=new THREE.Color(0x91a8c5),tint=new THREE.Color();
+  const attrs=this.geometry.attributes,gold=new THREE.Color(0xffce73),blue=new THREE.Color(0x90e6ff),dormant=new THREE.Color(0xaaaaaa),tint=new THREE.Color();
   for(let i=0;i<count;i++) {
    const p=this.sorted[i],color=tint.copy(p.strand?blue:gold).lerp(dormant,p.dormancy);
    const dx=p.direction.dot(this.right),dy=p.direction.dot(this.up),length=Math.hypot(dx,dy);
