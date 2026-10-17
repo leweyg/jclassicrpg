@@ -433,6 +433,7 @@ export class SceneRenderer {
 			this._ambient.intensity=cave?0.65:0.9;
 			this._sun.intensity=cave?0.15:1.4;
 			const pos=this.gameState.party.position;
+			this.worldView.bakedView?.shrineParticles.update(this.gameState.exploration.interactionCatalog,this.gameState.saveDeltas?.data,pos,this.camera,this.gameState.time.turn,this.gameState.realm);
 			const inside=this.gameState.exploration.cellAt?.(pos.x,pos.y,pos.z,this.gameState.realm)?.flags & 2048;
 			if(this._lantern){this._lantern.visible=cave||!!inside;this._lantern.position.copy(this.camera.position);}
 			this.scene.fog.color.set(cave?SURFACE_FOG_CAVE_COLOR:SURFACE_FOG_COLOR);
@@ -534,11 +535,14 @@ export class SceneRenderer {
 
 	start() {
 		this._running = true;
+		this._onShrineTurn ??= () => this.requestRender();
+		this.gameState?.events.addEventListener('turnAdvanced', this._onShrineTurn);
 		this.requestRender();
 	}
 
 	stop() {
 		this._running = false;
+		this.gameState?.events.removeEventListener('turnAdvanced', this._onShrineTurn);
 		this.cancelInput();
 	}
 }
