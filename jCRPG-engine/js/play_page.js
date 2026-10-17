@@ -100,7 +100,8 @@ async function main() {
         };
 		interactionsUI.onShowQuestMap=(goal,mission)=>worldMap.showQuestGoal(goal,mission);
         interactionsUI.onTravelQuest = async goal => {
-            await sim.gameState.teleport(goal.position[0], goal.position[2], goal.position[1], goal.realm ?? 'surface');
+            await sim.gameState.teleport(goal.position[0], goal.position[2], goal.position[1], goal.realm ?? 'surface', {standBack:true});
+            renderer.restoreView();
             renderer.worldView.sync();
             renderer._syncCamera();
             worldMap.update(true);
@@ -120,11 +121,10 @@ async function main() {
         interactionsUI.closeButton.before(readingButton);
         const hudReadingButton = document.getElementById('world-reading-mode');
         hudReadingButton.addEventListener('click', () => {
-            const showStory = storyOffer.available();
             storyOffer.dismiss();
             interactionsUI.persist();
             startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
-                travel: interactionsUI.onTravelQuest, story: showStory ? openingStory : null, log: appendLog});
+                travel: interactionsUI.onTravelQuest, log: appendLog});
         });
 		document.getElementById('hud-log').addEventListener('click',()=>interactionsUI.openJournal());
 		renderer.onInteractionPanel=()=>interactionsUI.show();
@@ -235,7 +235,7 @@ async function main() {
             storyOffer.dismiss();
             interactionsUI.persist();
             startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
-                travel: interactionsUI.onTravelQuest, story: openingStory, log: appendLog});
+                travel: interactionsUI.onTravelQuest, log: appendLog});
         }
 		// No repeating HUD timers. Changes are driven by input/render events only.
 		window.addEventListener('pagehide', () => renderer.stop(), { once: true });

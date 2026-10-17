@@ -24,10 +24,15 @@ test('reading reaches real actors, shrines, cave entrances, items and fittings i
     const arrive = async kind => {
         const goal = readingGoal(engine);
         assert.ok(goal);
-        await state.teleport(goal.position[0], goal.position[2], goal.position[1], goal.realm ?? 'surface');
+        await state.teleport(goal.position[0], goal.position[2], goal.position[1], goal.realm ?? 'surface', {standBack:true});
         const action = goalAction(state, goal);
         assert.ok(action, JSON.stringify(goal));
         assert.equal(action.kind, kind);
+        if (kind === 'actor') {
+            const p = state.party.position;
+            assert.ok(Math.hypot(p.x-action.position[0],p.z-action.position[2]) >= 0.275 - 1e-9);
+            assert.ok(state.saveDeltas.data.camera);
+        }
         return action;
     };
     await arrive('actor');

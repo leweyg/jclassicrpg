@@ -6,9 +6,10 @@ export function loadOpeningStory() {
     });
 }
 
-/** The introductory offer ends permanently after reading or finding a real interaction. */
+/** Offer the introduction only during the session that starts a new game. */
 export class OpeningStoryOffer {
     constructor(flags, newGame = false) {
+        this.newGame = newGame;
         this.getFlags = typeof flags === 'function' ? flags : () => flags;
         if (newGame) {
             this.flags['opening-story-pending'] = true;
@@ -16,7 +17,7 @@ export class OpeningStoryOffer {
         }
     }
     get flags() { return this.getFlags(); }
-    available() { return this.flags['opening-story-pending'] === true; }
+    available() { return this.newGame && this.flags['opening-story-pending'] === true; }
     dismiss() {
         if (!this.available()) return false;
         this.flags['opening-story-pending'] = false;

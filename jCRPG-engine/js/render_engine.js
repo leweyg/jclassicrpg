@@ -492,14 +492,15 @@ export class SceneRenderer {
 		this.cancelInput();
 	}
 
-	async teleportTo(x, z) {
+	async teleportTo(x, z, y = null, realm = 'surface') {
 		if (!Number.isFinite(x) || !Number.isFinite(z)) return;
 		this.cancelInput();
 		const p = this.gameState.party.position;
 		try {
 			if (this.gameState.exploration.manifest) {
 				this.setInputEnabled(false);
-				await this.gameState.teleport(x,z);
+				await this.gameState.teleport(x,z,y,realm,{standBack:true});
+                this.restoreView();
 			} else this.gameState.moveParty(x-p.x,z-p.z);
 			this.worldView.sync();this._syncCamera();this.requestRender();
 		} catch(error) { this.onStatus?.(error.message); }

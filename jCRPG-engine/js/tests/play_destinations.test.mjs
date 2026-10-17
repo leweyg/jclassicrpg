@@ -25,8 +25,10 @@ test('homepage destinations land on walkable ground and retain saved progress', 
   for (const [id, destination] of Object.entries(PLAY_DESTINATIONS)) {
    assert.equal(await visitPlayDestination(state, id), destination.name);
    const { x, y, z } = state.party.position;
-   assert.equal(x, destination.position[0]);
-   assert.equal(z, destination.position[2]);
+   const offset = Math.hypot(x-destination.position[0], z-destination.position[2]);
+   assert.ok(offset <= 2.5, `${id}: arrival should remain beside the destination`);
+   const actors = stream.chunks.flatMap(slot => slot.ready ? slot.data.interactions.filter(a=>a.kind==='actor' && a.realm==='surface') : []);
+   assert.ok(actors.every(a => Math.abs(a.position[1]-y)>=1.1 || Math.hypot(a.position[0]-x,a.position[2]-z)>=0.225), `${id}: arrival overlaps a character`);
    assert.equal(state.realm, 'surface');
    assert.ok(Number.isFinite(y));
    assert.ok(stream.canMove(x, y, z, x, z), `${id}: landing is blocked`);

@@ -46,7 +46,7 @@ export function keepReadingControlAccessible(bar) {
     };
 }
 
-export function startReadingMode({state, renderer, ui, travel, story, log}) {
+export function startReadingMode({state, renderer, ui, travel, log}) {
     if (ui.readingModeActive) return;
     ui.readingModeActive = true;
     const url = new URL(location.href);
@@ -113,6 +113,5 @@ export function startReadingMode({state, renderer, ui, travel, story, log}) {
         }
     }
     ui.dialog.addEventListener('close', advance);
-    if (story) ui.openStory(story);
-    else void advance();
+    void advance();
 }

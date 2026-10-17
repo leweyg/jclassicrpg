@@ -5,15 +5,16 @@ import {OpeningStoryOffer, sliceSummary} from '../opening_story.js';
 import {SceneRenderer} from '../render_engine.js';
 const read = path => JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));
 
-test('new-game story offer survives a save and stays dismissed after reading or a nearby interaction', () => {
+test('story offer is limited to a new-game session and never returns on resume', () => {
  const flags = {};
  assert.equal(new OpeningStoryOffer(flags).available(), false, 'existing saves do not receive a new offer');
  const offer = new OpeningStoryOffer(flags, true);
  assert.equal(offer.available(), true);
  const resumed = new OpeningStoryOffer(JSON.parse(JSON.stringify(flags)));
- assert.equal(resumed.available(), true);
- assert.equal(resumed.dismiss(), true);
- assert.equal(resumed.dismiss(), false);
+ assert.equal(resumed.available(), false, 'even an unread introduction stays hidden on resume');
+ assert.equal(offer.dismiss(), true);
+ assert.equal(offer.dismiss(), false);
+ assert.equal(offer.available(), false);
  assert.equal(new OpeningStoryOffer(resumed.flags).available(), false);
 });
 test('empty interaction opens story without invoking world interaction and releases its guard', async () => {

@@ -18,12 +18,12 @@ export async function visitPlayDestination(state, id) {
 			![x, y, z].every(Number.isFinite) || !['surface', 'cave'].includes(realm)) {
 			throw new Error('Invalid map destination. Choose a location on the homepage.');
 		}
-		await state.teleport(x, z, y, realm);
+		await state.teleport(x, z, y, realm, {standBack:true});
 		return `map location ${Math.round(x)}, ${Math.round(z)}`;
 	}
 	if (!Object.hasOwn(PLAY_DESTINATIONS, id)) throw new Error('Unknown destination. Choose a location on the homepage.');
 	const destination = PLAY_DESTINATIONS[id];
 	const [x, y, z] = destination.position;
-	await state.teleport(x, z, y, 'surface');
+	await state.teleport(x, z, y, 'surface', {standBack:true});
 	return destination.name;
 }

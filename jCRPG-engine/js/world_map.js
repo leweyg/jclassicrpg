@@ -188,7 +188,7 @@ export class WorldMap {
 
 	_teleport(marker) {
 		this.close();
-		if(marker.realm==='cave')this.state.teleport(marker.x,marker.z,marker.y,'cave').then(()=>{this.renderer._syncCamera();this.renderer.requestRender();}).catch(error=>this.renderer.onStatus?.(error.message));else this.renderer.teleportTo(marker.x, marker.z);
+		this.renderer.teleportTo(marker.x, marker.z, marker.y ?? null, marker.realm ?? 'surface');
 		this.update(true);
 	}
 

@@ -1,3 +1,4 @@
+import {actorArrival} from './interactions/arrival.js';
 /*
  * game_state.js
  *
@@ -213,7 +214,7 @@ export class GameState {
 		return this.exploration.update(this.party.position.x, this.party.position.z);
 	}
 
-	async teleport(x,z,y=null,realm='surface') {
+	async teleport(x,z,y=null,realm='surface',{standBack=false}={}) {
 		const stream=this.exploration, p=this.party.position, revision=(this._teleportRevision??0)+1;
 		this._teleportRevision=revision;this._teleporting=true;
 		try {
@@ -223,8 +224,13 @@ export class GameState {
 			if (!stream.getChunk(x,z)) { stream.update(p.x,p.z); throw Error('Destination unavailable; please retry.'); }
 			const floor=y===null?stream.heightAt(x,z):stream.floorAt(x,y,z,realm);
 			if(!Number.isFinite(floor)){stream.update(p.x,p.z);throw Error('Destination has no walkable floor.');}
-			Object.assign(p,{x,y:floor,z});this.realm=realm;
-			this.saveDeltas?.persist(p,realm);
+            let arrival;
+            try {
+                arrival = standBack ? actorArrival(stream, {x,y:floor,z}, realm, this.saveDeltas?.data.camera?.yaw ?? 0) : {position:{x,y:floor,z}};
+            } catch (error) { stream.update(p.x,p.z); throw error; }
+            Object.assign(p,arrival.position);this.realm=realm;
+            stream.update(p.x,p.z);
+            this.saveDeltas?.persist(p,realm,arrival.camera);
 			return true;
 		} finally { if(this._teleportRevision===revision)this._teleporting=false; }
 	}
