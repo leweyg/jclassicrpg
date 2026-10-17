@@ -6,15 +6,15 @@ function fixture(options){
  const scene=new THREE.Scene(),effect=new ShrineParticles(scene,options),camera=new THREE.PerspectiveCamera(62,1,.1,500);
  camera.position.set(0,2,8);camera.lookAt(0,2,0);
  const catalog={shrines:{a:{position:[0,0,0]},b:{position:[100,0,0]}}},save={deltaRevision:0,shrines:{},shrineRoutes:{}},player={x:0,y:0,z:8};
- const update=(turn=0,realm='surface')=>effect.update(catalog,save,player,camera,turn,realm);
+ const update=(seconds=0,realm='surface')=>effect.update(catalog,save,player,camera,seconds,realm);
  return {scene,effect,camera,catalog,save,player,update};
 }
-test('turn-only motion, static far markers, no redundant buffer updates, and depth ordering after rotation',()=>{
+test('active-time motion, static far markers, no redundant buffer updates, and depth ordering after rotation',()=>{
  const f=fixture();f.update();const a=f.effect.geometry.attributes.position,version=a.version,initial=a.array.slice();
  const far=f.effect.particles.filter(p=>p.position.x>90).map(p=>p.position.toArray());
  f.update();assert.equal(a.version,version);assert.deepEqual(a.array,initial);
- f.update(1);assert.notDeepEqual(a.array,initial);assert.deepEqual(f.effect.particles.filter(p=>p.position.x>90).map(p=>p.position.toArray()),far);
- f.camera.position.set(4,3,-6);f.camera.lookAt(0,2,0);f.update(1);
+ f.update(.25);assert.notDeepEqual(a.array,initial);assert.deepEqual(f.effect.particles.filter(p=>p.position.x>90).map(p=>p.position.toArray()),far);
+ f.camera.position.set(4,3,-6);f.camera.lookAt(0,2,0);f.update(.25);
  const depths=f.effect.sorted.map(p=>p.depth);assert.deepEqual(depths,[...depths].sort((a,b)=>a-b));
  assert.equal(f.effect.material.depthTest,false);assert.equal(f.effect.material.depthWrite,false);assert.equal(f.effect.material.fog,false);
  f.effect.dispose();assert.equal(f.scene.children.length,0);
@@ -30,15 +30,23 @@ test('bounded batch and zero direction yield finite point quads',()=>{
  const f=fixture({maxShrines:1,direction:[0,0,0]});f.update();
  assert.ok(f.effect.geometry.drawRange.count<=112*2*6);assert.ok(f.effect.geometry.attributes.position.array.every(Number.isFinite));f.effect.dispose();
 });
-test('coil fits above the table and below the chimney, rotating clockwise only with turns',()=>{
+test('coil fits above the table and below the chimney, rotating clockwise only with active time',()=>{
  const f=fixture();f.catalog.shrines={a:{position:[0,0,0]}};f.update();
  const positions=f.effect.geometry.attributes.position;
  for(let i=0;i<f.effect.sorted.length*4;i++)assert.ok(positions.getY(i)>.463&&positions.getY(i)<1.056);
  const first=f.effect.particles[0],before=first.position.clone(),center=f.effect.options.offset;
- f.update(1);
+ f.update(.25);
  const after=first.position.clone();
  // Viewed down +Y, +X -> +Z is clockwise (negative Three.js Y rotation).
  assert.ok((before.x-center[0])*(after.z-center[2])-(before.z-center[2])*(after.x-center[0])>0);
- f.player.z=25;f.update(1);assert.deepEqual(first.position,after,'approach changes fade, not rotation phase');
+ f.player.z=25;f.update(.25);assert.deepEqual(first.position,after,'approach changes fade, not rotation phase');
+ f.effect.dispose();
+});
+
+test('default rotation completes one clockwise revolution in eight active seconds',()=>{
+ const f=fixture();f.update();const start=f.effect.particles[0].position.clone();
+ f.update(2);const quarter=f.effect.particles[0].position;
+ assert.ok(Math.abs(quarter.x)<1e-10&&quarter.z>0);
+ f.update(8);assert.ok(f.effect.particles[0].position.distanceTo(start)<1e-10);
  f.effect.dispose();
 });

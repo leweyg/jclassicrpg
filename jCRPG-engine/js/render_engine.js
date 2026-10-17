@@ -425,6 +425,12 @@ export class SceneRenderer {
 		const moving = this._hasMovement();
 		const dt = this._lastFrameTime === null ? 0 : Math.min((now - this._lastFrameTime) / 1000, 0.1);
 		if (moving) this._updateMovement(dt);
+		// Every requested frame advances energy (including mouse-look and scroll).
+		// Keep this timestamp across idle so waking makes a small, bounded step;
+		// never schedule a frame just for animation or catch up suspended time.
+		const energyElapsed = this._lastEnergyFrameTime == null ? 0 : Math.max(0, (now - this._lastEnergyFrameTime) / 1000);
+		this._energyTimeSeconds = (this._energyTimeSeconds ?? 0) + (energyElapsed > .1 ? .005 : energyElapsed);
+		this._lastEnergyFrameTime = now;
 		this._applyLook();
 		if (this.gameState && this.worldView) {
 			const cave=this.gameState.realm==='cave';
@@ -433,7 +439,7 @@ export class SceneRenderer {
 			this._ambient.intensity=cave?0.65:0.9;
 			this._sun.intensity=cave?0.15:1.4;
 			const pos=this.gameState.party.position;
-			this.worldView.bakedView?.shrineParticles.update(this.gameState.exploration.interactionCatalog,this.gameState.saveDeltas?.data,pos,this.camera,this.gameState.time.turn,this.gameState.realm);
+			this.worldView.bakedView?.shrineParticles.update(this.gameState.exploration.interactionCatalog,this.gameState.saveDeltas?.data,pos,this.camera,this._energyTimeSeconds ?? 0,this.gameState.realm);
 			const inside=this.gameState.exploration.cellAt?.(pos.x,pos.y,pos.z,this.gameState.realm)?.flags & 2048;
 			if(this._lantern){this._lantern.visible=cave||!!inside;this._lantern.position.copy(this.camera.position);}
 			this.scene.fog.color.set(cave?SURFACE_FOG_CAVE_COLOR:SURFACE_FOG_COLOR);

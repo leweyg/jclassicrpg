@@ -92,3 +92,20 @@ test('render scheduler sleeps when idle, wakes for input, and stops on cancellat
 		globalThis.document = oldDocument; globalThis.requestAnimationFrame = oldRAF; globalThis.cancelAnimationFrame = oldCancel;
 	}
 });
+
+ test('energy advances on look-only frames at normal speed and caps idle wake to 5ms', () => {
+ const previous=globalThis.document;globalThis.document={hidden:false};
+ try {
+  const r=Object.assign(Object.create(SceneRenderer.prototype),{
+   _running:true,_lastFrameTime:null,_hasMovement:()=>false,_applyLook(){},
+   renderer:{render(){}},requestRender(){assert.fail('energy must not schedule idle frames');},
+  });
+  r._renderFrame(0);assert.equal(r._energyTimeSeconds,0);
+  for(let i=1;i<=120;i++)r._renderFrame(i*1000/60);
+  assert.ok(Math.abs(r._energyTimeSeconds-2)<1e-10,'two seconds of look updates advances the energy clock by two seconds');
+  r._renderFrame(62000);assert.ok(Math.abs(r._energyTimeSeconds-2.005)<1e-10);
+  r._renderFrame(62016);assert.ok(Math.abs(r._energyTimeSeconds-2.021)<1e-10);
+  document.hidden=true;r._renderFrame(100000);assert.ok(Math.abs(r._energyTimeSeconds-2.021)<1e-10);
+  document.hidden=false;r._renderFrame(120000);assert.ok(Math.abs(r._energyTimeSeconds-2.026)<1e-10);
+ }finally{globalThis.document=previous;}
+ });

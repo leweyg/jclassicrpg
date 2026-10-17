@@ -6,13 +6,13 @@ export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
  offset: [0, 0, 0],
  nearDistance: 30, farDistance: 380, maxShrines: 24, samples: 112,
  // World-space streak direction; zero gives round alpha-textured points.
- direction: [0, 1, 0], streakLength: .025, width: .008, turnRotation: .19,
+ direction: [0, 1, 0], streakLength: .025, width: .008, rotationHz: .125,
 });
 const smooth = (a,b,x) => {const t=THREE.MathUtils.clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const wrapDelta = x => THREE.MathUtils.euclideanModulo(x+800,1600)-800;
 
 /** One bounded transparent batch. No timers, RAF callbacks, lights or bloom passes.
- * Particle phase depends ONLY on simulation turn. View changes rebuild billboards
+ * Particle phase depends ONLY on the supplied active-update time in seconds. View changes rebuild billboards
  * and sort their centers in camera space, including across different shrines.
  */
 export class ShrineParticles {
@@ -30,10 +30,10 @@ export class ShrineParticles {
   this.particles=Array.from({length:capacity},()=>({position:new THREE.Vector3(),depth:0,alpha:0,strand:0,scale:1}));
   this.sorted=[];this.view=new THREE.Vector3();this.right=new THREE.Vector3();this.up=new THREE.Vector3();this.direction=new THREE.Vector3();
  }
- update(catalog,save,player,camera,turn=0,realm='surface') {
+ update(catalog,save,player,camera,timeSeconds=0,realm='surface') {
   this.mesh.visible=realm==='surface';if(!this.mesh.visible)return;
   camera.updateMatrixWorld();
-  const key=[...camera.matrixWorld.elements,player.x,player.y,player.z,turn,save?.deltaRevision??0,JSON.stringify(this.options)].join(',');
+  const key=[...camera.matrixWorld.elements,player.x,player.y,player.z,timeSeconds,save?.deltaRevision??0,JSON.stringify(this.options)].join(',');
   if(this.key===key&&this.catalog===catalog&&this.save===save)return;
   this.key=key;this.catalog=catalog;this.save=save;
   const o=this.options,frontier=new Set(Object.values(save?.shrineRoutes??{}).flatMap(r=>r.litFrontierShrineIds??[]));
@@ -53,7 +53,7 @@ export class ShrineParticles {
     const sparse=i%8===0;if(!sparse&&near===0)continue;
     // +angle moves +X toward +Z: clockwise when viewed from above (+Y).
     // Distance changes opacity/detail, never the rotation speed or phase.
-    const phase=near>0 ? turn*o.turnRotation : 0;
+    const phase=near>0 ? (timeSeconds*o.rotationHz%1)*Math.PI*2 : 0;
     const t=i/(o.samples-1),angle=t*Math.PI*2*o.loops+strand*Math.PI+phase;
     const radius=o.radius*(.72+.28*Math.sin(t*Math.PI));
     const p=this.particles[count++];p.position.set(s.x+o.offset[0]+Math.cos(angle)*radius,s.y+o.offset[1]+o.baseHeight+t*o.height,s.z+o.offset[2]+Math.sin(angle)*radius);
