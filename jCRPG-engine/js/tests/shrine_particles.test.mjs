@@ -22,7 +22,7 @@ test('active-time motion, static far markers, no redundant buffer updates, and d
 test('activation brightens coils and remote route trail, caves hide them, and positions wrap',()=>{
  const f=fixture();f.update();const near=f.effect.sorted.find(p=>p.position.x<1).alpha,far=f.effect.sorted.find(p=>p.position.x>90).alpha;
  f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
- assert.ok(f.effect.sorted.find(p=>p.position.x<1).alpha>near*3);assert.ok(f.effect.sorted.find(p=>p.position.x>90).alpha>far);
+ assert.ok(f.effect.sorted.find(p=>p.position.x<1).alpha>near*1.8);assert.ok(f.effect.sorted.find(p=>p.position.x>90).alpha>far);
  f.update(0,'cave');assert.equal(f.effect.mesh.visible,false);
  f.catalog.shrines.a.position[0]=1599;f.save.deltaRevision++;f.update();assert.equal(f.effect.mesh.visible,true);assert.ok(f.effect.sorted.some(p=>p.position.x<-.5));f.effect.dispose();
 });
@@ -64,5 +64,28 @@ test('outer beacon reaches below ground and above roof, with finer tangent-align
  const edge=new THREE.Vector3().fromBufferAttribute(positions,index*4+3).sub(new THREE.Vector3().fromBufferAttribute(positions,index*4));
  const projected=f.effect.right.clone().multiplyScalar(p.direction.dot(f.effect.right)).addScaledVector(f.effect.up,p.direction.dot(f.effect.up));
  assert.ok(edge.normalize().dot(projected.normalize())>.9999,'quad long axis follows projected tangent');
+ f.effect.dispose();
+});
+
+test('dormant shrines are readable nearby; activated destinations dominate guidance from a lit shrine',()=>{
+ const f=fixture();f.player.z=2;
+ f.catalog.shrines.c={position:[-100,0,0]};f.save.shrines.b={activated:true};
+ const peak=predicate=>Math.max(...f.effect.sorted.filter(predicate).map(p=>p.alpha));
+ f.update();
+ assert.ok(peak(p=>Math.abs(p.position.x)<1&&p.layer===1)>.45,'dormant outer coil is visible at the hut');
+ const baseline=peak(p=>p.position.x>90);
+ f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
+ const active=peak(p=>p.position.x>90),dormant=peak(p=>p.position.x< -90);
+ assert.ok(active>baseline*2.5);assert.ok(active>dormant*6);
+ assert.ok(dormant>.1&&dormant<.15,'unactivated locations remain faint guidance');
+ f.player.z=20;f.update();assert.ok(peak(p=>p.position.x>90)<active/2,'guidance fades when leaving the shrine');
+ f.effect.dispose();
+});
+test('distant outer streaks retain a thin visible screen-space width',()=>{
+ const f=fixture();f.catalog.shrines={a:{position:[0,0,-200]}};f.update();
+ const index=f.effect.sorted.findIndex(p=>p.layer===1),p=f.effect.sorted[index],a=f.effect.geometry.attributes.position;
+ const width=new THREE.Vector3().fromBufferAttribute(a,index*4+1).distanceTo(new THREE.Vector3().fromBufferAttribute(a,index*4));
+ const pixels=width*f.camera.projectionMatrix.elements[5]*800/(2*-p.depth);
+ assert.ok(pixels>=1.49&&pixels<1.6);
  f.effect.dispose();
 });

@@ -4,7 +4,10 @@ export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
  // Shrine OBJ: table top y=.463, chimney underside y=1.056.
  loops: 3.5, height: .48, radius: .409088 * .61, baseHeight: .52,
  offset: [0, 0, 0],
- nearDistance: 30, farDistance: 380, maxShrines: 24, samples: 112,
+ nearDistance: 30, farDistance: 380,
+ dormantNearOpacity: .48, activeNearOpacity: .95,
+ dormantFarOpacity: .045, activeFarOpacity: .32,
+ dormantGuidanceOpacity: .12, activeGuidanceOpacity: .9, beaconMinPixels: 1.5, maxShrines: 24, samples: 112,
  // null follows each helix tangent; a vector overrides it, zero gives points.
  direction: null, streakLength: .025, width: .008, rotationHz: .125,
  beacon: Object.freeze({height: 6, baseHeight: -1.5, radius: .7, loops: 3.5, samples: 160, width: .006, streakLength: .08}),
@@ -31,10 +34,10 @@ export class ShrineParticles {
   this.particles=Array.from({length:capacity},()=>({position:new THREE.Vector3(),direction:new THREE.Vector3(),layer:0,width:0,streakLength:0,depth:0,alpha:0,strand:0,scale:1}));
   this.sorted=[];this.view=new THREE.Vector3();this.right=new THREE.Vector3();this.up=new THREE.Vector3();
  }
- update(catalog,save,player,camera,timeSeconds=0,realm='surface') {
+ update(catalog,save,player,camera,timeSeconds=0,realm='surface',viewportHeight=800) {
   this.mesh.visible=realm==='surface';if(!this.mesh.visible)return;
   camera.updateMatrixWorld();
-  const key=[...camera.matrixWorld.elements,player.x,player.y,player.z,timeSeconds,save?.deltaRevision??0,JSON.stringify(this.options)].join(',');
+  const key=[...camera.matrixWorld.elements,player.x,player.y,player.z,timeSeconds,viewportHeight,save?.deltaRevision??0,JSON.stringify(this.options)].join(',');
   if(this.key===key&&this.catalog===catalog&&this.save===save)return;
   this.key=key;this.catalog=catalog;this.save=save;
   const o=this.options,frontier=new Set(Object.values(save?.shrineRoutes??{}).flatMap(r=>r.litFrontierShrineIds??[]));
@@ -47,7 +50,12 @@ export class ShrineParticles {
   for(const s of candidates.slice(0,o.maxShrines)) {
    const near=1-smooth(o.nearDistance*.65,o.nearDistance,s.d);
    const fade=1-smooth(o.farDistance*.65,o.farDistance,s.d);
-   const alpha=fade*((s.active ? .85 : .16)*near+(1-near)*(s.active ? .24 : .045)*(1+resonance*2+(frontier.has(s.id)?1:0)));
+   // Standing at a lit shrine reveals the activated network prominently,
+   // while dormant destinations remain subtle hints (even route frontiers).
+   const distant=s.active
+    ? THREE.MathUtils.lerp(o.activeFarOpacity,o.activeGuidanceOpacity,resonance)
+    : THREE.MathUtils.lerp(o.dormantFarOpacity,o.dormantGuidanceOpacity,resonance)+(frontier.has(s.id) ? .035 : 0);
+   const alpha=fade*THREE.MathUtils.lerp(distant,s.active ? o.activeNearOpacity : o.dormantNearOpacity,near);
    // Distant coils are a fixed, sparse silhouette. The transition fades detail
    // instead of replacing scene objects or loading the shrine's chunk.
    for(let layer=0;layer<2;layer++) {
@@ -64,7 +72,7 @@ export class ShrineParticles {
      if(o.direction===null)p.direction.set(dr*Math.cos(angle)-radius*da*Math.sin(angle),shape.height,dr*Math.sin(angle)+radius*da*Math.cos(angle)).normalize();
      else p.direction.fromArray(o.direction);
      p.depth=this.view.copy(p.position).applyMatrix4(camera.matrixWorldInverse).z;
-     p.alpha=alpha*(sparse?1:near)*(.65+.35*Math.sin(t*Math.PI))*(layer ? .75 : 1);
+     p.alpha=alpha*(sparse?1:near)*(.65+.35*Math.sin(t*Math.PI));
      p.strand=strand;p.layer=layer;p.width=shape.width;p.streakLength=shape.streakLength;
      p.scale=1+(1-near)*Math.min(layer ? 12 : 3,s.d/(layer ? 30 : 100));this.sorted.push(p);
     }
@@ -81,9 +89,13 @@ export class ShrineParticles {
     along.copy(this.right).multiplyScalar(dx/length).addScaledVector(this.up,dy/length);
     across.copy(this.right).multiplyScalar(dy/length).addScaledVector(this.up,-dx/length);
    }else{along.copy(this.up);across.copy(this.right);}
+   // Subpixel strands vanished against scenery. Give only the outer beacon
+   // a thin screen-space floor, keeping its physical coil radius unchanged.
+   const worldPerPixel=2*Math.max(0,-p.depth)/(camera.projectionMatrix.elements[5]*Math.max(1,viewportHeight));
+   const halfWidth=p.layer===1 ? Math.max(p.width*p.scale,worldPerPixel*o.beaconMinPixels*.5) : p.width*p.scale;
    for(let corner=0;corner<4;corner++){
     const u=corner===1||corner===2?1:-1,v=corner>=2?1:-1,index=i*4+corner;
-    this.view.copy(p.position).addScaledVector(across,u*p.width*p.scale).addScaledVector(along,v*(p.width+p.streakLength*length)*p.scale);
+    this.view.copy(p.position).addScaledVector(across,u*halfWidth).addScaledVector(along,v*(halfWidth+p.streakLength*length*p.scale));
     attrs.position.setXYZ(index,this.view.x,this.view.y,this.view.z);attrs.color.setXYZW(index,color.r,color.g,color.b,p.alpha);attrs.uv.setXY(index,(u+1)/2,(v+1)/2);
    }
   }
