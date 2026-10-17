@@ -194,7 +194,7 @@ async function main() {
 			sim.gameState.exploration.retry();
 		});
 		document.getElementById('world-save').addEventListener('click', () => {
-			const state=sim.gameState;state.saveDeltas.persist(state.party.position,state.realm);
+			const state=sim.gameState;renderer.saveView();
 			const url=URL.createObjectURL(new Blob([state.saveDeltas.export()],{type:'application/json'}));
 			const a=document.createElement('a');a.href=url;a.download='jcrpg-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 		});
@@ -206,7 +206,7 @@ async function main() {
                 try { state.interactions.initialize(); } catch(error) {state.saveDeltas.data=previous;throw error;}
 				try { if(save.player) await state.teleport(save.player.x,save.player.z,save.player.y,save.player.realm); }
 				catch(error) { state.saveDeltas.data=previous;throw error; }
-				renderer.worldView.sync();renderer._syncCamera();renderer.requestRender();state.saveDeltas.persist(state.party.position,state.realm);appendLog('Save imported.');
+				renderer.restoreView();renderer.worldView.sync();renderer._syncCamera();renderer.requestRender();renderer.saveView();appendLog('Save imported.');
 			} catch(error) { appendLog('Import failed: '+error.message); }
 			event.target.value='';
 		});

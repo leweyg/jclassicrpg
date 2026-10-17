@@ -22,6 +22,7 @@ export function validateSave(input){
  if(data?.interactionContentVersion==='interactions-v1')data.interactionContentVersion=INTERACTION_VERSION;
  if(data?.saveVersion!==2||data.worldId!==WORLD_ID||data.generatorVersion!==GENERATOR_VERSION||data.interactionContentVersion!==INTERACTION_VERSION)throw Error('Save belongs to a different compiled world');
  if(data.player&&(!['surface','cave'].includes(data.player.realm)||!['x','y','z'].every(k=>Number.isFinite(data.player[k]))||data.player.x<0||data.player.x>=1600||data.player.z<0||data.player.z>=1600||data.player.y<0||data.player.y>80))throw Error('Invalid saved position');
+ if(data.camera!=null&&(!Number.isFinite(data.camera.yaw)||!Number.isFinite(data.camera.pitch)||Math.abs(data.camera.pitch)>1.2))throw Error('Invalid saved camera direction');
  for(const field of dictionaries)if(!data[field]||Array.isArray(data[field])||typeof data[field]!=='object')throw Error('Invalid save dictionary: '+field);
  for(const field of ['openedContainers','discoveredLocations','evidence'])if(Object.values(data[field]).some(v=>v!==true))throw Error('Invalid discovery state');
  if(!Number.isSafeInteger(data.lastTransaction)||data.lastTransaction<0)throw Error('Invalid transaction number');
@@ -36,7 +37,7 @@ export function validateSave(input){
 }
 export class SaveDeltas{
  constructor(storage=null){this.storage=storage;this.data=emptySave();this.error=null;try{const raw=storage?.getItem(KEY)??storage?.getItem(OLD_KEY);if(raw)this.data=validateSave(JSON.parse(raw));}catch(e){this.error=e.message;}}
- persist(position,realm){this.data.player={...position,realm};try{if(!this.storage)throw Error('Local saving is unavailable; export a save to retain progress.');this.storage.setItem(KEY,JSON.stringify(this.data));this.error=null;}catch(e){this.error=e.message;}return !this.error;}
+ persist(position,realm,camera){this.data.player={...position,realm};if(camera)this.data.camera={yaw:camera.yaw,pitch:camera.pitch};try{if(!this.storage)throw Error('Local saving is unavailable; export a save to retain progress.');this.storage.setItem(KEY,JSON.stringify(this.data));this.error=null;}catch(e){this.error=e.message;}return !this.error;}
  open(id){this.data.openedContainers[id]=true;this.data.deltaRevision++;}
  export(){return JSON.stringify(this.data,null,2);}
  import(text){if(text.length>8000000)throw Error('Save too large');const value=validateSave(JSON.parse(text));this.data=value;return value;}

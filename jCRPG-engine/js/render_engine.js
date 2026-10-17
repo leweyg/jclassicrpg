@@ -394,6 +394,7 @@ export class SceneRenderer {
 
 	async buildWorld(gameState) {
 		this.gameState = gameState;
+        this.restoreView();
 		this._addLights();
 		await this.loadSky();
 		this.worldView = new WorldView(this.scene, gameState.exploration, () => this.requestRender());
@@ -453,6 +454,22 @@ export class SceneRenderer {
 		if (moving) this.requestRender();
 	}
 
+    /** Save gameplay angles, never the temporary conversation camera framing. */
+    saveView() {
+        const state = this.gameState;
+        if (!state?.saveDeltas) return;
+        return state.saveDeltas.persist(state.party.position, state.realm, {
+            yaw: this._yaw, pitch: this._pitch,
+        });
+    }
+
+    restoreView() {
+        const view = this.gameState?.saveDeltas?.data.camera;
+        if (!view) return; // Older saves retain the default starting direction.
+        this._yaw = view.yaw;
+        this._pitch = view.pitch;
+    }
+
 	cancelInput() {
         clearTimeout(this._clickTimer);
         this._touchDual = false;
@@ -461,7 +478,7 @@ export class SceneRenderer {
 		this.onGestureHighlight?.(null);
 		this._pointers.clear();
 		this._keys?.clear();
-		if (this.gameState?.saveDeltas) this.gameState.saveDeltas.persist(this.gameState.party.position,this.gameState.realm);
+		this.saveView();
 		this._movePointer = null;
 		this._joystickEl.style.display = "none";
 		this._lastFrameTime = null;
