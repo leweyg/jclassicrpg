@@ -383,3 +383,21 @@ test('each journal section puts its completed disclosure after available quests 
  }
  assert.ok(ui.body.querySelectorAll('h3').some(heading=>heading.textContent==='☐ Mini quests'));
 });
+
+test('opening story presents one paragraph per step and resumes only after the third', t => {
+    const {ui, calls, origin} = fixture(t);
+    const story = {title:'The Spiral Grid', paragraphs:['First paragraph.', 'Second paragraph.', 'Third paragraph.']};
+    ui.openStory(story);
+    for (let index = 0; index < 3; index++) {
+        assert.equal(ui.dialog.open, true);
+        assert.equal(ui.title.textContent, story.title);
+        assert.deepEqual(ui.body.querySelectorAll('p').map(p => p.textContent), [story.paragraphs[index]]);
+        assert.equal(ui.primaryButton.textContent, index === 2 ? 'Begin the journey' : 'Continue');
+        assert.equal(document.activeElement, ui.primaryButton);
+        assert.equal(calls.includes('resume'), false);
+        ui.dialog.emit('keydown', {key:'e'});
+    }
+    assert.equal(ui.dialog.open, false);
+    assert.equal(document.activeElement, origin);
+    assert.deepEqual(calls, ['pause', 'resume', 'render']);
+});

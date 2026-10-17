@@ -358,12 +358,14 @@ export class InteractionUI {
         this.focus();
     }
 
-    openStory(story) {
+    openStory(story, index = 0) {
         this.open(story.title, 'story');
-        for (const paragraph of story.paragraphs) this.text('p', paragraph);
-        this.button('Begin the journey', () => this.close(), {primary:true});
-        // Long opening prose must begin at its first paragraph, even on a phone.
-        this.closeButton.focus({preventScroll:true});
+        this.text('p', story.paragraphs[index]);
+        const last = index === story.paragraphs.length - 1;
+        this.button(last ? 'Begin the journey' : 'Continue',
+            () => last ? this.close() : this.openStory(story, index + 1),
+            {primary:true});
+        this.focus();
         this.dialog.scrollTop = 0;
     }
 
