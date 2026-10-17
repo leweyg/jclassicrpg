@@ -33,3 +33,30 @@ test('shared opening has three paragraphs and published counts match the live ca
  assert.ok(html.includes(summary));
  assert.match(summary,/5 story quests, 62 side quests, and 279 total characters/);
 });
+
+test('reading-mode offer survives reading and saves, but ends after a world interaction', async () => {
+ const {readingModeOfferAvailable} = await import('../opening_story.js');
+ const {GameState} = await import('../game_state.js');
+ const {SaveDeltas} = await import('../world/save_deltas.js');
+ const state = new GameState();
+ state.realm = 'surface';
+ state.saveDeltas = new SaveDeltas();
+ const offer = new OpeningStoryOffer(() => state.saveDeltas.data.flags, true);
+ assert.equal(readingModeOfferAvailable(state.saveDeltas.data), true);
+ offer.dismiss();
+ assert.equal(readingModeOfferAvailable(state.saveDeltas.data), true, 'Read Story does not dismiss reading mode');
+ const restored = new SaveDeltas();
+ restored.import(state.saveDeltas.export());
+ assert.equal(readingModeOfferAvailable(restored.data), true);
+ await state.interact(null);
+ assert.equal(readingModeOfferAvailable(state.saveDeltas.data), true);
+ state.interactions = {interact: () => {throw Error('Unavailable');}};
+ await assert.rejects(state.interact({kind:'shrine'}), /Unavailable/);
+ assert.equal(readingModeOfferAvailable(state.saveDeltas.data), true);
+ state.interactions.interact = () => ({message:'Recorded.'});
+ await state.interact({kind:'shrine'});
+ assert.equal(readingModeOfferAvailable(state.saveDeltas.data), false);
+ restored.import(state.saveDeltas.export());
+ assert.equal(readingModeOfferAvailable(restored.data), false);
+ assert.equal(readingModeOfferAvailable({flags:{},lastTransaction:5}), false);
+});

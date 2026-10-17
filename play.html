@@ -192,7 +192,7 @@
 	}
     #hud-nav.beside-compass { top: calc(0.5rem + env(safe-area-inset-top)); }
 	#hud-nav button { pointer-events: auto; max-width: 100%; overflow-wrap: anywhere; }
-	#world-interact, #world-intuition, #game-menu button, #game-menu a {
+	#world-interact, #world-reading-mode, #world-intuition, #game-menu button, #game-menu a {
 		box-sizing: border-box;
 		min-height: 48px;
 		min-width: 48px;
@@ -211,7 +211,7 @@
 		background: transparent;
 		border-color: rgba(179, 144, 80, 0.25);
 	}
-	#world-interact, #world-intuition {
+	#world-interact, #world-reading-mode, #world-intuition {
 		background: rgba(41, 55, 43, 0.08);
 		text-shadow: 0 1px 3px #000;
 	}
@@ -341,6 +341,7 @@ body:has(#interaction-panel[data-kind="dialogue"][open]) .hud { visibility:hidde
 	<div id="hud-location" aria-live="off"></div>
 	<button id="world-intuition" type="button" aria-haspopup="dialog" hidden disabled>Intuition</button>
 	<button id="world-interact" type="button" title="Interact [E]" hidden disabled>Interact</button>
+	<button id="world-reading-mode" type="button" aria-haspopup="dialog" hidden>Reading mode</button>
 </div>
 
 <dialog id="world-map-dialog" aria-labelledby="map-title">

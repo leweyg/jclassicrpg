@@ -5,6 +5,7 @@ export function bindHudLayout() {
   const location = document.getElementById('hud-location');
   const intuition = document.getElementById('world-intuition');
   const interact = document.getElementById('world-interact');
+  const reading = document.getElementById('world-reading-mode');
   let frame;
   const layout = () => {
     frame = null;
@@ -14,13 +15,15 @@ export function bindHudLayout() {
     const fits = right - width >= compassRect.right + 8;
     nav.classList.toggle('beside-compass', fits);
     interact.style.marginTop = '0px';
-    if (fits && !interact.hidden) {
-      interact.style.marginTop = `${Math.max(0, compassRect.bottom + 8 - interact.getBoundingClientRect().top)}px`;
+    if (reading) reading.style.marginTop = '0px';
+    const firstAction = interact.hidden ? reading : interact;
+    if (fits && firstAction && !firstAction.hidden) {
+      firstAction.style.marginTop = `${Math.max(0, compassRect.bottom + 8 - firstAction.getBoundingClientRect().top)}px`;
     }
   };
   const schedule = () => { if (frame == null) frame = requestAnimationFrame(layout); };
   const observer = new ResizeObserver(schedule);
-  for (const element of [location, intuition, interact, compass]) observer.observe(element);
+  for (const element of [location, intuition, interact, compass, reading].filter(Boolean)) observer.observe(element);
   window.addEventListener('resize', schedule);
   schedule();
 }

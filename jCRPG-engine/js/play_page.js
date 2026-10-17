@@ -1,5 +1,5 @@
 import {startReadingMode} from './reading_mode.js';
-import {loadOpeningStory, OpeningStoryOffer} from './opening_story.js';
+import {loadOpeningStory, OpeningStoryOffer, readingModeOfferAvailable} from './opening_story.js';
 import {bindHudLayout} from './hud_layout.js';
 import { InteractionUI } from './interactions/ui.js';
 /*
@@ -118,6 +118,14 @@ async function main() {
                 travel: interactionsUI.onTravelQuest, log: appendLog});
         });
         interactionsUI.closeButton.before(readingButton);
+        const hudReadingButton = document.getElementById('world-reading-mode');
+        hudReadingButton.addEventListener('click', () => {
+            const showStory = storyOffer.available();
+            storyOffer.dismiss();
+            interactionsUI.persist();
+            startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
+                travel: interactionsUI.onTravelQuest, story: showStory ? openingStory : null, log: appendLog});
+        });
 		document.getElementById('hud-log').addEventListener('click',()=>interactionsUI.openJournal());
 		renderer.onInteractionPanel=()=>interactionsUI.show();
 		window.__worldMap = worldMap;
@@ -205,6 +213,7 @@ async function main() {
 		renderer.onViewChange = (now,force) => {
             worldMap.update(false, now);
 			updateLocation(now,force);
+			hudReadingButton.hidden = interactionsUI.readingModeActive || !readingModeOfferAvailable(sim.gameState.saveDeltas.data);
 			const action=renderer.nearbyInteraction();
 			const button=document.getElementById('world-interact');
 			renderer.highlightInteraction(action);

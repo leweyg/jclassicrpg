@@ -242,6 +242,7 @@ export class GameState {
 		if (action.kind!=='portal') {
             if(action.kind==='actor')await this.preloadDialogue(action.targetId);
             const result=this.interactions.interact(action);
+            this.saveDeltas.data.flags['reading-mode-pending'] = false;
             this.saveDeltas.persist(this.party.position,this.realm);
             return result.message??result.text??'Recorded.';
         }
@@ -251,6 +252,7 @@ export class GameState {
 		await this.teleport(dest[0],dest[2],dest[1],realm);
 		if(portal.kind==='cave')this.arrivalYaw=caveArrivalYaw(this.exploration,portal,realm==='cave');
 		this.saveDeltas.data.discoveredLocations[portal.id]=true;
+        this.saveDeltas.data.flags['reading-mode-pending'] = false;
 		this.saveDeltas.persist(this.party.position,this.realm);
 		return portal.kind==='cave'?(realm==='cave'?'Entered the cave.':'Returned to the surface.'):'Changed floor.';
 	}
