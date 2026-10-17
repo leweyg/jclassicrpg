@@ -106,6 +106,18 @@ async function main() {
             worldMap.update(true);
             renderer.requestRender();
         };
+        const readingButton = document.createElement('button');
+        readingButton.type = 'button';
+        readingButton.id = 'intuition-reading-mode';
+        readingButton.textContent = 'Reading mode';
+        readingButton.addEventListener('click', () => {
+            interactionsUI.close();
+            storyOffer.dismiss();
+            interactionsUI.persist();
+            startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
+                travel: interactionsUI.onTravelQuest, log: appendLog});
+        });
+        interactionsUI.closeButton.before(readingButton);
 		document.getElementById('hud-log').addEventListener('click',()=>interactionsUI.openJournal());
 		renderer.onInteractionPanel=()=>interactionsUI.show();
 		window.__worldMap = worldMap;

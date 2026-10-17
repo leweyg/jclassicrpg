@@ -57,3 +57,50 @@ test('reading reaches real actors, shrines, cave entrances, items and fittings i
 test('reading ends cleanly with no remaining goals', () => {
     assert.equal(readingGoal({mainNavigationGoal:()=>null,navigationGoal:()=>null}), null);
 });
+
+test('reading control follows modal dialogs and returns to the page on close', async () => {
+    const {keepReadingControlAccessible} = await import('../reading_mode.js');
+    const originalDocument = globalThis.document;
+    const originalObserver = globalThis.MutationObserver;
+    let notify, disconnected = false;
+    const host = (modal = false) => ({
+        tagName: modal ? 'DIALOG' : 'BODY', open: modal, isConnected: true,
+        matches: () => modal,
+        append(bar) { bar.parentElement = this; },
+    });
+    const body = host(), conversation = host(true), menu = host(true);
+    const handlers = new Map();
+    const bar = {
+        parentElement: body,
+        addEventListener: (name, callback) => handlers.set(name, callback),
+        removeEventListener: name => handlers.delete(name),
+    };
+    globalThis.document = {body, querySelectorAll: () => [conversation]};
+    globalThis.MutationObserver = class {
+        constructor(callback) { notify = callback; }
+        observe() {}
+        disconnect() { disconnected = true; }
+    };
+    try {
+        const release = keepReadingControlAccessible(bar);
+        assert.equal(bar.parentElement, conversation);
+        notify([{target:menu}]);
+        assert.equal(bar.parentElement, menu);
+        menu.open = false;
+        notify([{target:menu}]);
+        assert.equal(bar.parentElement, conversation);
+        conversation.open = false;
+        notify([{target:conversation}]);
+        assert.equal(bar.parentElement, body);
+        let stopped = false;
+        handlers.get('pointerup')({stopPropagation() { stopped = true; }});
+        assert.equal(stopped, true, 'control clicks must not advance dialogue');
+        release();
+        assert.equal(disconnected, true);
+        assert.equal(handlers.size, 0);
+        assert.equal(bar.parentElement, body);
+    } finally {
+        globalThis.document = originalDocument;
+        globalThis.MutationObserver = originalObserver;
+    }
+});

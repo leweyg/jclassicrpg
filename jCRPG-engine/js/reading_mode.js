@@ -19,19 +19,48 @@ export function goalAction(state, goal) {
     });
 }
 
+// Modal dialogs make controls outside them inert, regardless of z-index.
+// Keep the fixed control inside the most recently opened modal's top layer.
+export function keepReadingControlAccessible(bar) {
+    let dialogs = [...document.querySelectorAll('dialog[open]')];
+    const sync = records => {
+        for (const {target} of records) {
+            if (target.tagName !== 'DIALOG') continue;
+            dialogs = dialogs.filter(dialog => dialog !== target);
+            if (target.open) dialogs.push(target);
+        }
+        dialogs = dialogs.filter(dialog => dialog.isConnected && dialog.open);
+        const host = dialogs.filter(dialog => dialog.matches(':modal')).at(-1) ?? document.body;
+        if (bar.parentElement !== host) host.append(bar);
+    };
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, {subtree:true, attributes:true, attributeFilter:['open']});
+    const stopPropagation = event => event.stopPropagation();
+    const events = ['pointerdown', 'pointerup', 'keydown'];
+    for (const event of events) bar.addEventListener(event, stopPropagation);
+    sync([]);
+    return () => {
+        observer.disconnect();
+        for (const event of events) bar.removeEventListener(event, stopPropagation);
+        document.body.append(bar);
+    };
+}
+
 export function startReadingMode({state, renderer, ui, travel, story, log}) {
+    if (ui.readingModeActive) return;
+    ui.readingModeActive = true;
+    const url = new URL(location.href);
+    url.searchParams.set('read', '1');
+    history.replaceState(null, '', url);
     let active = true, busy = false;
     const bar = document.getElementById('reading-mode');
-    const exit = document.createElement('button');
-    exit.type = 'button';
-    exit.textContent = '×';
-    exit.setAttribute('aria-label', 'Exit reading mode');
-    ui.dialog.querySelector('header').append(exit);
     bar.hidden = false;
+    const releaseControl = keepReadingControlAccessible(bar);
     const stop = () => {
         active = false;
+        ui.readingModeActive = false;
         bar.hidden = true;
-        exit.remove();
+        releaseControl();
         ui.dialog.removeEventListener('close', advance);
         const url = new URL(location.href);
         url.searchParams.delete('read');
@@ -39,7 +68,6 @@ export function startReadingMode({state, renderer, ui, travel, story, log}) {
         ui.close();
         log('Reading mode closed. Continue exploring from here.');
     };
-    exit.onclick = stop;
     document.getElementById('reading-close').onclick = stop;
     async function advance() {
         if (!active || busy || ui.dialog.open) return;
@@ -85,5 +113,6 @@ export function startReadingMode({state, renderer, ui, travel, story, log}) {
         }
     }
     ui.dialog.addEventListener('close', advance);
-    ui.openStory(story);
+    if (story) ui.openStory(story);
+    else void advance();
 }
