@@ -1,12 +1,13 @@
 import * as THREE from '../threejs/three.module.js';
 import {ShrineParticles} from './shrine_particles.js';
+import {WaypointPillar} from './waypoint_pillar.js';
 import {CaveMarkers} from './cave_markers.js';
 import {loadObjModel} from '../obj_mtl_loader.js';
 import {charactersRef} from '../game_static_core.js';
 import {modelForActor,loadCharacterModel} from '../character_models.js';
 /** Shared immutable source assets; only instance buffers belong to slots. */
 export class BakedView {
- constructor(scene,stream,wake,{loadCharacters=()=>charactersRef.load(),loadCharacter=loadCharacterModel}={}){this.scene=scene;this.stream=stream;this.wake=wake;this.assets=new Map();this.slots=stream.chunks.map(()=>({revision:-1,ticket:0,group:new THREE.Group(),batches:new Map()}));this.dummy=new THREE.Object3D();this.routeArrows=new Map();this.realm='surface';this.debug=false;this.caveMarkers=new CaveMarkers(scene);this.shrineParticles=new ShrineParticles(scene);this.stats={assetFailures:[],instances:0};
+ constructor(scene,stream,wake,{loadCharacters=()=>charactersRef.load(),loadCharacter=loadCharacterModel}={}){this.scene=scene;this.stream=stream;this.wake=wake;this.assets=new Map();this.slots=stream.chunks.map(()=>({revision:-1,ticket:0,group:new THREE.Group(),batches:new Map()}));this.dummy=new THREE.Object3D();this.routeArrows=new Map();this.realm='surface';this.debug=false;this.caveMarkers=new CaveMarkers(scene);this.shrineParticles=new ShrineParticles(scene);this.waypointPillar=new WaypointPillar(scene);this.stats={assetFailures:[],instances:0};
   this.loadCharacter=loadCharacter;this.characterAssets=new Map();this.characterData=loadCharacters().catch(error=>{this.stats.assetFailures.push(`characters.json: ${error.message}`);return {};});
   this.fallbackGeometry=new THREE.BoxGeometry(1,1,.1);this.fallbackGeometry.translate(0,.5,0);this.fallbackMaterial=new THREE.MeshStandardMaterial({color:0x92795a,side:THREE.DoubleSide});for(const s of this.slots)scene.add(s.group);
  }
@@ -92,5 +93,5 @@ export class BakedView {
   }
   for(const [id,arrow]of this.routeArrows)if(!used.has(id)){this.scene.remove(arrow);arrow.dispose();this.routeArrows.delete(id);}
  }
- dispose(){this.shrineParticles.dispose();this.caveMarkers.dispose();for(const arrow of this.routeArrows.values()){this.scene.remove(arrow);arrow.dispose();}this.routeArrows.clear();for(const s of this.slots){s.ticket++;this.scene.remove(s.group);for(const b of s.batches.values())b.mesh.dispose();}for(const pending of this.characterAssets.values())pending.then(model=>{const materials=new Set(),textures=new Set();model?.traverse(child=>{if(!child.isMesh)return;child.geometry.dispose();for(const material of Array.isArray(child.material)?child.material:[child.material])materials.add(material);});for(const material of materials){for(const value of Object.values(material))if(value?.isTexture)textures.add(value);material.dispose();}for(const texture of textures)texture.dispose();});this.characterAssets.clear();this.fallbackGeometry.dispose();this.fallbackMaterial.dispose();}
+ dispose(){this.waypointPillar.dispose();this.shrineParticles.dispose();this.caveMarkers.dispose();for(const arrow of this.routeArrows.values()){this.scene.remove(arrow);arrow.dispose();}this.routeArrows.clear();for(const s of this.slots){s.ticket++;this.scene.remove(s.group);for(const b of s.batches.values())b.mesh.dispose();}for(const pending of this.characterAssets.values())pending.then(model=>{const materials=new Set(),textures=new Set();model?.traverse(child=>{if(!child.isMesh)return;child.geometry.dispose();for(const material of Array.isArray(child.material)?child.material:[child.material])materials.add(material);});for(const material of materials){for(const value of Object.values(material))if(value?.isTexture)textures.add(value);material.dispose();}for(const texture of textures)texture.dispose();});this.characterAssets.clear();this.fallbackGeometry.dispose();this.fallbackMaterial.dispose();}
 }

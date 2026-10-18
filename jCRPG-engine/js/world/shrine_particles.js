@@ -45,7 +45,7 @@ export class ShrineParticles {
   const candidates=Object.entries(catalog?.shrines??{}).map(([id,s])=>{
    const dx=wrapDelta(s.position[0]-player.x),dz=wrapDelta(s.position[2]-player.z);
    return {id,x:player.x+dx,y:s.position[1],z:player.z+dz,d:Math.hypot(dx,dz),active:!!save?.shrines?.[id]?.activated};
-  }).filter(s=>s.d<o.farDistance).sort((a,b)=>a.d-b.d);
+  }).filter(s=>o.waypoint||s.d<o.farDistance).sort((a,b)=>a.d-b.d);
   const primary=candidates[0];
   // Any nearby shrine can serve as a lookout. Keep the nearest landmark
   // visible on approach, then reveal the network only in the last few steps.
@@ -67,17 +67,20 @@ export class ShrineParticles {
   this.sorted.length=0;let count=0;
   for(const s of candidates.slice(0,o.maxShrines)) {
    const near=1-smooth(o.nearDistance*.65,o.nearDistance,s.d);
-   const fade=1-smooth(o.farDistance*.65,o.farDistance,s.d);
+   const fade=o.waypoint ? 1 : 1-smooth(o.farDistance*.65,o.farDistance,s.d);
    // Standing at a lit shrine reveals the activated network prominently,
    // while dormant destinations remain subtle hints (even route frontiers).
    const distant=s.active
     ? THREE.MathUtils.lerp(o.activeFarOpacity,o.activeGuidanceOpacity,resonance)
     : THREE.MathUtils.lerp(o.dormantFarOpacity,o.dormantGuidanceOpacity,resonance)+(frontier.has(s.id) ? .035 : 0);
    const reveal=s===primary ? 1-smooth(o.guidanceFullDistance,o.primaryFadeDistance,s.d) : guidance;
-   const alpha=reveal*fade*THREE.MathUtils.lerp(distant,s.active ? o.activeNearOpacity : o.dormantNearOpacity,near);
+   const alpha=o.waypoint
+    ? smooth(o.guidanceFullDistance,o.guidanceStartDistance,s.d)*o.activeGuidanceOpacity
+    : reveal*fade*THREE.MathUtils.lerp(distant,s.active ? o.activeNearOpacity : o.dormantNearOpacity,near);
+   if(o.waypoint&&alpha===0)continue;
    // Distant coils use a sparse, rotating silhouette. The transition fades detail
    // instead of replacing scene objects or loading the shrine's chunk.
-   for(let layer=0;layer<2;layer++) {
+   for(let layer=o.waypoint?1:0;layer<2;layer++) {
     const shape=layer ? o.beacon : o;
     // Grow only the landmark coil with distance; keep the altar-sized coil
     // and the beacon's underground base anchored to their actual shrine.
@@ -107,9 +110,9 @@ export class ShrineParticles {
   this.sorted.sort((a,b)=>a.depth-b.depth);
   this.right.setFromMatrixColumn(camera.matrixWorld,0);this.up.setFromMatrixColumn(camera.matrixWorld,1);
   const along=new THREE.Vector3(),across=new THREE.Vector3();
-  const attrs=this.geometry.attributes,gold=new THREE.Color(0xffce73),blue=new THREE.Color(0x90e6ff),dormant=new THREE.Color(0xaaaaaa),tint=new THREE.Color();
+  const attrs=this.geometry.attributes,gold=new THREE.Color(o.waypoint?0xffd75a:0xffce73),blue=new THREE.Color(0x90e6ff),dormant=new THREE.Color(0xaaaaaa),tint=new THREE.Color();
   for(let i=0;i<count;i++) {
-   const p=this.sorted[i],color=tint.copy(p.strand?blue:gold).lerp(dormant,p.dormancy);
+   const p=this.sorted[i],color=tint.copy(p.strand&&!o.waypoint?blue:gold).lerp(dormant,p.dormancy);
    const dx=p.direction.dot(this.right),dy=p.direction.dot(this.up),length=Math.hypot(dx,dy);
    if(length>1e-6){
     along.copy(this.right).multiplyScalar(dx/length).addScaledVector(this.up,dy/length);
