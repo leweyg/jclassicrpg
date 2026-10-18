@@ -109,3 +109,55 @@ test('reading control follows modal dialogs and returns to the page on close', a
         globalThis.MutationObserver = originalObserver;
     }
 });
+
+test('reading mode persists on and off across resume, export/import and new games', async () => {
+    const {saveReadingMode, savedReadingMode} = await import('../reading_mode.js');
+    const {resetStoredSave} = await import('../world/save_deltas.js');
+    const stored = new Map();
+    const storage = {getItem:key=>stored.get(key)??null,setItem:(key,value)=>stored.set(key,value),removeItem:key=>stored.delete(key)};
+    const state = {saveDeltas:new SaveDeltas(storage),party:{position:{x:800,y:41,z:907}},realm:'surface'};
+    assert.equal(savedReadingMode(state.saveDeltas.data), false);
+    saveReadingMode(state, true);
+    assert.equal(savedReadingMode(new SaveDeltas(storage).data), true);
+    const portable = new SaveDeltas();
+    portable.import(state.saveDeltas.export());
+    assert.equal(savedReadingMode(portable.data), true);
+    saveReadingMode(state, false);
+    assert.equal(savedReadingMode(new SaveDeltas(storage).data), false);
+    saveReadingMode(state, true);
+    resetStoredSave(storage);
+    assert.equal(savedReadingMode(new SaveDeltas(storage).data), false);
+});
+
+test('starting and closing reading mode save the setting and consume the entry URL', async () => {
+    const {startReadingMode, savedReadingMode} = await import('../reading_mode.js');
+    const originals = Object.fromEntries(['document','MutationObserver','location','history'].map(key=>[key,globalThis[key]]));
+    const body = {append(bar) {bar.parentElement=this;}};
+    const bar = {parentElement:body,addEventListener(){},removeEventListener(){}};
+    const close = {};
+    const listeners = new Map(), states = [];
+    let currentURL = 'https://example.test/play.html?read=1', finishTravel;
+    globalThis.document = {body,querySelectorAll:()=>[],getElementById:id=>id==='reading-mode'?bar:close};
+    globalThis.MutationObserver = class {observe(){} disconnect(){}};
+    globalThis.location = {href:currentURL};
+    globalThis.history = {replaceState(_state,_title,url){currentURL=String(url);globalThis.location.href=currentURL;}};
+    const state = {saveDeltas:new SaveDeltas(),party:{position:{x:800,y:41,z:907}},realm:'surface',
+        interactions:{mainNavigationGoal:()=>({name:'Next person'}),navigationGoal:()=>null}};
+    const ui = {dialog:{open:false,addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)},
+        onReadingModeChange:value=>states.push(value),close(){},open(){throw Error('Cancelled travel must not open a dialog');}};
+    try {
+        startReadingMode({state,ui,renderer:{setInputEnabled(){}},log(){},travel:()=>new Promise(resolve=>{finishTravel=resolve;})});
+        assert.equal(savedReadingMode(state.saveDeltas.data), true);
+        assert.equal(new URL(currentURL).searchParams.has('read'), false);
+        close.onclick();
+        assert.equal(savedReadingMode(state.saveDeltas.data), false);
+        assert.equal(ui.readingModeActive, false);
+        assert.equal(ui.stopReadingMode, null);
+        assert.equal(listeners.size, 0);
+        assert.deepEqual(states,[true,false]);
+        finishTravel();
+        await Promise.resolve();
+    } finally {
+        for (const [key,value] of Object.entries(originals)) globalThis[key]=value;
+    }
+});

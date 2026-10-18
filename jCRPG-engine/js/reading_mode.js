@@ -1,3 +1,12 @@
+export function savedReadingMode(save) {
+    return save.flags['reading-mode-enabled'] === true;
+}
+
+export function saveReadingMode(state, enabled) {
+    state.saveDeltas.data.flags['reading-mode-enabled'] = enabled;
+    state.saveDeltas.persist(state.party.position, state.realm);
+}
+
 /** Travel follows real quest state; every conversation and action stays reader-paced. */
 export function readingGoal(engine) {
     return engine.mainNavigationGoal() ?? engine.navigationGoal();
@@ -49,16 +58,23 @@ export function keepReadingControlAccessible(bar) {
 export function startReadingMode({state, renderer, ui, travel, log}) {
     if (ui.readingModeActive) return;
     ui.readingModeActive = true;
+    saveReadingMode(state, true);
+    ui.onReadingModeChange?.(true);
     const url = new URL(location.href);
-    url.searchParams.set('read', '1');
+    // The URL is a one-time entry request; the save owns the mode after that.
+    url.searchParams.delete('read');
     history.replaceState(null, '', url);
     let active = true, busy = false;
     const bar = document.getElementById('reading-mode');
     bar.hidden = false;
     const releaseControl = keepReadingControlAccessible(bar);
     const stop = () => {
+        if (!active) return;
         active = false;
         ui.readingModeActive = false;
+        ui.stopReadingMode = null;
+        saveReadingMode(state, false);
+        ui.onReadingModeChange?.(false);
         bar.hidden = true;
         releaseControl();
         ui.dialog.removeEventListener('close', advance);
@@ -68,6 +84,7 @@ export function startReadingMode({state, renderer, ui, travel, log}) {
         ui.close();
         log('Reading mode closed. Continue exploring from here.');
     };
+    ui.stopReadingMode = stop;
     document.getElementById('reading-close').onclick = stop;
     async function advance() {
         if (!active || busy || ui.dialog.open) return;

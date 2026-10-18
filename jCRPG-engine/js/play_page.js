@@ -1,4 +1,4 @@
-import {startReadingMode} from './reading_mode.js';
+import {startReadingMode, savedReadingMode} from './reading_mode.js';
 import {loadOpeningStory, OpeningStoryOffer, readingModeOfferAvailable} from './opening_story.js';
 import {bindHudLayout} from './hud_layout.js';
 import { InteractionUI } from './interactions/ui.js';
@@ -107,25 +107,28 @@ async function main() {
             worldMap.update(true);
             renderer.requestRender();
         };
+        const menuReadingButton = document.getElementById('menu-reading-mode');
+        interactionsUI.onReadingModeChange = enabled => {
+            menuReadingButton.textContent = enabled ? 'Reading mode: On' : 'Reading mode';
+            menuReadingButton.setAttribute('aria-checked', String(enabled));
+        };
+        interactionsUI.onReadingModeChange(false);
+        const enterReadingMode = () => {
+            storyOffer.dismiss();
+            startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
+                travel: interactionsUI.onTravelQuest, log: appendLog});
+        };
         const readingButton = document.createElement('button');
         readingButton.type = 'button';
         readingButton.id = 'intuition-reading-mode';
         readingButton.textContent = 'Reading mode';
         readingButton.addEventListener('click', () => {
             interactionsUI.close();
-            storyOffer.dismiss();
-            interactionsUI.persist();
-            startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
-                travel: interactionsUI.onTravelQuest, log: appendLog});
+            enterReadingMode();
         });
         interactionsUI.closeButton.before(readingButton);
         const hudReadingButton = document.getElementById('world-reading-mode');
-        hudReadingButton.addEventListener('click', () => {
-            storyOffer.dismiss();
-            interactionsUI.persist();
-            startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
-                travel: interactionsUI.onTravelQuest, log: appendLog});
-        });
+        hudReadingButton.addEventListener('click', enterReadingMode);
 		document.getElementById('hud-log').addEventListener('click',()=>interactionsUI.openJournal());
 		renderer.onInteractionPanel=()=>interactionsUI.show();
 		window.__worldMap = worldMap;
@@ -171,6 +174,11 @@ async function main() {
 			menuButton.focus();
 			renderer.requestRender();
 		};
+        menuReadingButton.addEventListener('click', () => {
+            closeMenu();
+            if (interactionsUI.readingModeActive) interactionsUI.stopReadingMode();
+            else enterReadingMode();
+        });
 		menuButton.disabled = false;
 		menuButton.addEventListener('click', () => {
 			renderer.setInputEnabled(false);
@@ -207,6 +215,8 @@ async function main() {
 				try { if(save.player) await state.teleport(save.player.x,save.player.z,save.player.y,save.player.realm); }
 				catch(error) { state.saveDeltas.data=previous;throw error; }
 				renderer.restoreView();renderer.worldView.sync();renderer._syncCamera();renderer.requestRender();renderer.saveView();appendLog('Save imported.');
+                if (savedReadingMode(state.saveDeltas.data)) enterReadingMode();
+                else interactionsUI.stopReadingMode?.();
 			} catch(error) { appendLog('Import failed: '+error.message); }
 			event.target.value='';
 		});
@@ -231,12 +241,8 @@ async function main() {
 		updateLocation();
         worldMap.update();
 		renderer.start();
-        if (new URL(window.location.href).searchParams.get('read') === '1') {
-            storyOffer.dismiss();
-            interactionsUI.persist();
-            startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
-                travel: interactionsUI.onTravelQuest, log: appendLog});
-        }
+        if (new URL(window.location.href).searchParams.get('read') === '1'
+            || savedReadingMode(sim.gameState.saveDeltas.data)) enterReadingMode();
 		// No repeating HUD timers. Changes are driven by input/render events only.
 		window.addEventListener('pagehide', () => renderer.stop(), { once: true });
 		window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
