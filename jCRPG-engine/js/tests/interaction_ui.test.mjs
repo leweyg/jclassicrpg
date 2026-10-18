@@ -401,3 +401,27 @@ test('opening story presents one paragraph per step and resumes only after the t
     assert.equal(document.activeElement, origin);
     assert.deepEqual(calls, ['pause', 'resume', 'render']);
 });
+
+test('explicit Close and Escape stop reading mode; Continue still advances normally', t => {
+    const {ui} = fixture(t);
+    let stops = 0;
+    ui.stopReadingMode = () => { stops++; ui.readingModeActive = false; ui.close(); };
+    ui.readingModeActive = true;
+    ui.open('Continue reading', 'reading');
+    ui.closeButton.click();
+    assert.equal(stops, 1);
+    assert.equal(ui.dialog.open, false);
+    assert.equal(ui.readingModeActive, false);
+
+    ui.readingModeActive = true;
+    ui.showResult('Next step', 'A result.', () => ui.close());
+    ui.primaryButton.click();
+    assert.equal(stops, 1, 'finishing a step must not turn reading mode off');
+    assert.equal(ui.readingModeActive, true);
+
+    ui.open('Continue reading', 'reading');
+    ui.dialog.emit('cancel');
+    assert.equal(stops, 2);
+    assert.equal(ui.readingModeActive, false);
+    assert.equal(ui.dialog.open, false);
+});

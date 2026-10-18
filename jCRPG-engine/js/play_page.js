@@ -118,15 +118,6 @@ async function main() {
             startReadingMode({state: sim.gameState, renderer, ui: interactionsUI,
                 travel: interactionsUI.onTravelQuest, log: appendLog});
         };
-        const readingButton = document.createElement('button');
-        readingButton.type = 'button';
-        readingButton.id = 'intuition-reading-mode';
-        readingButton.textContent = 'Reading mode';
-        readingButton.addEventListener('click', () => {
-            interactionsUI.close();
-            enterReadingMode();
-        });
-        interactionsUI.closeButton.before(readingButton);
         const hudReadingButton = document.getElementById('world-reading-mode');
         hudReadingButton.addEventListener('click', enterReadingMode);
 		document.getElementById('hud-log').addEventListener('click',()=>interactionsUI.openJournal());

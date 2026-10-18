@@ -38,7 +38,7 @@ export class InteractionUI {
         for (const [event, method] of Object.entries(handlers)) {
             this.dialog.addEventListener(event, value => this[method](value));
         }
-        this.closeButton.onclick = () => this.close();
+        this.closeButton.onclick = () => this.dismiss();
     }
 
     isBackdrop(event) {
@@ -91,7 +91,7 @@ export class InteractionUI {
 
     handleCancel(event) {
         event.preventDefault();
-        this.close();
+        this.dismiss();
     }
 
     handleKeyDown(event) {
@@ -160,7 +160,7 @@ export class InteractionUI {
         const button = this.closeButton;
         button.textContent = 'Close';
         button.setAttribute('aria-label', 'Close interaction');
-        button.onclick = () => this.close();
+        button.onclick = () => this.dismiss();
         if (!this.dialog.open) {
             this.returnFocus = document.activeElement;
             this.renderer.setInputEnabled(false);
@@ -172,6 +172,12 @@ export class InteractionUI {
         const target = this.primaryButton ?? this.body.querySelector('button')
             ?? (this.closeButton.hidden ? this.dialog : this.closeButton);
         target.focus();
+    }
+
+    // Explicit dismissal exits reading mode; completed steps still use close().
+    dismiss() {
+        if (this.readingModeActive && this.stopReadingMode) this.stopReadingMode();
+        else this.close();
     }
 
     close() {
