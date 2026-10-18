@@ -3,6 +3,7 @@ import {ShrineParticles} from './shrine_particles.js';
 import {WaypointPillar} from './waypoint_pillar.js';
 import {CaveMarkers} from './cave_markers.js';
 import {loadObjModel} from '../obj_mtl_loader.js';
+import {sceneryModelSource,loadShrineModel} from '../scenery_models.js';
 import {charactersRef} from '../game_static_core.js';
 import {modelForActor,loadCharacterModel} from '../character_models.js';
 /** Shared immutable source assets; only instance buffers belong to slots. */
@@ -11,7 +12,7 @@ export class BakedView {
   this.loadCharacter=loadCharacter;this.characterAssets=new Map();this.characterData=loadCharacters().catch(error=>{this.stats.assetFailures.push(`characters.json: ${error.message}`);return {};});
   this.fallbackGeometry=new THREE.BoxGeometry(1,1,.1);this.fallbackGeometry.translate(0,.5,0);this.fallbackMaterial=new THREE.MeshStandardMaterial({color:0x92795a,side:THREE.DoubleSide});for(const s of this.slots)scene.add(s.group);
  }
- async asset(source){if(!this.assets.has(source)){const url=new URL(source),at=url.href.lastIndexOf('/');this.assets.set(source,loadObjModel(url.href.slice(0,at),url.href.slice(at+1),{yUp:true}).catch(error=>{this.stats.assetFailures.push(`${source}: ${error.message}`);const g=new THREE.Group();g.add(new THREE.Mesh(this.fallbackGeometry,this.fallbackMaterial));return g;}));}return this.assets.get(source);}
+ async asset(source){source=sceneryModelSource(source);if(!this.assets.has(source)){const url=new URL(source),at=url.href.lastIndexOf('/');this.assets.set(source,(url.pathname.endsWith('.gltf')?loadShrineModel(source):loadObjModel(url.href.slice(0,at),url.href.slice(at+1),{yUp:true})).catch(error=>{this.stats.assetFailures.push(`${source}: ${error.message}`);const g=new THREE.Group();g.add(new THREE.Mesh(this.fallbackGeometry,this.fallbackMaterial));return g;}));}return this.assets.get(source);}
  async characterAsset(definition){
   if(!this.characterAssets.has(definition.id))this.characterAssets.set(definition.id,this.loadCharacter(definition).catch(error=>{this.stats.assetFailures.push(`${definition.source}: ${error.message}`);return null;}));
   return this.characterAssets.get(definition.id);
