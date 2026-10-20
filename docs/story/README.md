@@ -131,3 +131,7 @@ For shipped captions and state predicates, see [story_opening](https://github.co
 [cave]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#cave
 [coil]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#coil
 [listener]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#listener
+
+## story_authoring
+
+[story_authoring](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/authoring/README.md) contains the detailed pacing, opening geography, regional design, and full Saima dialogue treatment.

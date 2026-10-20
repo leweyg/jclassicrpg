@@ -4,7 +4,7 @@ A nonviolent fantasy RPG about repairing a living network and learning what its 
 
 [Play](https://leweyg.github.io/jclassicrpg/play.html) · [Home](https://leweyg.github.io/jclassicrpg/) · [Philosophy](https://leweyg.github.io/spirtual_objectivism/)
 
-Browse the [docs](https://github.com/leweyg/jclassicrpg/blob/main/docs/README.md) directory for current guides and the historical archive.
+Browse the [docs](https://github.com/leweyg/jclassicrpg/blob/main/docs/README.md) directory for current guides and detailed references.
 
 ## Fiction
 
@@ -26,6 +26,6 @@ Player actions, mission types, puzzles, world systems, and development instructi
 
 The three sections extend the source site's Fiction and Game organization with a distinct Story section. Fiction owns meaning and archetypes; Story owns plot and pacing; Game owns rules and implementation. Cross-references connect them without duplicating their responsibilities. Temple World remains a related vision on the source site, not a claim that all its mechanics exist here.
 
-The bundled story catalog marks all five Concordance chapters playable, including Saima's regional reports and final sequence. Older design briefs and verification reports remain linked as historical detail; the current catalogs and authoring code resolve implementation differences.
+The bundled story catalog marks all five Concordance chapters playable, including Saima's regional reports and final sequence. Detailed design, authoring, and verification material is organized by subject under `docs/`; current catalogs and authoring code resolve implementation differences.
 
 Original Java instructions and licensing remain in [legacy_readme](https://github.com/leweyg/jclassicrpg/blob/main/README), [license](https://github.com/leweyg/jclassicrpg/blob/main/LICENSE), and [copyright](https://github.com/leweyg/jclassicrpg/blob/main/COPYRIGHT). The third-party XStream README belongs to its library and is unchanged.

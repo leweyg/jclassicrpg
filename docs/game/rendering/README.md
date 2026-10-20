@@ -8,3 +8,7 @@
 | [game_runtime](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/runtime/README.md) | Shared character models, accessory variants, cached poses, and idle frame behavior. |
 
 Rendering code lives under `jCRPG-engine/js/world/`; character model configuration lives in `jCRPG-engine/json/characters.json`. See [game_testing](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/README.md) for validation commands.
+
+## city_details
+
+[city_rendering](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/rendering/city.md) covers mesh calibration, subtype mappings, roofs, ground, materials, batching, visibility, and performance.

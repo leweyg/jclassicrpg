@@ -64,32 +64,23 @@ node --test jCRPG-engine/js/tests/*.test.mjs
 
 The generated world is `jCRPG-engine/worlds/seed0/v2`. Narrative authoring lives in [story_opening](https://github.com/leweyg/jclassicrpg/blob/main/scripts/concordance_dialogue.mjs) and [story_saima](https://github.com/leweyg/jclassicrpg/blob/main/scripts/saima_dialogue.mjs); [game_compile](https://github.com/leweyg/jclassicrpg/blob/main/scripts/compile_interactions.mjs) connects it to catalogs and anchors. Edit source and regenerate rather than hand-edit compiled records.
 
-For browser acceptance and focused checks, follow [game_testing](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/README.md). Rendering configuration is indexed in [game_rendering](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/rendering/README.md). Dated reports remain in the archive as verification history.
+For browser acceptance and focused checks, follow [game_testing](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/README.md). Rendering configuration is indexed in [game_rendering](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/rendering/README.md). Dated reports are consolidated in [test_results](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/results.md).
 
 ## game_sources
 
-Read the Fiction, Story, and Game READMEs first. Historical documents are collected in [older_v1](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/README.md). These retained references preserve detailed design, provenance, and verification without making earlier revisions compete with the current plot.
+Detailed references are organized by subject. Design examples identify their implementation limits; dated results retain their original scope.
 
-| Reference | Role and status |
+| Reference | Contents |
 | --- | --- |
-| [game_testing](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/README.md) | Active test commands, browser setup, and coverage limits. |
-| [game_rendering](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/rendering/README.md) | Current rendering and visual-tuning references. |
-| [game_catalog](https://github.com/leweyg/jclassicrpg/blob/main/jCRPG-engine/worlds/seed0/v2/interactions/stories.json) | Current five-chapter manifest; all five are marked playable. Individual missions resolve actual dependencies and objectives. |
-| [game_runtime](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/runtime/README.md) | Previous root README's browser operation, streaming, character, and map detail. |
-| [story_brief](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/main-story-implementation.md) | Opening design and pacing; its “chapters four and five planned” status is superseded by the catalog and Saima implementation. |
-| [story_early](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/root/main-story-implementation.md) | Earlier root copy of the opening brief, retained for history. |
-| [story_saima_brief](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/saima-regional-dialogue-and-puzzles.md) | Detailed regional design and dialogue script; proposal wording predates implementation. |
-| [game_saima_checks](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/saima-implementation.md) | Implemented Saima arc and recorded browser verification, including limits on cross-country route coverage. |
-| [game_interactions](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/root/jclassicrpg-interactions-missions-and-quests.md) | Comprehensive original theme and interaction specification. Old opening order and layer mapping are historical; use the new READMEs and live data for those. |
-| [game_review](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/root/interaction-review.md) | Root interaction review covering later switch families and local collection/use revisions. |
-| [game_early_review](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/interaction-review.md) | Earlier quantity/resonance implementation review and dialogue update; not the current opening walkthrough. |
-| [game_world](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/root/jclassicrpg-procedural-settlements-and-mazes.md) | Detailed generation, geometry, streaming, and compatibility specification. |
-| [game_world_plan](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/procedural-implementation.md) | Historical implementation stages and compatibility policy. |
-| [game_world_review](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/procedural-review.md) | Historical web-v1 review and Java parity boundaries. |
-| [game_world_checks](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/procedural-validation.md) | Recorded procedural validation and evidence. |
-| [game_particles](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/rendering/shrine-particles.md) | Shrine particle rendering and tuning. |
-| [game_page_checks](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/page-issues-review.md) | Later map, journal, introduction, and mobile UI verification. |
-| [game_fixes](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/root/jclassicrpg-bugs.md) | Dated issue resolutions and their verification status. |
-| [game_legacy](https://github.com/leweyg/jclassicrpg/blob/main/README) | Original Java controls, installation, requirements, and history. |
+| [game_world](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/world/README.md) | Generation, evidence, settlement hierarchy, mazes, caves, and navigation. |
+| [game_interactions](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/interactions/README.md) | Contracts, missions, actors, inventory, puzzles, and saves. |
+| [game_runtime](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/runtime/README.md) | Browser operation, character presentation, maps, and streaming. |
+| [game_rendering](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/rendering/README.md) | City meshes and shrine particles. |
+| [game_interface](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/interface/README.md) | Dialogue, journal, map, and homepage behavior. |
+| [game_development](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/development/README.md) | Compiler responsibilities, implementation order, and integration gates. |
+| [game_testing](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/README.md) | Commands, validation contracts, fixtures, and recorded results. |
+| [story_authoring](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/authoring/README.md) | Theme, pacing, opening evolution, Saima design, and dialogue. |
+| [game_catalog](https://github.com/leweyg/jclassicrpg/blob/main/jCRPG-engine/worlds/seed0/v2/interactions/stories.json) | Current five-chapter manifest; use the catalogs for live IDs and dependencies. |
+| [game_legacy](https://github.com/leweyg/jclassicrpg/blob/main/README) | Original Java setup, controls, and requirements. |
 
-The [source site](https://leweyg.github.io/spirtual_objectivism/) supplies philosophy, archetypes, and the broader Temple World relationship. Its Fiction/Game framing is expanded here into Fiction/Story/Game. The site itself has not been changed.
+The [source site](https://leweyg.github.io/spirtual_objectivism/) supplies philosophy, archetypes, and the broader Temple World relationship. Its Fiction/Game framing is expanded here into Fiction/Story/Game.

@@ -1,18 +1,25 @@
-> Historical geometry review for web-v1. The current runtime uses web-v2; see [the interaction review](interaction-review.md) for current build paths, gameplay and evidence.
+# world_checks
 
-# Local review guide
+[docs](https://github.com/leweyg/jclassicrpg/blob/main/docs/README.md)
+
+Geometry review procedures, golden-fixture regeneration, and compatibility boundaries. The v1-specific counts, paths, and missing interactions below describe that baseline; use v2 for current builds. The Java fixture commands and editor contracts remain useful. Current browser controls are in [game_play](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_play).
 
 Serve the repository root with `python3 -m http.server 8000` and open
 `http://localhost:8000/play.html`. Generated content is included. No API, Java
 runtime, procedural worker, deployment, or GitHub push is required to play.
 
 - Drag left to walk and right to look; WASD/arrow keys also move.
+
 - Use the Map to visit settlements, labyrinths, and **Cave entrance** markers.
+
 - Walk through house and labyrinth doorways. Walls and windows block movement.
+
 - Use **E** or the contextual toolbar button for stairs, cave entry/exit and chests.
+
 - Local saves retain position, explored entrances, and searched chests. Export and
   import JSON saves from the toolbar. A chest search records discovery, not loot
   inventory or combat (those systems are not part of this port).
+
 - Retry loading retries failed chunk requests; missing collision blocks movement.
 
 Rebuild and test everything:
@@ -65,22 +72,27 @@ Compatibility boundaries:
 
 - `web-baked-v1` does not claim full `legacy-v1` save parity. Java hash and maze
   bytes are verified, but full district/house/cave cube outputs are not certified.
+
 - Surface heights/rivers retain the existing web adapter. Placement and cave
   entrance detection consequently differ from Java's complete cube-kind queries.
+
 - House faces and corner closure are normalized. Wooden/stone houses are assembled
   from individual parts. Huts/igloos/brick variants use textured semantic walls and
   distinct roofs; their original whole-building mesh geometry is not reproduced.
+
 - Caves preserve coordinate-based occupancy without connectivity carving; entrance
   links enter existing components with at least twelve open floor cells. The cave
   view switches off surface terrain and uses a two-cell presentation of the saved
   cave band. Exact Java entrance/vertical cube rendering remains future work.
+
 - Shrine meshes are scenery; shrine encounters and interaction mechanics remain
   unimplemented. Doors are passable frames, matching legacy passability; animated
   door leaves, lock states, economy growth and NPC simulation are not implemented.
+
 - Desktop screenshots and bounded-stream tests are included in validation work.
   The actual local editor imported/rendered the fixture, calibration scene, a town
   chunk, and a 25-chunk region without errors. Physical-mobile GPU timings remain
   unmeasured; no fidelity reduction has been made on that basis.
 
-See [validation results and screenshots](procedural-validation.md) for the completed
+See [validation results and screenshots](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/results.md) for the completed
 checks and measured limits.

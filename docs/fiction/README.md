@@ -55,4 +55,8 @@ Each cultural capital extends the same crisis through a different responsibility
 | Deep Ledger | Shared underground work needs trustworthy claims and attention to physical risk. | Vek, Nix, Rul |
 | Awshoshotra, Labyrinth of Many Voices | Multiple meaningful paths must coexist within real constraints. | Iris-of-the-Turn, Ember-Tusk, Clasp-of-Seven |
 
-Wamwammigtraawsho, Talla's regional town, is distinct from Awshowam, the Boarman capital. The Measured Oasis is the opening journey's central destination. Names and geography originate in the recovered world where available; principal personalities, capital roles, and the Concordance plot are authored additions. Detailed cultural sketches remain in [fiction_notes](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/root/jclassicrpg-interactions-missions-and-quests.md#capital-stories-and-principal-characters).
+Wamwammigtraawsho, Talla's regional town, is distinct from Awshowam, the Boarman capital. The Measured Oasis is the opening journey's central destination. Names and geography originate in the recovered world where available; principal personalities, capital roles, and the Concordance plot are authored additions. Detailed cultural sketches remain in [fiction_notes](https://github.com/leweyg/jclassicrpg/blob/main/docs/fiction/cultures.md#capital-stories-and-principal-characters).
+
+## fiction_details
+
+[fiction_cultures](https://github.com/leweyg/jclassicrpg/blob/main/docs/fiction/cultures.md) expands each culture’s vocabulary, capital conflict, and principal characters. [world_settlements](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/world/settlements.md) holds exact capital identities and hierarchy rules.

@@ -46,7 +46,7 @@ position takes precedence over the original spawn.
 
 Rebuild and validate with `node scripts/build_world.mjs` (Node 22+, Python 3).
 The generated world and validation report are in `jCRPG-engine/worlds/seed0/v2`.
-See [the review guide](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/procedural-review.md) for controls, reproducibility,
+See [the review guide](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/world.md) for controls, reproducibility,
 editor scene entry points, Java golden fixtures, and explicit compatibility limits.
 This is `web-baked-v2`: hash and maze bytes match Java, while the existing surface
 adapter, cave entrance presentation, and some architectural geometry are adapted.
@@ -103,3 +103,7 @@ movement updates retain their 100 ms maximum delta after long frame gaps.
 Cave debug landmarks: gold arches and floor rings mark exits to the surface;
 blue beacons mark people, violet marks puzzle controls, and green marks evidence
 readings. These markers only appear in loaded caves and are occluded by walls.
+
+## stream_details
+
+[game_streaming](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/runtime/streaming.md) defines static delivery, canonical chunk addresses, slot revisions, cache ownership, and performance targets.

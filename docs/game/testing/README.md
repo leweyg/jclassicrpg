@@ -2,7 +2,7 @@
 
 [docs](https://github.com/leweyg/jclassicrpg/blob/main/docs/README.md) · [game_build](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_build) · [story_binding](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_binding)
 
-Active verification instructions extracted from the older implementation reports and checked against the current script entry points. Commands assume the repository root, Node 22+, and Python 3. The historical reports linked below retain their dated results; this guide does not claim a new test run.
+Verification commands checked against the current script entry points. Commands assume the repository root, Node 22+, and Python 3. The historical reports linked below retain their dated results; this guide does not claim a new test run.
 
 ## Checks
 
@@ -45,4 +45,8 @@ JCRPG_CDP_PORT=9231 JCRPG_TEST_ORIGIN=http://127.0.0.1:8789 node scripts/check_p
 
 ## Evidence
 
-The retained [saima_report](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/saima-implementation.md) and [page_report](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/page-issues-review.md) describe earlier runs and their limits. Their evidence remains in `docs/saima-evidence/` and `docs/page-issues-evidence/`. Keep new output separate until it is intentionally reviewed and recorded. For older geometry, interaction, and reproducibility records, see [older_v1](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/README.md).
+The consolidated [saima_report](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/results.md#saima-september-29) and [page_report](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/results.md#pages-september-29) describe earlier runs and their limits. Their evidence remains in `docs/saima-evidence/` and `docs/page-issues-evidence/`. Keep new output separate until it is intentionally reviewed and recorded. Geometry, interaction, and reproducibility records are consolidated in [test_results](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/results.md).
+
+## Test references
+
+[test_contracts](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/contracts.md) collects required coverage for generation, interactions, and story. [world_checks](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/world.md) preserves geometry review and Java fixture regeneration. [test_results](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/testing/results.md) keeps revision-specific counts, timings, compatibility limits, and evidence links.
