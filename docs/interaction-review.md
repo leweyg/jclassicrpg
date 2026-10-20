@@ -1,5 +1,7 @@
 # Concordance interactions — local review
 
+> Historical interaction review. Its opening walkthrough predates the five-chapter Concordance journey; use [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot) and [game_play](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_play).
+
 The new `web-baked-v2` world adds persistent characters, dialogue, missions, shrine routing, circuit puzzles and optional inventory to the existing frozen geography. All content runs from a plain static server. There is no combat, runtime content generator, service dependency, or API key.
 
 ## Completed stages

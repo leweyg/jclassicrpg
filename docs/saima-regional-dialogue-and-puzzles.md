@@ -1,5 +1,7 @@
 # Measured Oasis: Saima, four regional proofs, and the final sequence
 
+> Retained design and dialogue brief. Its proposal language predates implementation; see [game_saima_checks](https://github.com/leweyg/jclassicrpg/blob/main/docs/saima-implementation.md) and the narrative [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot).
+
 Implementation and writing brief for the continuation of `story:concordance:opening` after Talla. This is a proposed design for review, not a description of mechanics already shipped. The main story remains playable while this revision is developed; do not publish new waypoints to unfinished objectives.
 
 ## Name and role

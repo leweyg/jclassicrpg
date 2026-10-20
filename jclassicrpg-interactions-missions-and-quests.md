@@ -1,5 +1,7 @@
 # The Spiral Grid RPG — interactions, missions, actors, shrines, puzzles, and maze goals
 
+> Original design reference. The older five-layer mapping and opening progression below are superseded for current authoring by [fiction_layers](https://github.com/leweyg/jclassicrpg/blob/main/fiction/README.md#fiction_layers), [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot), and [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_mission_types). Preserve stable runtime IDs.
+
 ## Expression of theme and social world
 
 This interaction layer should give the generated world a coherent philosophical and social shape without pretending that the legacy game supplied a finished plot. Geography, populations, settlement forms, roads, shrines, caves, and labyrinths remain recovered world facts. Capitals, cultural interpretations, character roles, and mission arcs are a new deterministic narrative overlay built from those facts.

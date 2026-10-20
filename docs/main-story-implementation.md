@@ -1,5 +1,7 @@
 # Main story and opening journey: implementation guide
 
+> Historical design brief. The status below predates the playable Saima continuation. Use [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot) and [game_saima_checks](https://github.com/leweyg/jclassicrpg/blob/main/docs/saima-implementation.md) for the complete current arc.
+
 **Implementation status (September 2026):** the first three main-story chapters are playable in the current build: Orro and the shrine, Pella's cave component, and Talla's three-branch grid. Chapters four and five at the Measured Oasis remain planned. The landing page provides a five-moment walkthrough with those statuses and a horizontal gallery of current-build screenshots in `screenshots/`. Instructions below describe both the completed foundation and the remaining arc; use the current story catalog as the source of truth for live mission IDs.
 
 ## Theme, character arc, and travel rhythm

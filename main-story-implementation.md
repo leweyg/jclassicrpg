@@ -1,5 +1,7 @@
 # Main story and opening journey: implementation guide
 
+> Earlier opening design. Read [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot) for the current narrative and [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_mission_types) for implemented dependencies.
+
 ## Selected cast and geography (seed0/v2)
 
 Use these existing IDs for the first authored arc. Names for the unnamed regional NPC and the cave item below are **new proposed authored names**; the places, portals, and existing named characters are already present in the baked world. Keep the IDs and roles stable across dialogue rewrites.
