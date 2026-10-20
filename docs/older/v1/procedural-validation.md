@@ -36,13 +36,13 @@ unmeasured GPU limit.
 
 Evidence:
 
-- [Build and 31 tests](procedural-evidence/build-and-tests.txt)
-- [Byte reproducibility and seams](procedural-evidence/reproducibility.json)
-- [Browser metrics](procedural-evidence/report.json)
-- [Editor import results](procedural-evidence/editor-report.json)
-- [Town](procedural-evidence/town.png), [house interior](procedural-evidence/house-interior.png), [dungeon](procedural-evidence/dungeon.png)
-- [Cave](procedural-evidence/cave.png), [mobile viewport](procedural-evidence/mobile-cave.png)
-- [Editor calibration](procedural-evidence/editor-calibration.scene.json.png), [editor region](procedural-evidence/editor-regions_r000_008.scene.json.png)
+- [Build and 31 tests](../../procedural-evidence/build-and-tests.txt)
+- [Byte reproducibility and seams](../../procedural-evidence/reproducibility.json)
+- [Browser metrics](../../procedural-evidence/report.json)
+- [Editor import results](../../procedural-evidence/editor-report.json)
+- [Town](../../procedural-evidence/town.png), [house interior](../../procedural-evidence/house-interior.png), [dungeon](../../procedural-evidence/dungeon.png)
+- [Cave](../../procedural-evidence/cave.png), [mobile viewport](../../procedural-evidence/mobile-cave.png)
+- [Editor calibration](../../procedural-evidence/editor-calibration.scene.json.png), [editor region](../../procedural-evidence/editor-regions_r000_008.scene.json.png)
 
 No commit, GitHub push, or deployment was performed. The supplied implementation
 plan was left unchanged. The rejected broad parent-directory preview was replaced

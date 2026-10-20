@@ -21,7 +21,7 @@ Puzzle validation checks references, bounded controls, gates and solvability.
 - `node scripts/compile_world.mjs`: successful generation and validation.
 - `node --test jCRPG-engine/js/tests/*.test.mjs`: 168 passed, zero failed.
 - `JCRPG_CDP_PORT=9231 JCRPG_TEST_ORIGIN=http://127.0.0.1:8789 node scripts/check_saima_browser.mjs`:
-  all browser assertions passed; see [report](saima-evidence/browser-report.json).
+  all browser assertions passed; see [report](../../saima-evidence/browser-report.json).
 
 The browser runner requires an isolated Chrome debugging profile and a static
 server. It clears that profile’s game save. It starts fresh and uses real dialogue
@@ -39,7 +39,7 @@ check, retaining its original default port and output directory.
 
 ## Homepage image
 
-[Saima conversation](../screenshots/saima-dialogue-2026-09-29.jpg) is an actual
+[Saima conversation](../../../screenshots/saima-dialogue-2026-09-29.jpg) is an actual
 1600×1000 browser capture after playing the opening. The background includes
 nearby residents and a Measured Oasis building. The homepage Character dialogue
 card links to this image and uses updated descriptive alt text.

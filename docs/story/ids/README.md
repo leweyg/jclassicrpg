@@ -1,6 +1,6 @@
 # story_ids
 
-[story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot) · [game_systems](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_systems)
+[story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot) · [game_systems](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_systems)
 
 Stable bindings for the narrative. Linked IDs open their compiled catalog or individual record. Actor positions and town membership come from the catalog; witnesses may live in an outlying settlement, so follow their actual markers rather than placing them beside the regional keeper. These links are documentation bindings, not executable travel commands.
 

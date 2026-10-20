@@ -1,6 +1,6 @@
 # Concordance interactions — local review
 
-> Recorded interaction revision and evidence. For the current narrative and Saima continuation, use [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot) and [game_sources](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_sources).
+> Recorded interaction revision and evidence. For the current narrative and Saima continuation, use [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot) and [game_sources](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_sources).
 
 The new `web-baked-v2` world adds persistent characters, dialogue, missions, shrine routing, circuit puzzles and optional inventory to the existing frozen geography. All content runs from a plain static server. There is no combat, runtime content generator, service dependency, or API key.
 
@@ -33,9 +33,9 @@ Existing `interactions-v1` saves migrate to `interactions-v2`: player position, 
 - The browser walks the opening mission from spawn using production movement/collision and dialogue handlers. It exports a partly configured circuit, reloads, imports through the actual file input, and finishes the mission. A second run walks a real maze from its keeper, activates the generator, reports completion and reloads its linked shrine effect. **No JavaScript exceptions or missing actor/prop assets** were reported.
 - The unmodified `three_js_editor_small` loads the actor chunk, shrine chunk, maze chunk and a 25-chunk region directly. Gameplay data remains in `userData.jcrpg`; only visual assets use `source`.
 - Two independent bakes are **byte-identical across 5,217 files**. Verification checks 2,602 scenes, 780,721 visual references and all 5,000 terrain seams.
-- Catalogs total **1,832,511 raw bytes / 103,611 gzip bytes / 95,790 Brotli bytes**. Runtime keeps 25 active chunk slots and the existing bounded cache. Ordinary transactions measured 0.1 ms median / 0.2 ms p95, and nearby selection averaged 0.027 ms in isolated headless Chrome. Browser timing and memory measurements are in [the browser report](interaction-evidence/report.json).
+- Catalogs total **1,832,511 raw bytes / 103,611 gzip bytes / 95,790 Brotli bytes**. Runtime keeps 25 active chunk slots and the existing bounded cache. Ordinary transactions measured 0.1 ms median / 0.2 ms p95, and nearby selection averaged 0.027 ms in isolated headless Chrome. Browser timing and memory measurements are in [the browser report](../../../interaction-evidence/report.json).
 
-Evidence: [Marn dialogue](interaction-evidence/marn-dialogue.png), [completed journal](interaction-evidence/opening-completed-journal.png), [maze generator](interaction-evidence/maze-generator-active.png), [mobile journal](interaction-evidence/mobile-journal.png), [editor report](interaction-evidence/editor-report.json), [reproducibility](interaction-evidence/reproducibility.json).
+Evidence: [Marn dialogue](../../../interaction-evidence/marn-dialogue.png), [completed journal](../../../interaction-evidence/opening-completed-journal.png), [maze generator](../../../interaction-evidence/maze-generator-active.png), [mobile journal](../../../interaction-evidence/mobile-journal.png), [editor report](../../../interaction-evidence/editor-report.json), [reproducibility](../../../interaction-evidence/reproducibility.json).
 
 Run:
 

@@ -38,4 +38,4 @@ It checks real UI interactions and uses the game teleport API to reach Orro,
 plus a runtime acceptance transaction to seed the two-entry journal case.
 Phone portrait (390×844), landscape (844×390), and desktop (1280×900) checks
 cover visible actions, focus and scrolling. No scene asset failures or browser
-runtime exceptions occurred. See [browser results](page-issues-evidence/browser-report.json).
+runtime exceptions occurred. See [browser results](../../page-issues-evidence/browser-report.json).

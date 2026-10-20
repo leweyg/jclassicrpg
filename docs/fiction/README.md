@@ -1,6 +1,6 @@
 # Fiction
 
-[index](https://github.com/leweyg/jclassicrpg/blob/main/README.md) · [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot) · [game_systems](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_systems)
+[index](https://github.com/leweyg/jclassicrpg/blob/main/README.md) · [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot) · [game_systems](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_systems)
 
 ## fiction_theory
 
@@ -40,7 +40,7 @@ An archetype supplies a character's recurring question, not their entire persona
 
 The site's [fiction](https://leweyg.github.io/spirtual_objectivism/#fiction) offers three broad landscape archetypes: lowland systems favor measurable efficiency; frontier places require integration; distant sanctuaries expose the risks of untested certainty. They guide mood and conflict. They are not additional named regions or a replacement for the frozen game's geography.
 
-The opening gives these tensions personal faces. Orro's inherited language helps him attend to a measurable pulse. Marn's care takes the form of an account whose omissions Pella can name. Talla asks whether all the users of a common supply can remain visible. Varo protects repeatability; Nemi offers a symbol that can be checked; Saima makes public judgment responsible for both evidence and consequences. Their actions unfold in [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot).
+The opening gives these tensions personal faces. Orro's inherited language helps him attend to a measurable pulse. Marn's care takes the form of an account whose omissions Pella can name. Talla asks whether all the users of a common supply can remain visible. Varo protects repeatability; Nemi offers a symbol that can be checked; Saima makes public judgment responsible for both evidence and consequences. Their actions unfold in [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot).
 
 ## fiction_world
 
@@ -55,4 +55,4 @@ Each cultural capital extends the same crisis through a different responsibility
 | Deep Ledger | Shared underground work needs trustworthy claims and attention to physical risk. | Vek, Nix, Rul |
 | Awshoshotra, Labyrinth of Many Voices | Multiple meaningful paths must coexist within real constraints. | Iris-of-the-Turn, Ember-Tusk, Clasp-of-Seven |
 
-Wamwammigtraawsho, Talla's regional town, is distinct from Awshowam, the Boarman capital. The Measured Oasis is the opening journey's central destination. Names and geography originate in the recovered world where available; principal personalities, capital roles, and the Concordance plot are authored additions. Detailed cultural sketches remain in [fiction_notes](https://github.com/leweyg/jclassicrpg/blob/main/jclassicrpg-interactions-missions-and-quests.md#capital-stories-and-principal-characters).
+Wamwammigtraawsho, Talla's regional town, is distinct from Awshowam, the Boarman capital. The Measured Oasis is the opening journey's central destination. Names and geography originate in the recovered world where available; principal personalities, capital roles, and the Concordance plot are authored additions. Detailed cultural sketches remain in [fiction_notes](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/root/jclassicrpg-interactions-missions-and-quests.md#capital-stories-and-principal-characters).

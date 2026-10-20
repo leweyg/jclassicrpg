@@ -1,10 +1,10 @@
 # Story
 
-[index](https://github.com/leweyg/jclassicrpg/blob/main/README.md) · [fiction_theory](https://github.com/leweyg/jclassicrpg/blob/main/fiction/README.md#fiction_theory) · [story_ids](https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md) · [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_mission_types)
+[index](https://github.com/leweyg/jclassicrpg/blob/main/README.md) · [fiction_theory](https://github.com/leweyg/jclassicrpg/blob/main/docs/fiction/README.md#fiction_theory) · [story_ids](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md) · [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_mission_types)
 
 ## story_plot
 
-A narrative treatment of `story:concordance:opening`, including its ending. The linked people, places, and objects resolve to stable IDs in [story_ids](https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md); chapter links resolve to the compiled missions. This prose supplies scene narration and connective passages for adaptation into play. The current dialogue scripts remain the source of shipped lines and choices.
+A narrative treatment of `story:concordance:opening`, including its ending. The linked people, places, and objects resolve to stable IDs in [story_ids](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md); chapter links resolve to the compiled missions. This prose supplies scene narration and connective passages for adaptation into play. The current dialogue scripts remain the source of shipped lines and choices.
 
 ### Road
 
@@ -16,7 +16,7 @@ The shrine answers. For a moment, the problem is small enough to hold: this ligh
 
 [Marn][marn] listens before entering it in his account. He knows what supplies are stored and which lamps should draw from them. The working road light belongs in the record, but it cannot tell him whether every home receives the current. [Pella][pella] has been hearing from those homes. When you confirm the repair, he asks you to hear her too.
 
-[story_road](https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#road)
+[story_road](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#road)
 
 ### Current
 
@@ -28,7 +28,7 @@ At Pella's socket, the wound piece seats into place. She checks the answer, then
 
 Orro can help you think about the repair; Marn still has other accounts that need attention. Their work remains beside the road ahead. You can return to it without losing Pella's question.
 
-[story_current](https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#current)
+[story_current](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#current)
 
 ### Branches
 
@@ -38,7 +38,7 @@ You awaken the [three conductors][branches_puzzle]. There is no secret order. Ea
 
 The account has grown. That is precisely why Talla refuses to turn it into a grand theory. At the [Measured Oasis][oasis], a pulse has fallen outside the public prediction. [Saima][saima] will want to know how your readings were made. If hers disagree, Talla asks you to carry the disagreement with equal care.
 
-[story_branches](https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#branches)
+[story_branches](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#branches)
 
 ### Measures
 
@@ -48,7 +48,7 @@ Saima of Nine Measures receives you among the records by which other people plan
 
 When you bring the local balance back, Saima has a reason to listen further. She asks for four independent accounts beyond the oasis. Their keepers will need to receive your reports themselves. The road outward is a test of whether your practice can travel, not simply whether your confidence can.
 
-[story_meaning](https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#meaning)
+[story_meaning](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#meaning)
 
 ### Accounts
 
@@ -70,7 +70,7 @@ At the [four-measure device][final_puzzle], you hear the order before performing
 
 The network takes up the completed account. Its public practice now carries Orro's light, Pella's returning current, Talla's branches, and the regional reports together. Nothing in that agreement makes a later observation unwelcome. The road remains open, with other settlements still making their own demands on the light. Your next step can begin from what you have learned, without pretending that the world has finished answering.
 
-[story_order](https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#order)
+[story_order](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#order)
 
 ## story_style
 
@@ -82,52 +82,52 @@ Characters are capable people with limitations, rather than lecturers or mouthpi
 
 ## story_binding
 
-Each chapter's prose follows the authored mission's actions and return. The companion [story_ids](https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md) binds its names to actual actor, town, item, fitting, puzzle, and mission IDs. Use these IDs in dialogue navigation and objective targets; a renamed character or rewritten paragraph must not acquire a new save identity.
+Each chapter's prose follows the authored mission's actions and return. The companion [story_ids](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md) binds its names to actual actor, town, item, fitting, puzzle, and mission IDs. Use these IDs in dialogue navigation and objective targets; a renamed character or rewritten paragraph must not acquire a new save identity.
 
 Keep narration, spoken captions, and objective instructions separate when adapting this treatment. Split a scene at the player's next action. Select pending, ready, and completed dialogue from mission state; do not narrate a success before its transaction. The final paragraphs describe the completed path, not a belief every player must profess. Commitments remain explicit choices in dialogue.
 
 On a first visit, a new town or cave carries both mission and exploration. A return carries the changed result: the fitted coil, the revised record, the person now willing to trust you. Count travel through actual corridors and portals when tuning pacing. A scene bridge must not silently teleport the player or reveal an unknown goal; use the known entrance or informant until the target is discoverable.
 
-Body, Speech, Mind, and Wisdom above form one readable telling, but their regional missions can be completed in any order. Four reported completions, Nemi's clue, and the final device gate the synthesis. Some required tasks retain `kind: "side"` in current data; [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_mission_types) explains that distinction so an adapter does not accidentally make the ending optional.
+Body, Speech, Mind, and Wisdom above form one readable telling, but their regional missions can be completed in any order. Four reported completions, Nemi's clue, and the final device gate the synthesis. Some required tasks retain `kind: "side"` in current data; [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_mission_types) explains that distinction so an adapter does not accidentally make the ending optional.
 
-For shipped captions and state predicates, see [story_opening](https://github.com/leweyg/jclassicrpg/blob/main/scripts/concordance_dialogue.mjs) and [story_saima](https://github.com/leweyg/jclassicrpg/blob/main/scripts/saima_dialogue.mjs). Earlier implementation briefs remain in [game_sources](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_sources).
+For shipped captions and state predicates, see [story_opening](https://github.com/leweyg/jclassicrpg/blob/main/scripts/concordance_dialogue.mjs) and [story_saima](https://github.com/leweyg/jclassicrpg/blob/main/scripts/saima_dialogue.mjs). Earlier implementation briefs remain in [game_sources](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_sources).
 
-[orro]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#orro
-[marn]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#marn
-[pella]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#pella
-[talla]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#talla
-[saima]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#saima
-[varo]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#varo
-[nemi]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#nemi
-[wammigmig]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#wammigmig
-[regional_town]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#regional_town
-[oasis]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#oasis
-[shrine]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#shrine
-[coil_socket]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#coil_socket
-[listener_socket]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#listener_socket
-[branches_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#branches_puzzle
-[balance_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#balance_puzzle
-[final_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#final_puzzle
-[iva]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#iva
-[ketu]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#ketu
-[body_town]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#body_town
-[body_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#body_puzzle
-[mira]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#mira
-[seli]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#seli
-[speech_town]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#speech_town
-[speech_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#speech_puzzle
-[varis]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#varis
-[aro]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#aro
-[mind_town]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#mind_town
-[mind_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#mind_puzzle
-[tavi]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#tavi
-[naru]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#naru
-[wisdom_town]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#wisdom_town
-[road]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#road
-[current]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#current
-[branches]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#branches
-[meaning]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#meaning
-[order]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#order
-[cave]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#cave
-[coil]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#coil
-[listener]: https://github.com/leweyg/jclassicrpg/blob/main/story/ids/README.md#listener
+[orro]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#orro
+[marn]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#marn
+[pella]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#pella
+[talla]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#talla
+[saima]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#saima
+[varo]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#varo
+[nemi]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#nemi
+[wammigmig]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#wammigmig
+[regional_town]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#regional_town
+[oasis]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#oasis
+[shrine]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#shrine
+[coil_socket]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#coil_socket
+[listener_socket]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#listener_socket
+[branches_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#branches_puzzle
+[balance_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#balance_puzzle
+[final_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#final_puzzle
+[iva]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#iva
+[ketu]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#ketu
+[body_town]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#body_town
+[body_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#body_puzzle
+[mira]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#mira
+[seli]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#seli
+[speech_town]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#speech_town
+[speech_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#speech_puzzle
+[varis]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#varis
+[aro]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#aro
+[mind_town]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#mind_town
+[mind_puzzle]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#mind_puzzle
+[tavi]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#tavi
+[naru]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#naru
+[wisdom_town]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#wisdom_town
+[road]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#road
+[current]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#current
+[branches]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#branches
+[meaning]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#meaning
+[order]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#order
+[cave]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#cave
+[coil]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#coil
+[listener]: https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md#listener

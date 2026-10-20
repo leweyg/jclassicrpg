@@ -1,6 +1,6 @@
 # Procedural world implementation
 
-The requested reference is `jclassicrpg-procedural-settlements-and-mazes.md`.
+The requested reference is `docs/older/v1/root/jclassicrpg-procedural-settlements-and-mazes.md`.
 Work proceeds locally; no push or deployment is performed.
 
 Stages:

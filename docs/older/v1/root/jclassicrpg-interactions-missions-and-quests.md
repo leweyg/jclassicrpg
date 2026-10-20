@@ -1,6 +1,6 @@
 # The Spiral Grid RPG — interactions, missions, actors, shrines, puzzles, and maze goals
 
-> Original design reference. The older five-layer mapping and opening progression below are superseded for current authoring by [fiction_layers](https://github.com/leweyg/jclassicrpg/blob/main/fiction/README.md#fiction_layers), [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot), and [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_mission_types). Preserve stable runtime IDs.
+> Original design reference. The older five-layer mapping and opening progression below are superseded for current authoring by [fiction_layers](https://github.com/leweyg/jclassicrpg/blob/main/docs/fiction/README.md#fiction_layers), [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot), and [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_mission_types). Preserve stable runtime IDs.
 
 ## Expression of theme and social world
 
@@ -1956,6 +1956,6 @@ The feature is implementation-ready when:
 - `jCRPG-engine/js/procedural/structures.js`: labyrinth chests and semantic volumes.
 - `jCRPG-engine/worlds/seed0/v1/structures.json`: current structure and partial owner linkage.
 - `jCRPG-engine/worlds/seed0/v1/chunks/*.scene.json`: current interaction-placement destination.
-- `docs/procedural-review.md`: current controls and explicit interaction limits.
+- `docs/older/v1/procedural-review.md`: current controls and explicit interaction limits.
 
 Repository: <https://github.com/leweyg/jclassicrpg>

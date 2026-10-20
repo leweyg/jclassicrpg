@@ -1,6 +1,6 @@
 # game_runtime
 
-[game](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md) · [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot)
+[game](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md) · [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot)
 
 Browser operation and development notes retained from the former root README. Shell commands and code paths are relative to the repository root. Historical completion notes below are not a new verification report.
 
@@ -46,12 +46,12 @@ position takes precedence over the original spawn.
 
 Rebuild and validate with `node scripts/build_world.mjs` (Node 22+, Python 3).
 The generated world and validation report are in `jCRPG-engine/worlds/seed0/v2`.
-See [the review guide](https://github.com/leweyg/jclassicrpg/blob/main/docs/procedural-review.md) for controls, reproducibility,
+See [the review guide](https://github.com/leweyg/jclassicrpg/blob/main/docs/older/v1/procedural-review.md) for controls, reproducibility,
 editor scene entry points, Java golden fixtures, and explicit compatibility limits.
 This is `web-baked-v2`: hash and maze bytes match Java, while the existing surface
 adapter, cave entrance presentation, and some architectural geometry are adapted.
 
-See [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/story/README.md#story_plot) for the current opening and [game_sources](https://github.com/leweyg/jclassicrpg/blob/main/game/README.md#game_sources) for cultural-arc reviews and implementation limits. From spawn, speak with Orro beside the shrine, awaken it, then confirm with Marn in Wammigmig. Use **Journal** to track tasks and **Inventory** to inspect collected items.
+See [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot) for the current opening and [game_sources](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_sources) for cultural-arc reviews and implementation limits. From spawn, speak with Orro beside the shrine, awaken it, then confirm with Marn in Wammigmig. Use **Journal** to track tasks and **Inventory** to inspect collected items.
 
 Click the minimap or top-bar Map button to open the full world map. Select a marker or location entry to inspect it; use Travel to visit it or Waypoint to track it.
 Click the map background, Close, or Escape to return to the minimap. All recorded

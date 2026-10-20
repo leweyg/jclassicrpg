@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Verify unchanged generated JSON in a public-assets-only local editor copy.
- * See docs/procedural-review.md. Never serve unrelated repository directories. */
+ * See docs/older/v1/procedural-review.md. Never serve unrelated repository directories. */
 import fs from 'node:fs';
 const target=(await (await fetch(`http://127.0.0.1:${process.env.JCRPG_CDP_PORT??9224}/json/list`)).json()).find(t=>t.type==='page'),ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.addEventListener('open',r,{once:true}));let id=0;const pending=new Map(),errors=[];
 ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.id){pending.get(m.id)(m.result);pending.delete(m.id);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);});
