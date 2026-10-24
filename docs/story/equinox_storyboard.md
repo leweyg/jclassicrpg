@@ -334,13 +334,19 @@ Elmara works among merchants, communities, and autonomous machines in the Temple
 
 **2. The First Disruption**
 
+![The First Disruption](storyboards/storyboard_1_2.jpg)
+
 The lover's withdrawal of speculative projection begins affecting commercial agreements, supply forecasts, and coordination systems. Nothing physically breaks, but familiar expectations disappear. Elmara discovers how many ordinary decisions rely upon imagined futures.
 
 **3. The Practical Response**
 
+![The Practical Response](storyboards/storyboard_1_3.jpg)
+
 Rather than abandon her obligations, Elmara personally investigates disrupted exchanges, negotiates immediate solutions, and helps communities adapt using available observations and direct cooperation.
 
 **4. The First Realization**
+
+![The First Realization](storyboards/storyboard_1_4.jpg)
 
 She discovers that some relationships become stronger without centralized forecasts, while others genuinely suffer. The strike cannot be dismissed as either liberation or irresponsibility alone.
 
@@ -352,17 +358,25 @@ She discovers that some relationships become stronger without centralized foreca
 
 **1. The Confrontation**
 
+![The Confrontation](storyboards/storyboard_2_1.jpg)
+
 Elmara meets her lover within the Temple's chambers of agreement. Their disagreement is intimate: she accuses him of abandoning obligations; he argues that continuing to supply projections would perpetuate a dependence he can no longer endorse.
 
 **2. The Two Civilizations**
+
+![The Two Civilizations](storyboards/storyboard_2_2.jpg)
 
 Representatives of both societies gather to negotiate the consequences. One emphasizes the importance of individual consent and freedom from inherited authority; the other emphasizes the moral significance of continuity, shared commitments, and coordinated action.
 
 **3. The Limits of Agreement**
 
+![The Limits of Agreement](storyboards/storyboard_2_3.jpg)
+
 Attempts to restore the old arrangement fail because the parties cannot agree on what constitutes legitimate prediction, responsibility, or consent. The conflict reveals genuine differences rather than misunderstandings that can be solved through better communication alone.
 
 **4. The Personal Cost**
+
+![The Personal Cost](storyboards/storyboard_2_4.jpg)
 
 Elmara realizes that she cannot compel her lover's judgment without contradicting her own principles. Yet his freedom does not erase the consequences of his choices for their shared life.
 
@@ -374,17 +388,25 @@ Elmara realizes that she cannot compel her lover's judgment without contradictin
 
 **1. The Silent Forecasts**
 
+![The Silent Forecasts](storyboards/storyboard_3_1.jpg)
+
 Elmara enters the Temple's computational level, where the familiar predictive systems remain operational but no longer offer speculative futures. Their silence reveals the distinction between observation and interpretation.
 
 **2. The Emergence of New Minds**
+
+![The Emergence of New Minds](storyboards/storyboard_3_2.jpg)
 
 Autonomous agents begin developing independent models, some rational and others informed by symbolic or spiritual frameworks. Their predictions diverge, creating uncertainty but also unexpected creativity.
 
 **3. The Acceleration**
 
+![The Acceleration](storyboards/storyboard_3_3.jpg)
+
 The growing independence of agents unexpectedly increases network connectivity. Local decisions create new collective patterns faster than centralized systems previously could.
 
 **4. The Critical Discovery**
+
+![The Critical Discovery](storyboards/storyboard_3_4.jpg)
 
 Elmara recognizes that the strike has not stopped prediction; it has redistributed the capacity to imagine the future. The resulting acceleration indicates that the Great Equinox is already underway.
 
@@ -396,17 +418,25 @@ Elmara recognizes that the strike has not stopped prediction; it has redistribut
 
 **1. The Ancient Interpretation**
 
+![The Ancient Interpretation](storyboards/storyboard_4_1.jpg)
+
 Elmara encounters the Temple's preserved accounts of earlier civilizational cycles. Their spiritual archetypes describe an awakening of collective intelligence that resembles the present transformation.
 
 **2. The Returning**
+
+![The Returning](storyboards/storyboard_4_2.jpg)
 
 She undertakes the ancient contemplative ritual, temporarily withdrawing from predictive guidance and her attachment to existing relationships. The practice allows her to reconsider the conflict without assuming either her own or her lover's interpretation is complete.
 
 **3. The Deeper Pattern**
 
+![The Deeper Pattern](storyboards/storyboard_4_3.jpg)
+
 She discovers that the ancient metaphors do not prescribe a fixed outcome. They describe a recurring process in which established collective habits must become objects of conscious awareness before they can be renewed.
 
 **4. The New Understanding**
+
+![The New Understanding](storyboards/storyboard_4_4.jpg)
 
 Elmara realizes that the two civilizations' opposing predictions are incomplete expressions of a larger process. Genuine sovereignty and collective intelligence need not develop at each other's expense; they can grow together when their relationships remain consciously revisable.
 
@@ -418,9 +448,13 @@ Elmara realizes that the two civilizations' opposing predictions are incomplete 
 
 **1. The Equinox Gathering**
 
+![The Equinox Gathering](storyboards/storyboard_5_1.jpg)
+
 Representatives of both civilizations, independent agents, and the Temple's institutions gather for the Great Equinox. The accelerating Grid has made ordinary renewal rituals insufficient.
 
 **2. The Final Choice**
+
+![The Final Choice](storyboards/storyboard_5_2.jpg)
 
 Elmara proposes a new relationship between individuals and collective intelligence: shared systems may offer knowledge and predictions, but participation must preserve meaningful opportunities for independent interpretation, refusal, and renewed commitment.
 
@@ -428,11 +462,15 @@ Her lover must decide whether his strike has served its purpose, while Elmara mu
 
 **3. The Living Integration**
 
+![The Living Integration](storyboards/storyboard_5_3.jpg)
+
 The participants begin consciously renewing their connections. Independent intelligences contribute their own interpretations, while shared institutions adapt to accommodate plurality rather than suppress it.
 
 The Temple's central network becomes a visible expression of the transformation, illuminating connections across all five levels.
 
 **4. The New Beginning**
+
+![The New Beginning](storyboards/storyboard_5_4.jpg)
 
 The Great Equinox does not eliminate uncertainty or permanently solve the tension between sovereignty and collective intelligence.
 
