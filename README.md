@@ -16,6 +16,8 @@ Theory, world, and major archetypes: what the Spiral Grid is, what people believ
 
 The sequence of lived events: a roadside light, a missing current, a town's shared branches, and Saima's test of an account that must travel. The plot reads as a story; linked names resolve to stable gameplay IDs.
 
+[Storyboards](docs/story/equinox_storyboard.md)
+
 [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot) · [story_style](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_style) · [story_ids](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md)
 
 ## Game
