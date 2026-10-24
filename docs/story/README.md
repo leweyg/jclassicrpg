@@ -1,5 +1,8 @@
 # Story
 
+
+[![Early storyboard for story](Spiral_Grid_Great_Equinox_storyboard_v1.jpg)](Spiral_Grid_Great_Equinox_storyboard_v1.jpg)
+
 [index](https://github.com/leweyg/jclassicrpg/blob/main/README.md) · [fiction_theory](https://github.com/leweyg/jclassicrpg/blob/main/docs/fiction/README.md#fiction_theory) · [story_ids](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/ids/README.md) · [game_mission_types](https://github.com/leweyg/jclassicrpg/blob/main/docs/game/README.md#game_mission_types)
 
 ## story_plot
