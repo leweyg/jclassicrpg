@@ -60,7 +60,7 @@ export class ShrineParticles {
    const scale=THREE.MathUtils.lerp(1,o.beacon.farScale,smooth(o.nearDistance,o.beacon.farScaleDistance,s.d));
    const height=o.beacon.height*scale;
    sphere.center.set(s.x+o.offset[0],s.y+o.offset[1]+o.beacon.baseHeight+height/2,s.z+o.offset[2]);
-   sphere.radius=Math.hypot(height/2,o.beacon.radius*scale*(s===primary ? 1 : networkBoost));
+   sphere.radius=Math.hypot(height/2,3.141*o.beacon.radius*scale*(s===primary ? 1 : networkBoost));
    s.inView=frustum.intersectsSphere(sphere);
   }
   candidates.sort((a,b)=>Number(b.inView)-Number(a.inView)||a.d-b.d);
@@ -92,10 +92,12 @@ export class ShrineParticles {
      // +angle moves +X toward +Z: clockwise when viewed from above (+Y).
      const phase=(timeSeconds*o.rotationHz%1)*Math.PI*2;
      const t=i/(shape.samples-1),angle=t*Math.PI*2*shape.loops+strand*Math.PI+phase;
-     const radius=coilRadius*(.72+.28*Math.sin(t*Math.PI));
+     // Only landmark cylinders flare out; altar particles retain their rounded profile.
+     const waistOffset=2*t-1;
+     const radius=coilRadius*(layer ? Math.exp(Math.LN2*waistOffset*waistOffset) : .72+.28*Math.sin(t*Math.PI));
      const p=this.particles[count++];p.position.set(s.x+o.offset[0]+Math.cos(angle)*radius,s.y+o.offset[1]+shape.baseHeight+t*height,s.z+o.offset[2]+Math.sin(angle)*radius);
      // Exact derivative of the tapered helix, projected into the camera below.
-     const dr=coilRadius*.28*Math.PI*Math.cos(t*Math.PI),da=Math.PI*2*shape.loops;
+     const dr=layer ? 4*Math.LN2*waistOffset*radius : coilRadius*.28*Math.PI*Math.cos(t*Math.PI),da=Math.PI*2*shape.loops;
      if(o.direction===null)p.direction.set(dr*Math.cos(angle)-radius*da*Math.sin(angle),height,dr*Math.sin(angle)+radius*da*Math.cos(angle)).normalize();
      else p.direction.fromArray(o.direction);
      p.depth=this.view.copy(p.position).applyMatrix4(camera.matrixWorldInverse).z;

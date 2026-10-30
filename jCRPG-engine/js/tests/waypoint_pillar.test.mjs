@@ -46,7 +46,8 @@ test('pillar shrinks with altar scale thresholds and fades out between eight and
 test('target changes, missing goals, realms and wrapped coordinates update correctly', t => {
     const f=fixture(t);f.update();
     f.goal.position=[1590,0,0];f.update();
-    assert.ok(f.pillar.sorted.every(p=>p.position.x< -9));
+    const maxRadius=2*SHRINE_PARTICLE_DEFAULTS.beacon.radius;
+    assert.ok(f.pillar.sorted.every(p=>Math.hypot(p.position.x+10,p.position.z)<=maxRadius+1e-10));
     f.update(0,'cave');assert.equal(f.pillar.mesh.visible,false);
     f.goal.realm='cave';f.update(0,'cave');assert.equal(f.pillar.mesh.visible,true);
     f.pillar.update(null,f.player,f.camera);assert.equal(f.pillar.mesh.visible,false);
