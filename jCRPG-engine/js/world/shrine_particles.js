@@ -1,4 +1,5 @@
 import * as THREE from '../threejs/three.module.js';
+import {WORLD_SIZE} from './format.js';
 
 export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
  // Shrine OBJ: table top y=.463, chimney underside y=1.056.
@@ -14,7 +15,16 @@ export const SHRINE_PARTICLE_DEFAULTS = Object.freeze({
  beacon: Object.freeze({height: 6, baseHeight: -1.5, radius: .7, loops: 3.5, samples: 160, width: .028, streakLength: .04, farScale: 6, farScaleDistance: 120}),
 });
 const smooth = (a,b,x) => {const t=THREE.MathUtils.clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
-const wrapDelta = x => THREE.MathUtils.euclideanModulo(x+800,1600)-800;
+const wrapDelta = x => THREE.MathUtils.euclideanModulo(x+WORLD_SIZE/2,WORLD_SIZE)-WORLD_SIZE/2;
+const maxWrappedDistance = Math.hypot(WORLD_SIZE/2,WORLD_SIZE/2);
+const landmarkProximity = (o,d) => {
+ const farDistance=o.waypoint ? maxWrappedDistance : Math.min(o.farDistance,maxWrappedDistance);
+ return 1-smooth(o.nearDistance,farDistance,d);
+};
+const landmarkScaleAt = (o,d) => {
+ const proximityScale=THREE.MathUtils.lerp(.9,1.5,landmarkProximity(o,d));
+ return proximityScale*THREE.MathUtils.lerp(1,o.beacon.farScale,smooth(o.nearDistance,o.beacon.farScaleDistance,d));
+};
 
 /** One bounded transparent batch. No timers, RAF callbacks, lights or bloom passes.
  * Particle phase depends ONLY on the supplied active-update time in seconds. View changes rebuild billboards
@@ -57,7 +67,7 @@ export class ShrineParticles {
   const frustum=new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));
   const sphere=new THREE.Sphere();
   for(const s of candidates){
-   const scale=THREE.MathUtils.lerp(1,o.beacon.farScale,smooth(o.nearDistance,o.beacon.farScaleDistance,s.d));
+   const scale=landmarkScaleAt(o,s.d);
    const height=o.beacon.height*scale;
    sphere.center.set(s.x+o.offset[0],s.y+o.offset[1]+o.beacon.baseHeight+height/2,s.z+o.offset[2]);
    sphere.radius=Math.hypot(height/2,3.141*o.beacon.radius*scale*(s===primary ? 1 : networkBoost));
@@ -74,18 +84,19 @@ export class ShrineParticles {
     ? THREE.MathUtils.lerp(o.activeFarOpacity,o.activeGuidanceOpacity,resonance)
     : THREE.MathUtils.lerp(o.dormantFarOpacity,o.dormantGuidanceOpacity,resonance)+(frontier.has(s.id) ? .035 : 0);
    const reveal=s===primary ? 1-smooth(o.guidanceFullDistance,o.primaryFadeDistance,s.d) : guidance;
-   const alpha=o.waypoint
-    ? smooth(o.guidanceFullDistance,o.guidanceStartDistance,s.d)*o.activeGuidanceOpacity
-    : reveal*fade*THREE.MathUtils.lerp(distant,s.active ? o.activeNearOpacity : o.dormantNearOpacity,near);
-   if(o.waypoint&&alpha===0)continue;
+   const visibility=o.waypoint ? smooth(o.guidanceFullDistance,o.guidanceStartDistance,s.d) : reveal*fade;
+   const opacity=o.waypoint ? o.activeGuidanceOpacity : THREE.MathUtils.lerp(distant,s.active ? o.activeNearOpacity : o.dormantNearOpacity,near);
+   if(o.waypoint&&visibility===0)continue;
    // Distant coils use a sparse, rotating silhouette. The transition fades detail
    // instead of replacing scene objects or loading the shrine's chunk.
    for(let layer=o.waypoint?1:0;layer<2;layer++) {
     const shape=layer ? o.beacon : o;
     // Grow only the landmark coil with distance; keep the altar-sized coil
     // and the beacon's underground base anchored to their actual shrine.
-    const landmarkScale=layer ? THREE.MathUtils.lerp(1,shape.farScale,smooth(o.nearDistance,shape.farScaleDistance,s.d)) : 1;
+    const landmarkScale=layer ? landmarkScaleAt(o,s.d) : 1;
     const boost=layer&&s!==primary ? networkBoost : 1;
+    // Boost nearby landmark opacity before visibility fades so approach stays smooth.
+    const alpha=layer ? Math.min(1,opacity*boost*(1+.5*landmarkProximity(o,s.d)))*visibility : Math.min(1,opacity*boost*visibility);
     const height=shape.height*landmarkScale,coilRadius=shape.radius*landmarkScale*boost;
     for(let strand=0;strand<2;strand++)for(let i=0;i<shape.samples;i++) {
      const sparse=i%(layer ? 2 : 8)===0;if(!sparse&&near===0)continue;
@@ -103,7 +114,7 @@ export class ShrineParticles {
      p.depth=this.view.copy(p.position).applyMatrix4(camera.matrixWorldInverse).z;
      // Symmetric height envelope: transparent tips, full alpha at the middle.
      const heightAlpha=Math.sqrt(Math.max(0,1-Math.abs(2*t-1)));
-     p.alpha=Math.min(1,alpha*boost)*(sparse?1:near)*heightAlpha;
+     p.alpha=alpha*(sparse?1:near)*heightAlpha;
      p.strand=strand;p.layer=layer;p.dormancy=s.active ? 0 : 1;p.width=shape.width;p.streakLength=shape.streakLength;
      p.scale=1+(1-near)*Math.min(layer ? 12 : 3,s.d/(layer ? 30 : 100));this.sorted.push(p);
     }

@@ -46,12 +46,24 @@ test('pillar shrinks with altar scale thresholds and fades out between eight and
 test('target changes, missing goals, realms and wrapped coordinates update correctly', t => {
     const f=fixture(t);f.update();
     f.goal.position=[1590,0,0];f.update();
-    const maxRadius=2*SHRINE_PARTICLE_DEFAULTS.beacon.radius;
+    const maxRadius=2*SHRINE_PARTICLE_DEFAULTS.beacon.radius*1.5;
     assert.ok(f.pillar.sorted.every(p=>Math.hypot(p.position.x+10,p.position.z)<=maxRadius+1e-10));
     f.update(0,'cave');assert.equal(f.pillar.mesh.visible,false);
     f.goal.realm='cave';f.update(0,'cave');assert.equal(f.pillar.mesh.visible,true);
     f.pillar.update(null,f.player,f.camera);assert.equal(f.pillar.mesh.visible,false);
     f.update(0,'cave');assert.equal(f.pillar.mesh.visible,true);
+});
+
+test('proximity sizing uses the shortest wrapped distance on both axes', t => {
+    const f=fixture(t),shape=SHRINE_PARTICLE_DEFAULTS.beacon;
+    const radius=(x,z)=>Math.max(...f.pillar.sorted.map(p=>Math.hypot(p.position.x-x,p.position.z-z)));
+    f.goal.position=[-10,0,-10];f.update();
+    const nearRadius=radius(-10,-10);
+    assert.ok(Math.abs(nearRadius-2*shape.radius*1.5)<1e-10);
+    f.goal.position=[1590,0,3190];f.update();
+    assert.ok(Math.abs(radius(-10,-10)-nearRadius)<1e-10);
+    f.goal.position=[800,0,800];f.update();
+    assert.ok(Math.abs(radius(-800,-800)-2*shape.radius*shape.farScale*.9)<1e-10);
 });
 
 test('unchanged idle views do not rebuild buffers; disposal releases the overlay', t => {

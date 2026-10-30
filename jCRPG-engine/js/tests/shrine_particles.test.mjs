@@ -22,7 +22,7 @@ test('active-time motion for near and far markers, no redundant buffer updates, 
 test('activation brightens coils and remote route trail, caves hide them, and positions wrap',()=>{
  const f=fixture();f.update();const near=f.effect.sorted.find(p=>p.position.x<1).alpha,far=f.effect.sorted.find(p=>p.position.x>90).alpha;
  f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
- assert.ok(f.effect.sorted.find(p=>p.position.x<1).alpha>near*1.8);assert.ok(f.effect.sorted.find(p=>p.position.x>90).alpha>far);
+ assert.ok(f.effect.sorted.find(p=>p.position.x<1).alpha>near*1.3);assert.ok(f.effect.sorted.find(p=>p.position.x>90).alpha>far);
  f.update(0,'cave');assert.equal(f.effect.mesh.visible,false);
  f.catalog.shrines.a.position[0]=1599;f.save.deltaRevision++;f.update();assert.equal(f.effect.mesh.visible,true);assert.ok(f.effect.sorted.some(p=>p.position.x<-.5));f.effect.dispose();
 });
@@ -72,12 +72,12 @@ test('dormant shrines are readable nearby; activated destinations dominate guida
  f.catalog.shrines.c={position:[-100,0,0]};f.save.shrines.b={activated:true};
  const peak=predicate=>Math.max(...f.effect.sorted.filter(predicate).map(p=>p.alpha));
  f.update();
- assert.ok(peak(p=>Math.abs(p.position.x)<1&&p.layer===1)>.45,'dormant outer coil is visible at the hut');
+ assert.ok(peak(p=>Math.abs(p.position.x)<1&&p.layer===1)>.7,'nearby dormant outer coil receives the opacity boost');
  const baseline=peak(p=>p.position.x>90);
  f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
  const active=peak(p=>p.position.x>90),dormant=peak(p=>p.position.x< -90);
- assert.ok(active>baseline*2.5);assert.ok(active>dormant*2);
- assert.ok(dormant>.43&&dormant<.46,'unactivated locations remain faint guidance');
+ assert.ok(active>baseline*2);assert.ok(active>dormant*1.5);
+ assert.ok(dormant>.64&&dormant<.66,'nearby unactivated guidance is brighter but below active opacity');
  f.player.z=20;f.update();assert.ok(peak(p=>p.position.x>90)<active/2,'guidance fades when leaving the shrine');
  f.effect.dispose();
 });
@@ -97,7 +97,8 @@ test('particles stay elongated but fuller, and distant landmarks grow without mo
  const bounds=layer=>{const ps=f.effect.sorted.filter(p=>p.layer===layer);return {top:Math.max(...ps.map(p=>p.position.y)),bottom:Math.min(...ps.map(p=>p.position.y)),radius:Math.max(...ps.map(p=>Math.hypot(p.position.x,p.position.z)))}};
  const inner=bounds(0),near=bounds(1);
  f.player.z=240;f.update();const far=bounds(1);
- assert.ok(far.top>near.top*6&&far.radius>near.radius*5.9);
+ assert.ok(far.top>near.top*4&&far.radius>near.radius*4);
+ assert.ok(far.radius<near.radius*6,'nearby landmarks receive the larger proximity boost');
  assert.equal(far.bottom,near.bottom);assert.equal(bounds(0).bottom,inner.bottom);
  assert.ok(f.effect.sorted.every(p=>p.dormancy===1));
  f.save.shrines.a={activated:true};f.save.deltaRevision++;f.update();
