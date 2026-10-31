@@ -123,6 +123,8 @@ Elmara realizes that the two civilizations' opposing predictions are incomplete 
 
 **Dramatic result:** Elmara develops a practical proposal for renewing cooperation without restoring compulsory dependence upon inherited projections.
 
+![Blessing of the new understanding](storyboards/storyboard_4_5.jpg)
+
 ### Beat 5 — BLISS: The Great Returning
 
 *Integration, conscious renewal, and the beginning of a new civilizational cycle.*
