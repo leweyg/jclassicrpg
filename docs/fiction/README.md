@@ -6,7 +6,7 @@
 
 The Spiral Grid imagines a future in which the old internet has grown into a living network threaded through forests, stone, settlements, and biological perception. Its Concordance infrastructure carries light, heat, and signals through roadside shrines and underground generators. A repair changes both a physical current and the relationships of those who depend on it.
 
-The philosophical foundation is [Spiritual Objectivism](https://leweyg.github.io/spirtual_objectivism/#principles). Reality constrains belief, while a person's access to it remains partial. An intuitive pattern can direct inquiry into what is not yet understood; it becomes a reliable claim only through checking. Virtue means acting consistently with considered values. Institutions and rituals earn their place through the lives and cooperation they sustain, and remain open to revision.
+The philosophical foundation is [Spiritual Objectivism](https://leweyg.github.io/spiritual_objectivism/#principles). Reality constrains belief, while a person's access to it remains partial. An intuitive pattern can direct inquiry into what is not yet understood; it becomes a reliable claim only through checking. Virtue means acting consistently with considered values. Institutions and rituals earn their place through the lives and cooperation they sustain, and remain open to revision.
 
 Within this fiction, attunement is a practiced way of noticing possible relationships. Instruments report what they can measure; a felt rhythm may suggest where to look next. Neither an elegant number nor a powerful feeling settles the matter by itself. The Grid can have repeatable resonance without making every interpretation of that resonance true.
 
@@ -14,7 +14,7 @@ The common crisis, the **Drift of Measure**, is a failure of coordination as wel
 
 ## fiction_layers
 
-The current [site correspondences](https://leweyg.github.io/spirtual_objectivism/#correspondences) define the philosophical mapping below. The story travels upward from concrete action toward integration; the source site's explanatory table also reads downward from Bliss toward Body. These are complementary directions through the same layers.
+The current [site correspondences](https://leweyg.github.io/spiritual_objectivism/#correspondences) define the philosophical mapping below. The story travels upward from concrete action toward integration; the source site's explanatory table also reads downward from Bliss toward Body. These are complementary directions through the same layers.
 
 | Layer | Principle | Dramatic expression |
 | --- | --- | --- |
@@ -38,7 +38,7 @@ An archetype supplies a character's recurring question, not their entire persona
 
 “Wild” in the older notes means less mediated by settled institutions. It does not mean morally inferior. These cultures all reason, intuit, cooperate, and make mistakes. Greek Horde is the game's working fantasy label, not a claim about historical Greek people; `AnatipionCatchers` remains the legacy spelling in Antipion IDs.
 
-The site's [fiction](https://leweyg.github.io/spirtual_objectivism/#fiction) offers three broad landscape archetypes: lowland systems favor measurable efficiency; frontier places require integration; distant sanctuaries expose the risks of untested certainty. They guide mood and conflict. They are not additional named regions or a replacement for the frozen game's geography.
+The site's [fiction](https://leweyg.github.io/spiritual_objectivism/#fiction) offers three broad landscape archetypes: lowland systems favor measurable efficiency; frontier places require integration; distant sanctuaries expose the risks of untested certainty. They guide mood and conflict. They are not additional named regions or a replacement for the frozen game's geography.
 
 The opening gives these tensions personal faces. Orro's inherited language helps him attend to a measurable pulse. Marn's care takes the form of an account whose omissions Pella can name. Talla asks whether all the users of a common supply can remain visible. Varo protects repeatability; Nemi offers a symbol that can be checked; Saima makes public judgment responsible for both evidence and consequences. Their actions unfold in [story_plot](https://github.com/leweyg/jclassicrpg/blob/main/docs/story/README.md#story_plot).
 

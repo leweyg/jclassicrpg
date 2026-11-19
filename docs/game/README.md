@@ -83,4 +83,4 @@ Detailed references are organized by subject. Design examples identify their imp
 | [game_catalog](https://github.com/leweyg/jclassicrpg/blob/main/jCRPG-engine/worlds/seed0/v2/interactions/stories.json) | Current five-chapter manifest; use the catalogs for live IDs and dependencies. |
 | [game_legacy](https://github.com/leweyg/jclassicrpg/blob/main/README) | Original Java setup, controls, and requirements. |
 
-The [source site](https://leweyg.github.io/spirtual_objectivism/) supplies philosophy, archetypes, and the broader Temple World relationship. Its Fiction/Game framing is expanded here into Fiction/Story/Game.
+The [source site](https://leweyg.github.io/spiritual_objectivism/) supplies philosophy, archetypes, and the broader Temple World relationship. Its Fiction/Game framing is expanded here into Fiction/Story/Game.

@@ -2,7 +2,7 @@
 
 A nonviolent fantasy RPG about repairing a living network and learning what its light can honestly promise. Built on jClassicRPG, with a browser world and an authored Concordance journey.
 
-[Play](https://leweyg.github.io/jclassicrpg/play.html) · [Home](https://leweyg.github.io/jclassicrpg/) · [Philosophy](https://leweyg.github.io/spirtual_objectivism/)
+[Play](https://leweyg.github.io/jclassicrpg/play.html) · [Home](https://leweyg.github.io/jclassicrpg/) · [Philosophy](https://leweyg.github.io/spiritual_objectivism/)
 
 Browse the [docs](https://github.com/leweyg/jclassicrpg/blob/main/docs/README.md) directory for current guides and detailed references.
 
